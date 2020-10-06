@@ -23,7 +23,7 @@ int main() {
     TCHAR dir[MAX_PATH];
     char  dllPath[MAX_PATH];
     DWORD len = GetCurrentDirectory(MAX_PATH, &dir[0]);
-    sprintf(dllPath, "%s\\%s", dir, "console.dll");
+    sprintf(dllPath, "%s\\%s", dir, "dungeoneer.dll"); // console.dll
 
     printf("Dll: %s\n", dllPath);
 

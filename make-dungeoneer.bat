@@ -9,7 +9,7 @@ cl /nologo /EHsc ^
      minhook-master\src\buffer.c^
      minhook-master\src\trampoline.c^
      minhook-master\src\hde\hde64.c^
-     ..\imgui-1.78\imgui*.cpp^
+     imgui-1.78\imgui*.cpp^
      dungeoneer\imgui\*.cpp ^
      -link ^
       /LIBPATH:"%DXSDK_DIR%/Lib/x86" d3d11.lib d3dcompiler.lib ^

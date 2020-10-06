@@ -95,23 +95,16 @@ struct comp
 //RangedDamageModCalculation.CalculateBaseMagnitude() params 2
 void HandleDamageModCalculation(UObject* object, UFunction* func, void *params) {
 
-//    printf("%s.%s\n", getName(object->ClassPrivate),getName(object));
-    // iterateStruct(object->ClassPrivate, [&](UProperty *p) {
-    //     dumpProperty(object, p, 1, 7);
-    //     printf("\n");
-    //     return false;
-    // });
-
     printf("%s.%s->%s(%llx)\n", getName(object->ClassPrivate),getName(object),getName(func), (uint64)params);
 
-    iteratePropertiesRecursive(func, params, 0, [&](UProperty *p, void *container, int depth) {
+    // iteratePropertiesRecursive(func, params, 0, [&](UProperty *p, void *container, int depth) {
         
-        printf("%*s", depth, "");
-        dumpProperty(p, container);
-        printf("\n");
+    //     printf("%*s", depth, "");
+    //     dumpProperty(p, container);
+    //     printf("\n");
 
-        return false;
-    });
+    //     return false;
+    // });
 
     if (params != nullptr) {
         float *meterAmount = nullptr;
