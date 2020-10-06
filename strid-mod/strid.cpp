@@ -273,8 +273,6 @@ void HandleDamageModCalculation(UObject* object, UFunction* func, void *params) 
 Dungeoneer *dungeoneer;
 SpyData *spyData;
 
-//ProcessEventHandler dmgMod{"CalculateBaseMagnitude", &HandleDamageModCalculation};
-//FUObjectArray *GUObjectArray; // from dll.cpp
 UFont *font = nullptr;
 
 std::wstring makeWide(std::string text) {
@@ -282,12 +280,7 @@ std::wstring makeWide(std::string text) {
     return converter.from_bytes(text);
 }
 
-// FString fstrNames;
-// FString fstrAmounts;
-// Won't this allocate a new wchar_t each time?
 void makeFString(FString *str, std::wstring wide) {
-    //std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    //std::wstring wide = converter.from_bytes(text);   // convert to wide
     const wchar_t *wideChars = wide.c_str();                // get the wchar_t
 
     str->Data.Data = (void*)wideChars;
@@ -304,22 +297,16 @@ void AHUD_PostRender(void *hud) {
 
     float y = 30;
     for (auto &dv: meter.view.damages) {
-//    for (auto it=meter.damageSources.begin(); it!=meter.damageSources.end(); ++it) {
-        //DamageTypeID type = it->first;
-        //Damage *damage = it->second;
 
         // Name - left aligned
         if (dv.nameW.length() > 0) {
             makeFString(&dv.name, dv.nameW);
-            //makeFString(&fstrNames, damage->view.name);
             spyData->AHUD_DrawText(hud, &dv.name, textColor, 30, y, font, 1.f, false);
         }
 
         // Amount - right aligned.
         if (dv.amountW.length() > 0) {
             makeFString(&dv.amount, dv.amountW);
-//            printf("view amount len: %lld %d [%ws] %llx\n", damage->view.amountW.length(), damage->view.amount.Data.ArrayNum, (wchar_t*)damage->view.amountW.c_str(), (uint64)damage->view.amountW.c_str());
-            //makeFString(&fstrAmounts, damage->view.amount);
             float width = 0.0;
             float height = 0.0;
             spyData->AHUD_GetTextSize(hud, &dv.amount, &width, &height, font, 1.f);
