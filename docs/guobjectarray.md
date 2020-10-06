@@ -39,3 +39,38 @@
 41 54 48 81 EC C0 00 00 00 44 0F B6 E1 44 0F 29 44 24 60 ?? ?? ?? ?? ?? ?? ?? 44 0F 28 C1
 
 00007FF76F180B68 - 00007FF76B1D0000 = 3FB0B68
+
+
+This instantiates itself with a reference to the global GUObjectArray. So can we create our own version, store the reference to GUObjectArray
+and then delete it?
+FRawObjectIterator(bool bOnlyGCedObjects = false) :
+	FUObjectArray::TIterator( GUObjectArray, bOnlyGCedObjects )
+	{
+	}
+
+.text:000000014067D020                         ; FRawObjectIterator *__fastcall FRawObjectIterator::FRawObjectIterator(FRawObjectIterator *__hidden this, bool)
+.text:000000014067D020                         ??0FRawObjectIterator@@QEAA@_N@Z proc near
+.text:000000014067D020                                                                 ; CODE XREF: IncrementalPurgeGarbage(bool,float)+1A0↓p
+.text:000000014067D020                                                                 ; IncrementalPurgeGarbage(bool,float)+5AA↓p
+.text:000000014067D020 84 D2                                   test    dl, dl
+.text:000000014067D022 48 C7 41 10 00 00 00 00                 mov     qword ptr [rcx+10h], 0
+.text:000000014067D02A B8 FF FF FF FF                          mov     eax, 0FFFFFFFFh
+.text:000000014067D02F 4C 8D 05 22 23 69 02                    lea     r8, ?GUObjectArray@@3VFUObjectArray@@A ; FUObjectArray GUObjectArray
+.text:000000014067D036 89 41 08                                mov     [rcx+8], eax
+.text:000000014067D039 4C 8B D1                                mov     r10, rcx
+.text:000000014067D03C 4C 89 01                                mov     [rcx], r8
+.text:000000014067D03F 0F 45 05 16 23 69 02                    cmovnz  eax, cs:dword_142D0F35C
+.text:000000014067D046 FF C0                                   inc     eax
+.text:000000014067D048 89 41 08                                mov     [rcx+8], eax
+.text:000000014067D04B 3B 05 2B 23 69 02                       cmp     eax, dword ptr cs:qword_142D0F37C
+.text:000000014067D051 7D 4C                                   jge     short loc_14067D09F
+.text:000000014067D053
+.text:000000014067D053                         loc_14067D053:                          ; CODE XREF: FRawObjectIterator::FRawObjectIterator(bool)+75↓j
+.text:000000014067D053 0F B7 D0                                movzx   edx, ax
+.text:000000014067D056 8B C8                                   mov     ecx, eax
+.text:000000014067D058 85 C0                                   test    eax, eax
+.text:000000014067D05A 79 0C                                   jns     short loc_14067D068
+.text:000000014067D05C 8D 88 FF FF 00 00                       lea     ecx, [rax+0FFFFh]
+.text:000000014067D062 81 EA 00 00 01 00                       sub     edx, 10000h
+
+84 D2 48 C7 41 10 00 00 00 00 B8 FF FF FF FF ?? ?? ?? ?? ?? ?? ?? 89 41 08 4C 8B D1 4C 89 01

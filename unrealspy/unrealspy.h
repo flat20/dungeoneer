@@ -5,6 +5,8 @@
 typedef signed int (__thiscall *tProcessEvent) (UObject* object, UFunction* func, void *params);
 typedef void (__thiscall *tPostRender) (void *hud);
 typedef TNameEntryArray* (__stdcall *FName_GetNames) ();
+//typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
+typedef void* (__thiscall *FRawObjectIteratorCtor)(void *_this, bool bOnlyGCedObjects);
 
 // void __stdcall __high AHUD::DrawRect(struct FLinearColor, float, float, float, float)
 typedef void (__thiscall *AHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
@@ -34,6 +36,7 @@ typedef std::string UE4Reference;
 const UE4Reference RefUObject_ProcessEvent  = "UObject_ProcessEvent";
 const UE4Reference RefAHUD_PostRender       = "AHUD_PostRender";
 const UE4Reference RefFName_GetNames        = "FName_GetNames";
+const UE4Reference RefFRawObjectIteratorCtor= "FRawObjectIteratorCtor";
 const UE4Reference RefStaticLoadObject      = "StaticLoadObject";
 const UE4Reference RefStaticLoadClass       = "StaticLoadClass";
 const UE4Reference RefLoadPackage           = "LoadPackage";
@@ -51,6 +54,7 @@ struct SpyData {
     StaticLoadClass StaticLoadClass;
     LoadPackage LoadPackage;
     FName_GetNames FName_GetNames;
+    FRawObjectIteratorCtor FRawObjectIteratorCtor;
 
     tProcessEvent origProcessEvent = NULL;
     void *detourProcessEvent = NULL;

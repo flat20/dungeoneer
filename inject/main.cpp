@@ -202,6 +202,10 @@ int FindOffsets(DWORD pid) {
         "AHUD_PostRender",
         "40 55 56 48 8D 6C 24 B1 48 81 EC C8 00 00 00 48 8B 01 48 8B F1",
     });
+    lookups.push_back({
+        "FName_GetNames",
+        "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? B9 08 08 00 00 48 89 5C 24 20",
+    });
 
     uintptr_t offset;
     for (auto it = std::begin(lookups); it != std::end(lookups); ++it) {

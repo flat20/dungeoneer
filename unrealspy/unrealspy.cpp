@@ -81,6 +81,7 @@ bool InitSpy(SpyData *data) {
     offsets[RefStaticLoadClass] = new Offset{0xe7b100}; // UObjectGlobals.h
     offsets[RefLoadPackage]     = new Offset{0xe72490}; // UObjectGlobals.h
     offsets[RefFName_GetNames]  = new Offset{0xCF2D40}; // Maybe find gnames this way?}
+    offsets[RefFRawObjectIteratorCtor] = new Offset{0xE0F6F0};
 
     for(const auto &v: offsets) {
         Offset *offset = v.second;
@@ -91,7 +92,7 @@ bool InitSpy(SpyData *data) {
     // data->GNames = *reinterpret_cast<TNameEntryArray**>(offsets["GNames"]->ptr);
     // util::GNames = data->GNames;
 
-    data->GUObjectArray = (FUObjectArray*)offsets["GUObjectArray"]->ptr;
+    //data->GUObjectArray = (FUObjectArray*)offsets["GUObjectArray"]->ptr;
     data->GEngine = *(UEngine **)offsets["GEngine"]->ptr;
 
     data->AHUD_DrawRect = (AHUD_DrawRect)offsets["AHUD_DrawRect"]->ptr;
@@ -101,15 +102,20 @@ bool InitSpy(SpyData *data) {
     data->StaticLoadClass = (StaticLoadClass)offsets[RefStaticLoadClass]->ptr;
     data->LoadPackage = (LoadPackage)offsets[RefLoadPackage]->ptr;
     data->FName_GetNames = (FName_GetNames)offsets[RefFName_GetNames]->ptr;
+    data->FRawObjectIteratorCtor = (FRawObjectIteratorCtor)offsets[RefFRawObjectIteratorCtor]->ptr;
 
     data->GNames = data->FName_GetNames();
     util::GNames = data->GNames;
+
+    // Enough to hold this class we're creating
+    char bla[256];
+    void **ref = (void**)data->FRawObjectIteratorCtor(&bla[0], false);
+    data->GUObjectArray = (FUObjectArray*)*ref;
 
     printf("Check offsets\n");
     printf("gnames: %llx ptr %llx ofs: %llx\n",  (uint64)data->GNames, (uint64)offsets["GNames"]->ptr, offsets["GNames"]->offset);
     printf("gengine: %s (%s)\n", util::getName(data->GEngine), util::getName(data->GEngine->ClassPrivate));
     printf("guobjectarray: %llx\n", (uint64)data->GUObjectArray);
-    hexDump(offsets["GUObjectArray"]->ptr, 64);
     printf("NumElements %d\n", data->GUObjectArray->ObjObjects.NumElements);
     printf("NumElementsPerChunk %d\n", data->GUObjectArray->ObjObjects.NumElementsPerChunk);
     printf("NumChunks %d\n", data->GUObjectArray->ObjObjects.NumChunks);
