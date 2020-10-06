@@ -120,7 +120,7 @@ MODULEENTRY32 GetModule(const DWORD &pid, const char *modName) {
 
 		if (Module32First(snapshot, &curr)) {
 			do {
-				if (strcmp(curr.szModule, modName) == 0) {
+				if (strcmp((const char*)curr.szModule, modName) == 0) {
 					modEntry = curr;
 					break;
 				}
@@ -205,6 +205,10 @@ int FindOffsets(DWORD pid) {
     lookups.push_back({
         "FName_GetNames",
         "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? B9 08 08 00 00 48 89 5C 24 20",
+    });
+    lookups.push_back({
+        "FRawObjectIterator_Ctor",
+        "84 D2 48 C7 41 10 00 00 00 00 B8 FF FF FF FF ?? ?? ?? ?? ?? ?? ?? 89 41 08 4C 8B D1 4C 89 01",
     });
 
     uintptr_t offset;

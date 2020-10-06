@@ -74,3 +74,5 @@ FRawObjectIterator(bool bOnlyGCedObjects = false) :
 .text:000000014067D062 81 EA 00 00 01 00                       sub     edx, 10000h
 
 84 D2 48 C7 41 10 00 00 00 00 B8 FF FF FF FF ?? ?? ?? ?? ?? ?? ?? 89 41 08 4C 8B D1 4C 89 01
+
+00007FF76BFDF6F0 - 00007FF76B1D0000 = E0F6F0

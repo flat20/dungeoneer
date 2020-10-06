@@ -10,21 +10,21 @@
 
 
 struct Hook {
-    uint64 offset;
+    uintptr_t address;
     void *detour;   // Point this to function
     LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
 };
 
-struct Offset {
-    uint64 offset;
-    void *ptr;      // Pointer to location in running process, once the Offset has been looked up.
-};
+// struct Offset {
+//     uint64 offset;
+//     void *ptr;      // Pointer to location in running process, once the Offset has been looked up.
+// };
 
 // We shouldn't force a user into our basic API. Leaving some options
 bool SetHook(LPVOID target, LPVOID detour, LPVOID* original);
 // Address to target and address to our hook
-bool SetHook(uint64 baseAddress, Hook *hook);
-bool EnableHook(uint64 baseAddress, uint64 offset);
+bool SetHook(Hook *hook);
+bool EnableHook(uintptr_t address);
 
 // const int ofsGNames                 = 0x3FAA768;
 // const int ofsGUObjectArray          = 0x3FAEA68;
@@ -47,11 +47,11 @@ bool EnableHook(uint64 baseAddress, uint64 offset);
 
 // Offsets to functions. Name each entry?
 std::map<UE4Reference, Hook*> hooks;
-std::map<UE4Reference, Offset*> offsets; // Rename to variables? or references?
+//std::map<UE4Reference, Offset*> offsets; // Rename to variables? or references?
 
 // Call from within the UE game process
 // Sets up GNames global for the util:: namespace to work
-bool InitSpy(SpyData *data) {
+bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
 
     // We end up with the same base address as the one we're injected in
     HMODULE dll = GetModuleHandle(NULL);
@@ -69,52 +69,59 @@ bool InitSpy(SpyData *data) {
 
 
 
-    // return InitSdk("Dungeons.exe", 0x3FB6CB8, 0x3E03AD8);
-    offsets["GNames"]           = new Offset{0x3FAC868};
-    offsets["GUObjectArray"]    = new Offset{0x3FB0B68};//0x3C15A78}; // wrong?
-    offsets["GEngine"]          = new Offset{0x40ACB68};
+    // // return InitSdk("Dungeons.exe", 0x3FB6CB8, 0x3E03AD8);
+    // offsets["GNames"]           = new Offset{0x3FAC868};
+    // offsets["GUObjectArray"]    = new Offset{0x3FB0B68};//0x3C15A78}; // wrong?
+    // offsets["GEngine"]          = new Offset{0x40ACB68};
 
-    offsets["AHUD_DrawRect"]    = new Offset{0x1bd7180};
-    offsets["AHUD_DrawText"]    = new Offset{0x1bd7230};
-    offsets["AHUD_GetTextSize"] = new Offset{0x1be6350};
-    offsets[RefStaticLoadObject]= new Offset{0xe7b5b0}; // UObjectGlobals.h
-    offsets[RefStaticLoadClass] = new Offset{0xe7b100}; // UObjectGlobals.h
-    offsets[RefLoadPackage]     = new Offset{0xe72490}; // UObjectGlobals.h
-    offsets[RefFName_GetNames]  = new Offset{0xCF2D40}; // Maybe find gnames this way?}
-    offsets[RefFRawObjectIteratorCtor] = new Offset{0xE0F6F0};
+    // offsets["AHUD_DrawRect"]    = new Offset{0x1bd7180};
+    // offsets["AHUD_DrawText"]    = new Offset{0x1bd7230};
+    // offsets["AHUD_GetTextSize"] = new Offset{0x1be6350};
+    // offsets[RefStaticLoadObject]= new Offset{0xe7b5b0}; // UObjectGlobals.h
+    // offsets[RefStaticLoadClass] = new Offset{0xe7b100}; // UObjectGlobals.h
+    // offsets[RefLoadPackage]     = new Offset{0xe72490}; // UObjectGlobals.h
+    // offsets[RefFName_GetNames]  = new Offset{0xCF2D40}; // Maybe find gnames this way?}
+    // offsets[RefFRawObjectIterator_Ctor] = new Offset{0xE0F6F0}; 
 
-    for(const auto &v: offsets) {
-        Offset *offset = v.second;
-        offset->ptr = (void*)(baseAddress + offset->offset);
-    }
+    // for(const auto &v: offsets) {
+    //     Offset *offset = v.second;
+    //     offset->ptr = (void*)(baseAddress + offset->offset);
+    // }
 
 
     // data->GNames = *reinterpret_cast<TNameEntryArray**>(offsets["GNames"]->ptr);
     // util::GNames = data->GNames;
 
     //data->GUObjectArray = (FUObjectArray*)offsets["GUObjectArray"]->ptr;
-    data->GEngine = *(UEngine **)offsets["GEngine"]->ptr;
+    //data->GEngine = *(UEngine **)offsets["GEngine"]->ptr;
 
-    data->AHUD_DrawRect = (AHUD_DrawRect)offsets["AHUD_DrawRect"]->ptr;
-    data->AHUD_DrawText = (AHUD_DrawText)offsets["AHUD_DrawText"]->ptr;
-    data->AHUD_GetTextSize = (AHUD_GetTextSize)offsets["AHUD_GetTextSize"]->ptr;
-    data->StaticLoadObject = (StaticLoadObject)offsets[RefStaticLoadObject]->ptr;
-    data->StaticLoadClass = (StaticLoadClass)offsets[RefStaticLoadClass]->ptr;
-    data->LoadPackage = (LoadPackage)offsets[RefLoadPackage]->ptr;
-    data->FName_GetNames = (FName_GetNames)offsets[RefFName_GetNames]->ptr;
-    data->FRawObjectIteratorCtor = (FRawObjectIteratorCtor)offsets[RefFRawObjectIteratorCtor]->ptr;
+    data->AHUD_DrawRect = (AHUD_DrawRect)addresses["AHUD_DrawRect"];
+    data->AHUD_DrawText = (AHUD_DrawText)addresses["AHUD_DrawText"];
+    data->AHUD_GetTextSize = (AHUD_GetTextSize)addresses["AHUD_GetTextSize"];
+    data->StaticLoadObject = (StaticLoadObject)addresses[RefStaticLoadObject];
+    data->StaticLoadClass = (StaticLoadClass)addresses[RefStaticLoadClass];
+    data->LoadPackage = (LoadPackage)addresses[RefLoadPackage];
+    data->FName_GetNames = (FName_GetNames)addresses[RefFName_GetNames];
+    data->FRawObjectIterator_Ctor = (FRawObjectIterator_Ctor)addresses[RefFRawObjectIterator_Ctor];
 
     data->GNames = data->FName_GetNames();
     util::GNames = data->GNames;
 
+    printf("ctor: %llx\n",  (uint64)data->FRawObjectIterator_Ctor);
+    
+    printf("ctor2: %llx\n",  (uint64)addresses[RefFRawObjectIterator_Ctor]);
+
     // Enough to hold this class we're creating
     char bla[256];
-    void **ref = (void**)data->FRawObjectIteratorCtor(&bla[0], false);
+    
+    printf("Check offsets1 \n");
+    void **ref = (void**)data->FRawObjectIterator_Ctor(&bla[0], false);
+    
+    printf("Check offsets2 \n");
     data->GUObjectArray = (FUObjectArray*)*ref;
 
-    printf("Check offsets\n");
-    printf("gnames: %llx ptr %llx ofs: %llx\n",  (uint64)data->GNames, (uint64)offsets["GNames"]->ptr, offsets["GNames"]->offset);
-    printf("gengine: %s (%s)\n", util::getName(data->GEngine), util::getName(data->GEngine->ClassPrivate));
+    printf("Check offsets3 \n");
+    //printf("gengine: %s (%s)\n", util::getName(data->GEngine), util::getName(data->GEngine->ClassPrivate));
     printf("guobjectarray: %llx\n", (uint64)data->GUObjectArray);
     printf("NumElements %d\n", data->GUObjectArray->ObjObjects.NumElements);
     printf("NumElementsPerChunk %d\n", data->GUObjectArray->ObjObjects.NumElementsPerChunk);
@@ -122,14 +129,14 @@ bool InitSpy(SpyData *data) {
     printf("MaxChunks %d\n", data->GUObjectArray->ObjObjects.MaxChunks);
     printf("MaxElements %d\n", data->GUObjectArray->ObjObjects.MaxElements);
     
-    printf("viewport: %llx\n", (DWORD64)data->GEngine->GameViewport);
-    if (data->GEngine->GameViewport != nullptr) {
-        printf("viewport: %s (%s)\n", util::getName(data->GEngine->GameViewport), util::getName(data->GEngine->GameViewport->ClassPrivate));
-    }
+    // printf("viewport: %llx\n", (DWORD64)data->GEngine->GameViewport);
+    // if (data->GEngine->GameViewport != nullptr) {
+    //     printf("viewport: %s (%s)\n", util::getName(data->GEngine->GameViewport), util::getName(data->GEngine->GameViewport->ClassPrivate));
+    // }
 
 
-    hooks[RefUObject_ProcessEvent]  = new Hook{0xE75250,    data->detourProcessEvent};
-    hooks[RefAHUD_PostRender]       = new Hook{0x1BEB4B0,   data->detourPostRender};
+    hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
+    hooks[RefAHUD_PostRender]       = new Hook{addresses[RefAHUD_PostRender],   data->detourPostRender};
     //hooks["GetNames"]               = new Hook{0xCF2D40, data->detourGetNames}; // Maybe find gnames this way?
 
     // Hook functions
@@ -145,7 +152,7 @@ bool InitSpy(SpyData *data) {
             continue;
         }
 
-        bool success = SetHook(baseAddress, hook);
+        bool success = SetHook(hook);
         if (success == false) {
             printf("%s hook not set\n", label.c_str());
             return false;
@@ -163,7 +170,7 @@ bool InitSpy(SpyData *data) {
         if (hook->detour == nullptr) {
             continue;
         }
-        bool success = EnableHook(baseAddress, hook->offset);
+        bool success = EnableHook(hook->address);
         if (success == false) {
             printf("%s hook not enabled\n", label.c_str());
             return false;
@@ -221,15 +228,15 @@ bool SetHook(LPVOID target, LPVOID detour, LPVOID* original) {
 
 
 // Address to target and address to our hook
-bool SetHook(uint64 baseAddress, Hook *hook) {
+bool SetHook(Hook *hook) {
 
-    LPVOID target = (LPVOID)(baseAddress + hook->offset);
+    LPVOID target = (LPVOID)(hook->address);
 
     return SetHook(target, hook->detour, &hook->original);
 }
 
-bool EnableHook(uint64 baseAddress, uint64 offset) {
-    LPVOID target = (LPVOID)(baseAddress + offset);
+bool EnableHook(uintptr_t address) {
+    LPVOID target = (LPVOID)(address);
     printf("enable target: %llx\n", (uint64)target);
     MH_STATUS err = MH_EnableHook(target);
     if (err != MH_OK) {
@@ -239,8 +246,6 @@ bool EnableHook(uint64 baseAddress, uint64 offset) {
     return true;
 }
 
-// // Do some trickery to figure out where GNames, GUObjectArray and GEngine are.
-// void findOffsets() {
 // }
 
 

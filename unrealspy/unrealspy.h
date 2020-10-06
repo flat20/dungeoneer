@@ -6,7 +6,7 @@ typedef signed int (__thiscall *tProcessEvent) (UObject* object, UFunction* func
 typedef void (__thiscall *tPostRender) (void *hud);
 typedef TNameEntryArray* (__stdcall *FName_GetNames) ();
 //typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
-typedef void* (__thiscall *FRawObjectIteratorCtor)(void *_this, bool bOnlyGCedObjects);
+typedef void* (__thiscall *FRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
 
 // void __stdcall __high AHUD::DrawRect(struct FLinearColor, float, float, float, float)
 typedef void (__thiscall *AHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
@@ -33,19 +33,19 @@ typedef UPackage* (__fastcall *LoadPackage)( UPackage* InOuter, const TCHAR* InL
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
 typedef std::string UE4Reference;
-const UE4Reference RefUObject_ProcessEvent  = "UObject_ProcessEvent";
-const UE4Reference RefAHUD_PostRender       = "AHUD_PostRender";
-const UE4Reference RefFName_GetNames        = "FName_GetNames";
-const UE4Reference RefFRawObjectIteratorCtor= "FRawObjectIteratorCtor";
-const UE4Reference RefStaticLoadObject      = "StaticLoadObject";
-const UE4Reference RefStaticLoadClass       = "StaticLoadClass";
-const UE4Reference RefLoadPackage           = "LoadPackage";
+const UE4Reference RefUObject_ProcessEvent      = "UObject_ProcessEvent";
+const UE4Reference RefAHUD_PostRender           = "AHUD_PostRender";
+const UE4Reference RefFName_GetNames            = "FName_GetNames";
+const UE4Reference RefFRawObjectIterator_Ctor   = "FRawObjectIterator_Ctor";
+const UE4Reference RefStaticLoadObject          = "StaticLoadObject";
+const UE4Reference RefStaticLoadClass           = "StaticLoadClass";
+const UE4Reference RefLoadPackage               = "LoadPackage";
 
 struct SpyData {
     uint64 baseAddress;             // Base address of process
     FUObjectArray *GUObjectArray;
     TNameEntryArray* GNames;
-    UEngine* GEngine;
+    //UEngine* GEngine; // Just get from GUObjectArray?
 
     AHUD_DrawRect AHUD_DrawRect;
     AHUD_DrawText AHUD_DrawText;
@@ -54,7 +54,7 @@ struct SpyData {
     StaticLoadClass StaticLoadClass;
     LoadPackage LoadPackage;
     FName_GetNames FName_GetNames;
-    FRawObjectIteratorCtor FRawObjectIteratorCtor;
+    FRawObjectIterator_Ctor FRawObjectIterator_Ctor;
 
     tProcessEvent origProcessEvent = NULL;
     void *detourProcessEvent = NULL;
@@ -79,5 +79,5 @@ struct SpyHook {
 
 
 // Hook everything up, pass in offsets.
-bool InitSpy(SpyData*);
+bool InitSpy(SpyData*, std::map<UE4Reference, uintptr_t> addresses);
 bool DeInitSpy(SpyData*);

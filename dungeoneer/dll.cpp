@@ -7,6 +7,7 @@
 #include <unrealspy.h>
 #include <util.h>
 #include "dungeoneer.h"
+#include "offsets.h"
 #include "ui.h"
 
 
@@ -98,10 +99,13 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
+
+        HANDLE process = GetCurrentProcess();
+        std::map<std::string,uintptr_t> addresses = offsets::FindAddresses(process, "Dungeons-Win64-Shipping.exe");
+
         spyData.detourProcessEvent = &UObject_ProcessEvent;
         spyData.detourPostRender = &AHUD_PostRender;
-        //spyData.detourGetNames = &GetNames;
-        InitSpy(&spyData);
+        InitSpy(&spyData, addresses);
 
         dng.spyData = &spyData;
         dng.AddFunctionHandler = &AddFunctionHandler;
@@ -135,15 +139,6 @@ HMODULE loadMod(LPCSTR filename) {
         return nullptr;
     }
     printf("%s loaded\n", filename);
-
-    // char *modVersion = (char *)GetProcAddress(handle, "ModDungeoneerVersion");
-    // if (modVersion == NULL) {
-    //     printf("No ModDungeoneerVersion function in %s\n", filename);
-    //     FreeLibrary(handle);
-    //     return nullptr;
-    // }
-    // printf("ModDungeoneerVersion %s\n", modVersion);
-
 
     typedef ModuleInfo* (__stdcall *FuncModGetInfo)();
     FuncModGetInfo fnModGetInfo  = (FuncModGetInfo)GetProcAddress(handle, "ModGetInfo");
