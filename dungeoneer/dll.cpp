@@ -12,6 +12,8 @@
 
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
 void __stdcall AHUD_PostRender(void* hud);
+void* __stdcall GetNames();
+
 HMODULE loadMod(LPCSTR filename);
 std::string getDllDirectory();
 
@@ -98,6 +100,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
 
         spyData.detourProcessEvent = &UObject_ProcessEvent;
         spyData.detourPostRender = &AHUD_PostRender;
+        //spyData.detourGetNames = &GetNames;
         InitSpy(&spyData);
 
         dng.spyData = &spyData;
@@ -403,3 +406,13 @@ void __stdcall AHUD_PostRender(void* hud) {
         }
     }
 }
+
+
+// void* __stdcall GetNames() {
+
+//     void *gnames = spyData.origGetNames();
+//     printf("getnames? %llx %llx\n", (uint64)gnames, (uint64)spyData.GNames);
+
+//     return gnames;
+
+// }

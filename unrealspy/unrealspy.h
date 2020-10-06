@@ -2,8 +2,9 @@
 #include "unreal.h"
 
 
-typedef signed int(__thiscall *tProcessEvent) (UObject* object, UFunction* func, void *params);
-typedef void(__thiscall *tPostRender) (void *hud);
+typedef signed int (__thiscall *tProcessEvent) (UObject* object, UFunction* func, void *params);
+typedef void (__thiscall *tPostRender) (void *hud);
+typedef TNameEntryArray* (__stdcall *FName_GetNames) ();
 
 // void __stdcall __high AHUD::DrawRect(struct FLinearColor, float, float, float, float)
 typedef void (__thiscall *AHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
@@ -32,6 +33,7 @@ typedef UPackage* (__fastcall *LoadPackage)( UPackage* InOuter, const TCHAR* InL
 typedef std::string UE4Reference;
 const UE4Reference RefUObject_ProcessEvent  = "UObject_ProcessEvent";
 const UE4Reference RefAHUD_PostRender       = "AHUD_PostRender";
+const UE4Reference RefFName_GetNames        = "FName_GetNames";
 const UE4Reference RefStaticLoadObject      = "StaticLoadObject";
 const UE4Reference RefStaticLoadClass       = "StaticLoadClass";
 const UE4Reference RefLoadPackage           = "LoadPackage";
@@ -39,7 +41,7 @@ const UE4Reference RefLoadPackage           = "LoadPackage";
 struct SpyData {
     uint64 baseAddress;             // Base address of process
     FUObjectArray *GUObjectArray;
-    TNameEntryArray* GNames { };
+    TNameEntryArray* GNames;
     UEngine* GEngine;
 
     AHUD_DrawRect AHUD_DrawRect;
@@ -48,11 +50,16 @@ struct SpyData {
     StaticLoadObject StaticLoadObject;
     StaticLoadClass StaticLoadClass;
     LoadPackage LoadPackage;
+    FName_GetNames FName_GetNames;
 
     tProcessEvent origProcessEvent = NULL;
     void *detourProcessEvent = NULL;
     tPostRender origPostRender = NULL;
     void *detourPostRender = NULL;
+
+    // GetNames returns pointer to GNames array, I think.
+    // tGetNames origGetNames = nullptr;
+    // void *detourGetNames = nullptr;
 };
 
 // Give a list of these to SpyData to hook them.

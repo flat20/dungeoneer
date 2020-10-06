@@ -80,9 +80,7 @@ bool InitSpy(SpyData *data) {
     offsets[RefStaticLoadObject]= new Offset{0xe7b5b0}; // UObjectGlobals.h
     offsets[RefStaticLoadClass] = new Offset{0xe7b100}; // UObjectGlobals.h
     offsets[RefLoadPackage]     = new Offset{0xe72490}; // UObjectGlobals.h
-
-    hooks[RefUObject_ProcessEvent] = new Hook{0xE75250,    data->detourProcessEvent};
-    hooks[RefAHUD_PostRender]      = new Hook{0x1BEB4B0,   data->detourPostRender};
+    offsets[RefFName_GetNames]  = new Offset{0xCF2D40}; // Maybe find gnames this way?}
 
     for(const auto &v: offsets) {
         Offset *offset = v.second;
@@ -90,8 +88,8 @@ bool InitSpy(SpyData *data) {
     }
 
 
-    data->GNames = *reinterpret_cast<TNameEntryArray**>(offsets["GNames"]->ptr);
-    util::GNames = data->GNames;
+    // data->GNames = *reinterpret_cast<TNameEntryArray**>(offsets["GNames"]->ptr);
+    // util::GNames = data->GNames;
 
     data->GUObjectArray = (FUObjectArray*)offsets["GUObjectArray"]->ptr;
     data->GEngine = *(UEngine **)offsets["GEngine"]->ptr;
@@ -102,6 +100,10 @@ bool InitSpy(SpyData *data) {
     data->StaticLoadObject = (StaticLoadObject)offsets[RefStaticLoadObject]->ptr;
     data->StaticLoadClass = (StaticLoadClass)offsets[RefStaticLoadClass]->ptr;
     data->LoadPackage = (LoadPackage)offsets[RefLoadPackage]->ptr;
+    data->FName_GetNames = (FName_GetNames)offsets[RefFName_GetNames]->ptr;
+
+    data->GNames = data->FName_GetNames();
+    util::GNames = data->GNames;
 
     printf("Check offsets\n");
     printf("gnames: %llx ptr %llx ofs: %llx\n",  (uint64)data->GNames, (uint64)offsets["GNames"]->ptr, offsets["GNames"]->offset);
@@ -119,6 +121,10 @@ bool InitSpy(SpyData *data) {
         printf("viewport: %s (%s)\n", util::getName(data->GEngine->GameViewport), util::getName(data->GEngine->GameViewport->ClassPrivate));
     }
 
+
+    hooks[RefUObject_ProcessEvent]  = new Hook{0xE75250,    data->detourProcessEvent};
+    hooks[RefAHUD_PostRender]       = new Hook{0x1BEB4B0,   data->detourPostRender};
+    //hooks["GetNames"]               = new Hook{0xCF2D40, data->detourGetNames}; // Maybe find gnames this way?
 
     // Hook functions
     if (MH_Initialize() != MH_OK) {
@@ -140,11 +146,9 @@ bool InitSpy(SpyData *data) {
         }
     }
 
-    // This is no good. Hook original needs to point to the destination variable
-    // so we minimize the time when a hook is enabled and triggers, but there's no
-    // original function set up yet so we can't call anything.
     data->origPostRender = (tPostRender)hooks[RefAHUD_PostRender]->original;
     data->origProcessEvent = (tProcessEvent)hooks[RefUObject_ProcessEvent]->original;
+    //data->origGetNames = (tGetNames)hooks["GetNames"]->original;
 
     // Enable hooks once we have pointers to original functions
     for(const auto &v: hooks) {
@@ -228,3 +232,17 @@ bool EnableHook(uint64 baseAddress, uint64 offset) {
     }
     return true;
 }
+
+// // Do some trickery to figure out where GNames, GUObjectArray and GEngine are.
+// void findOffsets() {
+// }
+
+
+// void* __stdcall GetNames() {
+
+//     void *gnames = spyData.origGetNames();
+//     printf("getnames? %llx %llx\n", (uint64)gnames, (uint64)spyData.GNames);
+
+//     return gnames;
+
+// }
