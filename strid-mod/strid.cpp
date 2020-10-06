@@ -107,17 +107,11 @@ void HandleDamageModCalculation(UObject* object, UFunction* func, void *params) 
     // });
 
     if (params != nullptr) {
-        float *meterAmount = nullptr;
-        char *meterType = nullptr;
-
-        findPropertyByPath(func, params, "Spec/Def", [&](UProperty *p, void *container) {
-            UObject *Def = GetPropertyValue<UObject>(p, container);
-            meterType = getName(Def->ClassPrivate);
-        });
-
-        findPropertyByPath(func, params, "ReturnValue", [&](UProperty *p, void *container) {
-            meterAmount = GetPropertyValue<float>(p, container);
-        });
+        
+        UObject *Def = util::GetPropertyValueByPath<UObject>(func, params, "Spec/Def");
+        char *meterType = getName(Def->ClassPrivate);
+    
+        float *meterAmount = util::GetPropertyValueByPath<float>(func, params, "ReturnValue");
 
         // bool result = findPropertyByPath(func, params, "Spec/CapturedRelevantAttributes/SourceAttributes", [&](UProperty *p, void *container) {
         //     // ArrayProperty

@@ -45,6 +45,73 @@ namespace util {
         }
     }
 
+    
+    // Would be nicer to pass in a struct{UProperty*found, void *valueContainer} and fill that in.
+    // Tried it and it actually made the calling code more verbose :/
+    bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound) {
+
+        std::string name;
+        int delimiter = path.find_first_of("/");
+        if (delimiter != std::string::npos) {
+            name = path.substr(0, delimiter);
+            path = path.substr(delimiter+1, path.length());
+        } else {
+            name = path;
+            path = "";
+        }
+
+        UProperty *foundProperty = nullptr;
+
+        // Search all properties for 'name'
+        iterate(object, [&](UProperty *p) {
+
+            // Not the property we're looking for, continue
+            if (strcmp(getName(p), name.c_str()) != 0) {
+                return false;
+            }
+
+            // Found property, do we need to go deeper?
+            if (path.length() > 0) {
+
+                // Step inside property if needed
+                if (IsClass(p, CASTCLASS_UStructProperty)) {
+                    UStructProperty *sp = (UStructProperty*)p;
+                    UScriptStruct* v = sp->Struct;
+                    if (v != nullptr) {
+                        void *nextContainer = (void*)((uint64)container + p->Offset_Internal);
+                        return findPropertyByPath(v, nextContainer, path, fnFound);
+                    }
+
+                } else if (IsClass(p, CASTCLASS_UObjectProperty)) {
+                    UObject *v = GetPropertyValue<UObject>(p, container);
+                    if (v != nullptr) {
+                        void *nextContainer = v;
+                        return findPropertyByPath(v, nextContainer, path, fnFound);
+                    }
+                    
+                }
+
+                // Can't go deeper, give up looking
+                return true;
+            }
+
+
+            // Found a match - Now return it and a usable place to find its value.
+            foundProperty = p;
+            fnFound(p, container);
+
+            return true;
+        });
+
+        // This is where we should fill in a struct to return.
+        if (foundProperty != nullptr) {
+            return true;
+        }
+
+        return false;
+
+    }
+
     void dumpProperty(UProperty *p, void *container) {
 
         printf("%s", getName(p));
@@ -187,9 +254,30 @@ namespace util {
             
         // }
     }
+
+    // UObject implementation
+    template <>
+    UObject *GetPropertyValue<UObject>(UProperty *p, void *container) {
+
+        if (!IsClass(p, CASTCLASS_UObjectPropertyBase)) {
+            printf("Not an object?");
+            return nullptr;
+        }
+
+        UObjectPropertyBase *baseProp = (UObjectPropertyBase*)p;
+        UObject **ptr = (UObject**)((uint64)container + p->Offset_Internal);
+        if (*ptr == nullptr || (uint64)*ptr == MAX_uint64) {
+            return nullptr;
+        }
+
+        UObject *obj = *ptr;
+        return obj;
+    }
+
 }
 
 using namespace util;
+
 
 // char * getNameFull(UObject *Object) {
 //     char name[2048];
@@ -413,24 +501,6 @@ FScriptArray *GetArrayPropertyValue(void *container, UProperty *p) {
 }
 
 
-// UObject implementation
-template <>
-UObject *GetPropertyValue<UObject>(UProperty *p, void *container) {
-
-    if (!IsClass(p, CASTCLASS_UObjectPropertyBase)) {
-        printf("Not an object?");
-        return nullptr;
-    }
-
-    UObjectPropertyBase *baseProp = (UObjectPropertyBase*)p;
-    UObject **ptr = (UObject**)((uint64)container + p->Offset_Internal);
-    if (*ptr == nullptr || (uint64)*ptr == MAX_uint64) {
-        return nullptr;
-    }
-    
-    UObject *obj = *ptr;
-    return obj;
-}
 
 
 // Return a pointer to the data container for the given UStructProperty
@@ -824,71 +894,6 @@ UProperty *findPropertyByName(UStruct *us, char *name) {
 }
 
 
-// Would be nicer to pass in a struct{UProperty*found, void *valueContainer} and fill that in.
-// Tried it and it actually made the calling code more verbose :/
-bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound) {
-
-    std::string name;
-    int delimiter = path.find_first_of("/");
-    if (delimiter != std::string::npos) {
-        name = path.substr(0, delimiter);
-        path = path.substr(delimiter+1, path.length());
-    } else {
-        name = path;
-        path = "";
-    }
-
-    UProperty *foundProperty = nullptr;
-
-    // Search all properties for 'name'
-    iterate(object, [&](UProperty *p) {
-
-        // Not the property we're looking for, continue
-        if (strcmp(getName(p), name.c_str()) != 0) {
-            return false;
-        }
-
-        // Found property, do we need to go deeper?
-        if (path.length() > 0) {
-
-            // Step inside property if needed
-            if (IsClass(p, CASTCLASS_UStructProperty)) {
-                UStructProperty *sp = (UStructProperty*)p;
-                UScriptStruct* v = sp->Struct;
-                if (v != nullptr) {
-                    void *nextContainer = (void*)((uint64)container + p->Offset_Internal);
-                    return findPropertyByPath(v, nextContainer, path, fnFound);
-                }
-
-            } else if (IsClass(p, CASTCLASS_UObjectProperty)) {
-                UObject *v = GetPropertyValue<UObject>(p, container);
-                if (v != nullptr) {
-                    void *nextContainer = v;
-                    return findPropertyByPath(v, nextContainer, path, fnFound);
-                }
-                
-            }
-
-            // Can't go deeper, give up looking
-            return true;
-        }
-
-
-        // Found a match - Now return it and a usable place to find its value.
-        foundProperty = p;
-        fnFound(p, container);
-
-        return true;
-    });
-
-    // This is where we should fill in a struct to return.
-    if (foundProperty != nullptr) {
-        return true;
-    }
-
-    return false;
-
-}
 
 // TODO
 

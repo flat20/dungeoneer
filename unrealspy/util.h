@@ -17,17 +17,33 @@ namespace util {
     // Has been very useful so it gets to live here
     void dumpProperty(UProperty *p, void *container);
 
+
+    // Works for numerics and some others.
+    template <typename T>
+    T *GetPropertyValue(UProperty *p, void *container) {
+        return (T*)((uint64)container + p->Offset_Internal);
+    }
+    
+    // UObject implementation
+    template <>
+    UObject *GetPropertyValue<UObject>(UProperty *p, void *container);
+
+    bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound);
+
+    // Retrieve the value of a property by its path
+    template <typename T>
+    T *GetPropertyValueByPath(UObject* object, void *container, std::string path) {
+
+        T *value = nullptr;
+        findPropertyByPath(object, container, path, [&](UProperty *p, void *container) {
+            value = GetPropertyValue<T>(p, container);
+        });
+
+        return value;
+    }
 }
 
-// Works for numerics and some others (above). Not sure what to call it when it only works some of the time.
-template <typename T>
-T *GetPropertyValue(UProperty *p, void *container) {
-    return (T*)((uint64)container + p->Offset_Internal);
-}
 
-// UObject implementation
-template <>
-UObject *GetPropertyValue<UObject>(UProperty *p, void *container);
 
 // TODO templatify 
 template <class T>
@@ -52,7 +68,6 @@ UObject *findObjectByName(FUObjectArray *oa, char *objectName, char *className);
 
 // TEMP
 UProperty *findPropertyByName(UStruct *us, char *name);
-bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound);
 //UProperty* findPropertyByPath(UObject* object, void *container, std::string path, void **outContainer);
 
 
