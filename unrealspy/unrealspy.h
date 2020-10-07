@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include "unreal.h"
 
 
@@ -33,19 +34,20 @@ typedef UPackage* (__fastcall *LoadPackage)( UPackage* InOuter, const TCHAR* InL
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
 typedef std::string UE4Reference;
-const UE4Reference RefUObject_ProcessEvent      = "UObject_ProcessEvent";
-const UE4Reference RefAHUD_PostRender           = "AHUD_PostRender";
 const UE4Reference RefFName_GetNames            = "FName_GetNames";
 const UE4Reference RefFRawObjectIterator_Ctor   = "FRawObjectIterator_Ctor";
+const UE4Reference RefUObject_ProcessEvent      = "UObject_ProcessEvent";
+const UE4Reference RefAHUD_PostRender           = "AHUD_PostRender";
 const UE4Reference RefStaticLoadObject          = "StaticLoadObject";
 const UE4Reference RefStaticLoadClass           = "StaticLoadClass";
 const UE4Reference RefLoadPackage               = "LoadPackage";
+
 
 struct SpyData {
     uint64 baseAddress;             // Base address of process
     FUObjectArray *GUObjectArray;
     TNameEntryArray* GNames;
-    //UEngine* GEngine; // Just get from GUObjectArray?
+    UEngine* GEngine; // Just get from GUObjectArray?
 
     AHUD_DrawRect AHUD_DrawRect;
     AHUD_DrawText AHUD_DrawText;

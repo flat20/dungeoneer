@@ -5,9 +5,12 @@
 
 // Anything in this namespace I'm fairly happy with, anything outside it
 // is work-in-progress or stuff I needed when testing
+// TODO Casing to match UE4 sdk
 namespace util {
+
     extern TNameEntryArray* GNames;
-    
+    extern FUObjectArray* GUObjectArray;
+
     char * getName(FName name);
     char * getName(UObject *Object);
     
@@ -28,9 +31,10 @@ namespace util {
     template <>
     UObject *GetPropertyValue<UObject>(UProperty *p, void *container);
 
+    // Searches object recursively for the path to get a property and its container.
     bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound);
 
-    // Retrieve the value of a property by its path
+    // Searches object recursively to retrieve the value of a child property.
     template <typename T>
     T *GetPropertyValueByPath(UObject* object, void *container, std::string path) {
 
@@ -41,6 +45,10 @@ namespace util {
 
         return value;
     }
+
+    // GUObjectArray
+    void IterateObjectArray(std::function<bool (UObject*)> fnDone);
+    UObject *FindObjectByName(char *objectName, char *className);
 }
 
 
@@ -58,22 +66,22 @@ void hexDump(const void * mem, unsigned int n);
 //void dumpObject(UObject *Object, int level);
 void dumpField(UField *uf, int level);
 //void dumpStruct(UStruct *us, int level);
-void dumpClass(UClass *ClassPrivate, int level);
+//void dumpClass(UClass *ClassPrivate, int level);
 //void dumpObject(UObject *Object, void *container, int level);
 void dumpObjectArray(FUObjectArray* oa);
 void dumpNameEntries();
-void dumpFunction(UFunction *fn, int level);
-void findObjectsByClassName(FUObjectArray* oa, char *name);
-UObject *findObjectByName(FUObjectArray *oa, char *objectName, char *className);
+//void dumpFunction(UFunction *fn, int level);
+//void findObjectsByClassName(FUObjectArray* oa, char *name);
+//UObject *findObjectByName(FUObjectArray *oa, char *objectName, char *className);
 
 // TEMP
-UProperty *findPropertyByName(UStruct *us, char *name);
+//UProperty *findPropertyByName(UStruct *us, char *name);
 //UProperty* findPropertyByPath(UObject* object, void *container, std::string path, void **outContainer);
 
 
 //char * getNameFull(UObject *Object);
 
-void iterateObjectArray(FUObjectArray *oa, std::function<bool (UObject*)> fnDone);
+//void iterateObjectArray(FUObjectArray *oa, std::function<bool (UObject*)> fnDone);
 UProperty *iterateStruct(UStruct* us, std::function<bool (UProperty*)> fnDone);
 UProperty *iterateFunc(UFunction* func, std::function<bool (UProperty*)> fnDone);
 void iterateArray(FScriptArray *arr, UArrayProperty *ap, std::function<bool (uint8*)> fnDone);
@@ -89,36 +97,37 @@ bool iteratePropertiesRecursive(UObject *obj, void *container, int level, std::f
 // And IsParmType(..)
 
 bool IsClass(UObject *object, EClassCastFlags flag);
-bool IsByteProperty(UProperty *p);
-bool IsFloatProperty(UProperty *p);
-bool IsIntProperty(UProperty *p);
-bool IsUIntProperty(UProperty *p);
-bool IsInt16Property(UProperty *p);
-bool IsUInt16Property(UProperty *p);
-bool IsInt64Property(UProperty *p);
-bool IsUInt64Property(UProperty *p);
-bool IsBoolProperty(UProperty *p);
-bool IsNameProperty(UProperty *p);
-bool IsStructProperty(UProperty *p);
-bool IsStrProperty(UProperty *p);
-bool IsTextProperty(UProperty *p);
-bool IsMulticastDelegateProperty(UProperty *p);
-bool IsObjectProperty(UProperty *p);
-bool IsEnumProperty(UProperty *p);
-bool IsReturnParm(UProperty *p);
-bool IsOutParm(UProperty *p);
+
+// bool IsByteProperty(UProperty *p);
+// bool IsFloatProperty(UProperty *p);
+// bool IsIntProperty(UProperty *p);
+// bool IsUIntProperty(UProperty *p);
+// bool IsInt16Property(UProperty *p);
+// bool IsUInt16Property(UProperty *p);
+// bool IsInt64Property(UProperty *p);
+// bool IsUInt64Property(UProperty *p);
+// bool IsBoolProperty(UProperty *p);
+// bool IsNameProperty(UProperty *p);
+// bool IsStructProperty(UProperty *p);
+// bool IsStrProperty(UProperty *p);
+// bool IsTextProperty(UProperty *p);
+// bool IsMulticastDelegateProperty(UProperty *p);
+// bool IsObjectProperty(UProperty *p);
+// bool IsEnumProperty(UProperty *p);
+// bool IsReturnParm(UProperty *p);
+// bool IsOutParm(UProperty *p);
 
 uint8 *GetBytePropertyValue(void *container, UProperty *p);
-float *GetFloatPropertyValue(void *container, UProperty *p);
-int32 *GetIntPropertyValue(void *container, UProperty *p);
-uint64 *GetUInt64PropertyValue(void *container, UProperty *p);
-int64 *GetInt64PropertyValue(void *container, UProperty *p);
-int16 *GetInt16PropertyValue(void *container, UProperty *p);
-uint16 *GetUInt16PropertyValue(void *container, UProperty *p);
-FName *GetNamePropertyValue(void *container, UProperty *p);
-FString *GetStrPropertyValue(void *container, UProperty *p);
-FText *GetTextPropertyValue(void *container, UProperty *p);
-FScriptArray *GetArrayPropertyValue(void *container, UProperty *p);
+// float *GetFloatPropertyValue(void *container, UProperty *p);
+// int32 *GetIntPropertyValue(void *container, UProperty *p);
+// uint64 *GetUInt64PropertyValue(void *container, UProperty *p);
+// int64 *GetInt64PropertyValue(void *container, UProperty *p);
+// int16 *GetInt16PropertyValue(void *container, UProperty *p);
+// uint16 *GetUInt16PropertyValue(void *container, UProperty *p);
+// FName *GetNamePropertyValue(void *container, UProperty *p);
+// FString *GetStrPropertyValue(void *container, UProperty *p);
+// FText *GetTextPropertyValue(void *container, UProperty *p);
+//FScriptArray *GetArrayPropertyValue(void *container, UProperty *p);
 //UObject* GetObjectPropertyValue(void *container, UProperty *p);
 //void* GetStructPropertyValue(void *container, UProperty *p);
 

@@ -1,8 +1,8 @@
 
 cl /nologo /EHsc ^
-     /I minhook-master\include\ /I unrealspy\ ^
-     /I ../imgui-1.78  ^
-     /I "%WindowsSdkDir%Include\um" /I "%WindowsSdkDir%Include\shared" /I "%DXSDK_DIR%Include"  ^
+     /I minhook-master/include/ /I unrealspy/ ^
+     /I imgui-1.78/  ^
+     /I "%WindowsSdkDir%Include\um" /I "%WindowsSdkDir%Include\shared"  ^
      dungeoneer\*.cpp ^
      unrealspy\*.cpp ^
      minhook-master\src\hook.c^
@@ -12,5 +12,5 @@ cl /nologo /EHsc ^
      imgui-1.78\imgui*.cpp^
      dungeoneer\imgui\*.cpp ^
      -link ^
-      /LIBPATH:"%DXSDK_DIR%/Lib/x86" d3d11.lib d3dcompiler.lib ^
+      d3d11.lib d3dcompiler.lib ^
       -DLL /subsystem:console /DEBUG -OUT:dungeoneer.dll

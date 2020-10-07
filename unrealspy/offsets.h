@@ -3,18 +3,19 @@
 #include <TlHelp32.h>
 #include <string>
 #include <map>
+#include <unrealspy.h>
 
 namespace offsets {
-    struct OffsetLookup {
-        const char *name;
-        const char *opcodes;
-        uintptr_t offset; // in case base address of the opcodes isn't where we can find our value.
-    };
 
-    std::map<std::string,uintptr_t> FindAddresses(HANDLE process, const char *moduleName);
-    uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, OffsetLookup lookup);
-    MODULEENTRY32 GetModule(const DWORD &pid, const char *modName);
+    // ["name"] = opcodes string
+    extern std::map<UE4Reference,std::string> defaultAddressLookups;
+
+    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<std::string,std::string> lookups);
+    uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, std::string opcodes);
+    MODULEENTRY32 GetModule(const DWORD &pid);
     int parseHex(std::string hex, BYTE *bytes, std::stringstream *mask);
+
+
     // Taken from https://github.com/0xZ0F/CPPMemory/blob/master/x64/Scanning.cpp
 
     // Actual pattern scanning:

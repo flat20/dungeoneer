@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include <unrealspy.h>
+#include <offsets.h>
 #include <util.h>
 #include "ui.h"
 
@@ -13,17 +14,19 @@ UIData uiData;
 DWORD WINAPI UIThreadFunction(LPVOID lpParam);
 HANDLE  hThread; 
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
-{
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
     if (dwReason == DLL_PROCESS_ATTACH) {
 
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
+        HANDLE process = GetCurrentProcess();
+        std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, offsets::defaultAddressLookups);
+
         spyData.detourPostRender = nullptr;
         spyData.detourProcessEvent = &hProcessEvent;
-        InitSpy(&spyData);
+        InitSpy(&spyData, addresses);
 
         DWORD threadId; // Can we ignore this?
         hThread = CreateThread( NULL, 0, UIThreadFunction, NULL, 0, &threadId);

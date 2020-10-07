@@ -5,9 +5,10 @@
 #include <mutex>
 
 #include <unrealspy.h>
+#include <offsets.h>
 #include <util.h>
+
 #include "dungeoneer.h"
-#include "offsets.h"
 #include "ui.h"
 
 
@@ -91,17 +92,15 @@ void ClearFunctionHandlers(Module *mod) {
 
 
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
-{
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
     if (dwReason == DLL_PROCESS_ATTACH) {
 
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
-
         HANDLE process = GetCurrentProcess();
-        std::map<std::string,uintptr_t> addresses = offsets::FindAddresses(process, "Dungeons-Win64-Shipping.exe");
+        std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, offsets::defaultAddressLookups);
 
         spyData.detourProcessEvent = &UObject_ProcessEvent;
         spyData.detourPostRender = &AHUD_PostRender;
@@ -110,8 +109,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
         dng.spyData = &spyData;
         dng.AddFunctionHandler = &AddFunctionHandler;
 
+        // Some ui vars
         dllDirectory = getDllDirectory();
-
         uiData.modNames = listMods(dllDirectory.c_str());
         uiData.onLoadPressed = &onLoadPressed;
         uiData.onUnloadPressed = &onUnloadPressed;
