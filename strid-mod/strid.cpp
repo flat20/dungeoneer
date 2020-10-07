@@ -335,7 +335,7 @@ void ModMain(Dungeoneer *dng, Module *mod) {
 
     //findObjectsByClassName(spyData->GUObjectArray, "Font");
 
-    font = (UFont*)findObjectByName(spyData->GUObjectArray, "NotoSans", "Font");
+    font = (UFont*)FindObjectByName("NotoSans", "Font");
     //font = (UFont*)findObjectByName(GUObjectArray, "Minecraft", "Font");
     if (font != nullptr) {
         printf("font: %s %s\n", getName(font), getName(font->ClassPrivate));
