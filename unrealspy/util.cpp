@@ -34,16 +34,22 @@ namespace util {
         return getName(Object->NamePrivate);
     }
 
+    // Iterates properties, but not fields which is what we need in some places?
     void iterate(UObject *baseObject, std::function<bool (UProperty*)> fnDone) {
         if (IsClass(baseObject, CASTCLASS_UStruct)) {
             iterateProperties((UStruct *)baseObject, fnDone);
         } else if (IsClass(baseObject, CASTCLASS_UFunction)) {
             iterateProperties((UFunction *)baseObject, fnDone);
-        //  } else if (IsClass(baseObject, CASTCLASS_UClass)) {
-        //      iterateProperties((UClass *)baseObject, fnDone);
+        // } else if (IsClass(baseObject, CASTCLASS_UClass)) {
+        //     iterateProperties((UClass *)baseObject, fnDone);
         } else { // UObject
             iterateProperties(baseObject, fnDone);
         }
+    }
+
+    // TODO..
+    void iterate(UClass *cls, std::function<bool (UField*)> fnDone) {
+        iterateProperties(cls, fnDone);
     }
 
     bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound) {
@@ -821,7 +827,7 @@ void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone) 
 }
 
 // This is correct for classes, and now I'm unsure about UStruct and UObjects. This also works
-// for UFunctions so what the hell?
+// for UFunction parameters, so what the hell?
 void iterateProperties(UClass *cls, std::function<bool (UField*)> fnDone) {
 
     for (UField *f = cls->Children; f != nullptr; f = f->Next) {

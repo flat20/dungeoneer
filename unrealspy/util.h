@@ -16,6 +16,8 @@ namespace util {
     
     // Return true to stop iterating.
     void iterate(UObject *baseObject, std::function<bool (UProperty*)> fnDone);
+    
+    void iterate(UClass *cls, std::function<bool (UField*)> fnDone);
 
     // Has been very useful so it gets to live here
     void dumpProperty(UProperty *p, void *container);
@@ -89,6 +91,7 @@ void iterateArray(FScriptArray *arr, UArrayProperty *ap, std::function<bool (uin
 void iterateProperties(UObject *obj, std::function<bool (UProperty*)> fnDone);
 void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone);
 void iterateProperties(UFunction *func, std::function<bool (UProperty*)> fnDone);
+void iterateProperties(UClass *cls, std::function<bool (UField*)> fnDone);
 bool iteratePropertiesRecursive(UObject *obj, void *container, int level, std::function<bool (UProperty* p,void *data,int depth)> fnDone);
 
 
