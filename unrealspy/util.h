@@ -17,7 +17,7 @@ namespace util {
     // Return true to stop iterating.
     void iterate(UObject *baseObject, std::function<bool (UProperty*)> fnDone);
     
-    void iterate(UClass *cls, std::function<bool (UField*)> fnDone);
+    void IterateFields(UStruct *strct, std::function<bool (UField*)> fnDone);
 
     // Has been very useful so it gets to live here
     void dumpProperty(UProperty *p, void *container);

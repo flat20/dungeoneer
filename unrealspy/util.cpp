@@ -47,9 +47,13 @@ namespace util {
         }
     }
 
-    // TODO..
-    void iterate(UClass *cls, std::function<bool (UField*)> fnDone) {
-        iterateProperties(cls, fnDone);
+    // TODO.. iterate members?
+    void IterateFields(UStruct *strct, std::function<bool (UField*)> fnDone) {
+        for (UField *f = strct->Children; f != nullptr; f = f->Next) {
+            if (fnDone(f)) {
+                return;
+            }
+        }
     }
 
     bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound) {
@@ -824,24 +828,6 @@ void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone) 
         }
     }
     return;
-}
-
-// This is correct for classes, and now I'm unsure about UStruct and UObjects. This also works
-// for UFunction parameters, so what the hell?
-void iterateProperties(UClass *cls, std::function<bool (UField*)> fnDone) {
-
-    for (UField *f = cls->Children; f != nullptr; f = f->Next) {
-        if (fnDone(f)) {
-            return;
-        }
-    }
-
-    // for (UProperty* p = strct->PropertyLink; p; p = p->PropertyLinkNext) {
-    //     if (fnDone(p)) {
-    //         return;
-    //     }
-    // }
-    // return;
 }
 
 

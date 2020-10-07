@@ -37,12 +37,20 @@ void ModMain(Dungeoneer *dng, Module *mod) {
 
 void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
     // Print out the name of the function and the object it belongs to.
-    
+
     if (strcmp(util::getName(func), "CalculateBaseMagnitude") == 0) {
         printf("simple-mod UObject_ProcessEvent %s.%s::%s() %s %llx\n", util::getName(object->ClassPrivate), util::getName(object), util::getName(func), util::getName(func->ClassPrivate), func->ClassPrivate->ClassCastFlags);
-        for (UField *f = func->Children; f != nullptr; f = f->Next) {
-            printf(" func params %s %s\n", util::getName(f), util::getName(f->ClassPrivate));
-        }
+        util::IterateFields(func, [&](UField *f) {
+            printf(" func fields %s %s\n", util::getName(f), util::getName(f->ClassPrivate));
+
+            UProperty *p = (UProperty*)f;
+            if (strcmp(util::getName(p), "ReturnValue") == 0) {
+                float *value = util::GetPropertyValue<float>(p, params);
+                printf(" func ret val %f\n", *value);
+            }
+            
+            return false;
+        });
     }
 
     // Uncomment to show all params for the function. There will be A LOT!
