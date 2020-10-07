@@ -45,7 +45,7 @@ UIData uiData;
 
 using namespace util;
 
-void AddFunctionHandler(Module *mod, FunctionName funcName, void *fnHandler) {
+void __stdcall AddFunctionHandler(Module *mod, FunctionName funcName, void *fnHandler) {
     mod->functionHandlers[funcName] = fnHandler;
 
     functionHandlers[funcName].push_back(fnHandler);
