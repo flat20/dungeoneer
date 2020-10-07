@@ -820,7 +820,23 @@ void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone) 
     return;
 }
 
+// This is correct for classes, and now I'm unsure about UStruct and UObjects. This also works
+// for UFunctions so what the hell?
+void iterateProperties(UClass *cls, std::function<bool (UField*)> fnDone) {
 
+    for (UField *f = cls->Children; f != nullptr; f = f->Next) {
+        if (fnDone(f)) {
+            return;
+        }
+    }
+
+    // for (UProperty* p = strct->PropertyLink; p; p = p->PropertyLinkNext) {
+    //     if (fnDone(p)) {
+    //         return;
+    //     }
+    // }
+    // return;
+}
 
 
 // Iterate properties on UObject, UFunction, UClass, UArray etc.

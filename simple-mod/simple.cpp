@@ -37,7 +37,13 @@ void ModMain(Dungeoneer *dng, Module *mod) {
 
 void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
     // Print out the name of the function and the object it belongs to.
-    //printf("simple-mod UObject_ProcessEvent %s.%s::%s()\n", util::getName(object->ClassPrivate), util::getName(object), util::getName(func));
+    
+    if (strcmp(util::getName(func), "CalculateBaseMagnitude") == 0) {
+        printf("simple-mod UObject_ProcessEvent %s.%s::%s() %s %llx\n", util::getName(object->ClassPrivate), util::getName(object), util::getName(func), util::getName(func->ClassPrivate), func->ClassPrivate->ClassCastFlags);
+        for (UField *f = func->Children; f != nullptr; f = f->Next) {
+            printf(" func params %s %s\n", util::getName(f), util::getName(f->ClassPrivate));
+        }
+    }
 
     // Uncomment to show all params for the function. There will be A LOT!
     // iteratePropertiesRecursive(func, params, 0, [&](UProperty *p, void *container, int depth) {
