@@ -49,7 +49,7 @@ namespace offsets {
             std::string opcodes = it->second;
             offset = FindOffset(process, modEntry, opcodes);
             uintptr_t addr = baseAddr + offset;
-            printf("%s: %llx = %llx\n", name.c_str(), offset, addr);
+            printf("%s: %llx = %llx\n", name.c_str(), (uint64)offset, (uint64)addr);
             results[name] = addr;
         }
         return results;
