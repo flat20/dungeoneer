@@ -3,7 +3,8 @@
 #include "unreal.h"
 
 
-typedef signed int (__thiscall *tProcessEvent) (UObject* object, UFunction* func, void *params);
+typedef signed int (__thiscall *tProcessEvent) (UObject* thisObject, UFunction* func, void *params);
+typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
 typedef void (__thiscall *tPostRender) (void *hud);
 typedef TNameEntryArray* (__stdcall *FName_GetNames) ();
 //typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
@@ -37,6 +38,7 @@ typedef std::string UE4Reference;
 const UE4Reference RefFName_GetNames            = "FName_GetNames";
 const UE4Reference RefFRawObjectIterator_Ctor   = "FRawObjectIterator_Ctor";
 const UE4Reference RefUObject_ProcessEvent      = "UObject_ProcessEvent";
+const UE4Reference RefAActor_ProcessEvent       = "AActor_ProcessEvent";
 const UE4Reference RefAHUD_PostRender           = "AHUD_PostRender";
 const UE4Reference RefStaticLoadObject          = "StaticLoadObject";
 const UE4Reference RefStaticLoadClass           = "StaticLoadClass";
@@ -58,26 +60,15 @@ struct SpyData {
     FName_GetNames FName_GetNames;
     FRawObjectIterator_Ctor FRawObjectIterator_Ctor;
 
+    // TODO just make a std::map or similar
     tProcessEvent origProcessEvent = NULL;
     void *detourProcessEvent = NULL;
+    tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
+    void *detourAActor_ProcessEvent = NULL;
     tPostRender origPostRender = NULL;
     void *detourPostRender = NULL;
 
-    // GetNames returns pointer to GNames array, I think.
-    // tGetNames origGetNames = nullptr;
-    // void *detourGetNames = nullptr;
 };
-
-// Give a list of these to SpyData to hook them.
-struct SpyHook {
-    // Offset in process
-    uint64 offset;
-    // Replace original with this
-    void *detourFunction;
-    // Pointer to the original function
-    void *origFunction;
-};
-
 
 
 // Hook everything up, pass in offsets.

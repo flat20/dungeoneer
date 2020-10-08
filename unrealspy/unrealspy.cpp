@@ -87,6 +87,7 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     }
 
     hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
+    hooks[RefAActor_ProcessEvent]  = new Hook{addresses[RefAActor_ProcessEvent],    data->detourAActor_ProcessEvent};
     hooks[RefAHUD_PostRender]       = new Hook{addresses[RefAHUD_PostRender],   data->detourPostRender};
 
     // Hook functions
@@ -109,8 +110,10 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
         }
     }
 
-    data->origPostRender = (tPostRender)hooks[RefAHUD_PostRender]->original;
     data->origProcessEvent = (tProcessEvent)hooks[RefUObject_ProcessEvent]->original;
+    data->origAActor_ProcessEvent = (tAActor_ProcessEvent)hooks[RefAActor_ProcessEvent]->original;
+    data->origPostRender = (tPostRender)hooks[RefAHUD_PostRender]->original;
+    
     //data->origGetNames = (tGetNames)hooks["GetNames"]->original;
 
     // Enable hooks once we have pointers to original functions

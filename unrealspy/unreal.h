@@ -535,6 +535,10 @@ struct UEngine : UObject {
 
 };
 
+struct AActor : UObject {
+	// todo
+};
+
 template <typename ElementType, int32_t MaxTotalElements, int32_t ElementsPerChunk>
 class TStaticIndirectArrayThreadSafeRead
 {

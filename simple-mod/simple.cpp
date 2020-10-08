@@ -9,12 +9,14 @@ ModuleInfo modInfo = {
 
 
 void UObject_ProcessEvent(UObject* object, UFunction* func, void *params);
+void AActor_ProcessEvent(AActor* thisActor, UFunction* func, void *params);
 
 // Called when Mod gets loaded
 void ModMain(Dungeoneer *dng, Module *mod) {
     printf("simple.cpp\n");
     // Listen for UObject_ProcessEvent (UFunctions being called basically)
-    dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
+    //dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
+    dng->AddFunctionHandler(mod, RefAActor_ProcessEvent, &AActor_ProcessEvent);
 
 }
 
@@ -29,7 +31,6 @@ void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
 
     // Uncomment to show all params for the function.
     util::IterateProperties(func, [&](UProperty *p) {
-//        UProperty *p = (UProperty*)f;
 
         printf("  ");
         util::dumpProperty(p, params);
@@ -46,4 +47,11 @@ void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
     });
     printf("\n");
 
+}
+
+
+void AActor_ProcessEvent(AActor* thisActor, UFunction* func, void *params) {
+    printf("%s::", util::getName(thisActor->ClassPrivate));
+    printf("%s.%s(%d) ", util::getName(thisActor), util::getName(func), func->NumParms);
+    printf("\n");
 }

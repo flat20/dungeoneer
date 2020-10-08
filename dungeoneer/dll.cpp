@@ -13,6 +13,7 @@
 
 
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
+signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params);
 void __stdcall AHUD_PostRender(void* hud);
 void* __stdcall GetNames();
 
@@ -103,6 +104,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, offsets::defaultAddressLookups);
 
         spyData.detourProcessEvent = &UObject_ProcessEvent;
+        spyData.detourAActor_ProcessEvent = &AActor_ProcessEvent;
         spyData.detourPostRender = &AHUD_PostRender;
         InitSpy(&spyData, addresses);
 
@@ -338,22 +340,9 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
 
     int result = spyData.origProcessEvent(object, func, params);
 
-    UClass *objClass = object->ClassPrivate;
-    char *name = getName(objClass);
-    char *funcName = getName(func);
-
     // Call all handlers
     {
         // const std::lock_guard<std::mutex> lock(processEventHandlersMutex);
-
-        // for (auto it = processEventHandlers.begin(); it != processEventHandlers.end(); it++) {
-        //     tProcessEvent fnHandler = (tProcessEvent)*it;
-        //     //if (strcmp(funcName, handler->filterName) == 0) {
-        //         fnHandler(object, func, params);
-        //     //}
-        // }
-
-
 
         auto it = functionHandlers.find(RefUObject_ProcessEvent);
         if (it == functionHandlers.end()) {
@@ -363,15 +352,36 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
             tProcessEvent fnHandler = (tProcessEvent)*it;
-            //if (strcmp(funcName, handler->filterName) == 0) {
-                fnHandler(object, func, params);
-            //}
+            fnHandler(object, func, params);
         }
     }
 
 	return result;
 }
 
+
+signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params) {
+    
+    int result = spyData.origAActor_ProcessEvent(thisActor, func, params);
+    
+    // Call all handlers
+    {
+        // const std::lock_guard<std::mutex> lock(processEventHandlersMutex);
+
+        auto it = functionHandlers.find(RefAActor_ProcessEvent);
+        if (it == functionHandlers.end()) {
+            return result;
+        }
+        std::list<void *>handlers = it->second;
+
+        for (auto it = handlers.begin(); it != handlers.end(); it++) {
+            tAActor_ProcessEvent fnHandler = (tAActor_ProcessEvent)*it;
+            fnHandler(thisActor, func, params);
+        }
+    }
+
+	return result;
+}
 
 void __stdcall AHUD_PostRender(void* hud) {
 
