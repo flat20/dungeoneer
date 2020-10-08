@@ -95,7 +95,7 @@ struct comp
 //RangedDamageModCalculation.CalculateBaseMagnitude() params 2
 void HandleDamageModCalculation(UObject* object, UFunction* func, void *params) {
 
-    printf("%s.%s->%s(%llx)\n", getName(object->ClassPrivate),getName(object),getName(func), (uint64)params);
+    printf("(%s) %s::%s()\n", util::getName(object->ClassPrivate),getName(object),getName(func));
 
     // iteratePropertiesRecursive(func, params, 0, [&](UProperty *p, void *container, int depth) {
         
@@ -108,7 +108,12 @@ void HandleDamageModCalculation(UObject* object, UFunction* func, void *params) 
 
     if (params != nullptr) {
         
-        UObject *Def = util::GetPropertyValueByPath<UObject>(func, params, "Spec/Def");
+        UObject *Def;
+
+        Def = util::GetPropertyValueByPath<UObject>(func, params, "Spec/Def");
+        if (Def == nullptr) {
+            return;
+        }
         char *meterType = getName(Def->ClassPrivate);
     
         float *meterAmount = util::GetPropertyValueByPath<float>(func, params, "ReturnValue");

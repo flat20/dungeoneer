@@ -15,9 +15,16 @@ namespace util {
     char * getName(UObject *Object);
     
     // Return true to stop iterating.
-    void iterate(UObject *baseObject, std::function<bool (UProperty*)> fnDone);
+    //void iterate(UObject *baseObject, std::function<bool (UProperty*)> fnDone);
     
     void IterateFields(UStruct *strct, std::function<bool (UField*)> fnDone);
+    void IterateFields(UArrayProperty *ap, std::function<bool (UField*)> fnDone);
+
+    template <typename T>
+    void IterateProperties(T *Object, std::function<bool (UProperty*)> fnDone);
+//    void IterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone);
+    template <>
+    void IterateProperties(UFunction *func, std::function<bool (UProperty*)> fnDone);
 
     // Has been very useful so it gets to live here
     void dumpProperty(UProperty *p, void *container);
@@ -37,12 +44,12 @@ namespace util {
     bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound);
 
     // Searches object recursively to retrieve the value of a child property.
-    template <typename T>
-    T *GetPropertyValueByPath(UObject* object, void *container, std::string path) {
+    template <typename ValueType>
+    ValueType *GetPropertyValueByPath(UObject* object, void *container, std::string path) {
 
-        T *value = nullptr;
+        ValueType *value = nullptr;
         findPropertyByPath(object, container, path, [&](UProperty *p, void *container) {
-            value = GetPropertyValue<T>(p, container);
+            value = GetPropertyValue<ValueType>(p, container);
         });
 
         return value;
@@ -88,12 +95,12 @@ UProperty *iterateStruct(UStruct* us, std::function<bool (UProperty*)> fnDone);
 UProperty *iterateFunc(UFunction* func, std::function<bool (UProperty*)> fnDone);
 void iterateArray(FScriptArray *arr, UArrayProperty *ap, std::function<bool (uint8*)> fnDone);
 
-void iterateProperties(UObject *obj, std::function<bool (UProperty*)> fnDone);
-void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone);
-void iterateProperties(UFunction *func, std::function<bool (UProperty*)> fnDone);
-void iterateProperties(UClass *cls, std::function<bool (UField*)> fnDone);
+// void iterateProperties(UObject *obj, std::function<bool (UProperty*)> fnDone);
+// void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone);
+// void iterateProperties(UFunction *func, std::function<bool (UProperty*)> fnDone);
+// void iterateProperties(UClass *cls, std::function<bool (UField*)> fnDone);
 bool iteratePropertiesRecursive(UObject *obj, void *container, int level, std::function<bool (UProperty* p,void *data,int depth)> fnDone);
-
+bool iterateFieldsRecursive(UObject *obj, void *container, int depth, std::function<bool (UField*,void *data, int depth)> fnDone);
 
 
 // TODO Just make a bool IsClassType(UOBject *, flag);

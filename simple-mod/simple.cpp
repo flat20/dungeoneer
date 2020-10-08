@@ -16,50 +16,34 @@ void ModMain(Dungeoneer *dng, Module *mod) {
     // Listen for UObject_ProcessEvent (UFunctions being called basically)
     dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
 
-    UObject* obj = util::FindObjectByName("Actor", nullptr);
-
-    printf("%s\n", util::getName(obj));
-    if (obj != nullptr) {
-        printf("%s\n", util::getName(obj->ClassPrivate));
-        util::iterate((UStruct*)obj, [](UProperty *p) {
-            printf("  %s\n", util::getName(p));
-            return false;
-        });
-
-        UStruct *cls = (UStruct*)obj;
-        for (UField *f = cls->Children; f != nullptr; f = f->Next) {
-            printf("iterating fields %s %s\n", util::getName(f), util::getName(f->ClassPrivate));
-            
-        }
-
-    }
 }
 
 void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
     // Print out the name of the function and the object it belongs to.
-
-    if (strcmp(util::getName(func), "CalculateBaseMagnitude") == 0) {
-        printf("simple-mod UObject_ProcessEvent %s.%s::%s() %s %llx\n", util::getName(object->ClassPrivate), util::getName(object), util::getName(func), util::getName(func->ClassPrivate), func->ClassPrivate->ClassCastFlags);
-        util::IterateFields(func, [&](UField *f) {
-            printf(" func fields %s %s\n", util::getName(f), util::getName(f->ClassPrivate));
-
-            UProperty *p = (UProperty*)f;
-            if (strcmp(util::getName(p), "ReturnValue") == 0) {
-                float *value = util::GetPropertyValue<float>(p, params);
-                printf(" func ret val %f\n", *value);
-            }
-            
-            return false;
-        });
+    printf("%s::", util::getName(object->ClassPrivate));
+    printf("%s.%s(%d) ", util::getName(object), util::getName(func), func->NumParms);
+    for (UObject *outer = object; outer != nullptr; outer = outer->OuterPrivate) {
+        printf("-%s", util::getName(outer));
     }
+    printf("\n");
 
-    // Uncomment to show all params for the function. There will be A LOT!
-    // iteratePropertiesRecursive(func, params, 0, [&](UProperty *p, void *container, int depth) {
+    // Uncomment to show all params for the function.
+    util::IterateProperties(func, [&](UProperty *p) {
+//        UProperty *p = (UProperty*)f;
+
+        printf("  ");
+        util::dumpProperty(p, params);
+        printf("\n");
         
-    //     printf("%*s", depth, "");
-    //     util::dumpProperty(p, container);
-    //     printf("\n");
+        return false;
+    });
 
-    //     return false;
-    // });
+    // Not sure how to get the values of these. It's not in params it seems.
+    printf(" Variables:\n");
+    util::IterateFields(func, [&](UField *f) {
+        printf(" %s", util::getName(f));
+        return false;
+    });
+    printf("\n");
+
 }

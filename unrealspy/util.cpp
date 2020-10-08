@@ -35,25 +35,67 @@ namespace util {
     }
 
     // Iterates properties, but not fields which is what we need in some places?
-    void iterate(UObject *baseObject, std::function<bool (UProperty*)> fnDone) {
-        if (IsClass(baseObject, CASTCLASS_UStruct)) {
-            iterateProperties((UStruct *)baseObject, fnDone);
-        } else if (IsClass(baseObject, CASTCLASS_UFunction)) {
-            iterateProperties((UFunction *)baseObject, fnDone);
-        // } else if (IsClass(baseObject, CASTCLASS_UClass)) {
-        //     iterateProperties((UClass *)baseObject, fnDone);
-        } else { // UObject
-            iterateProperties(baseObject, fnDone);
-        }
-    }
+    // void Iterate(UObject *baseObject, std::function<bool (UProperty*)> fnDone) {
+    //     if (IsClass(baseObject, CASTCLASS_UStruct)) {
+    //         iterateProperties((UStruct *)baseObject, fnDone);
+    //     } else if (IsClass(baseObject, CASTCLASS_UFunction)) {
+    //         iterateProperties((UFunction *)baseObject, fnDone);
+    //     // } else if (IsClass(baseObject, CASTCLASS_UClass)) {
+    //     //     iterateProperties((UClass *)baseObject, fnDone);
+    //     } else { // UObject
+    //         iterateProperties(baseObject, fnDone);
+    //     }
+    // }
 
-    // TODO.. iterate members?
     void IterateFields(UStruct *strct, std::function<bool (UField*)> fnDone) {
         for (UField *f = strct->Children; f != nullptr; f = f->Next) {
             if (fnDone(f)) {
                 return;
             }
         }
+    }
+    // Iterate the inner element of an array
+    void IterateFields(UArrayProperty *ap, std::function<bool (UField*)> fnDone) {
+        for (UField *f = ap->Inner; f != nullptr; f = f->Next) {
+            if (fnDone(f)) {
+                return;
+            }
+        }
+    }
+
+    // UStruct/UClass - iterate PropertyLink
+    template <typename T>
+    void IterateProperties(T *strct, std::function<bool (UProperty*)> fnDone) {
+        if (strct == nullptr) {
+            return;
+        }
+
+        for (UProperty *p = strct->PropertyLink; p != nullptr; p = p->PropertyLinkNext) {
+            if (fnDone(p)) {
+                return;
+            }
+        }
+        return;
+    }
+
+
+    // UFunction - like struct but with extra checks
+    template <>
+    void IterateProperties(UFunction *func, std::function<bool (UProperty*)> fnDone) {
+        IterateProperties((UStruct*)func, [&](UProperty *p){
+            // Initialize the parameter pack with any param properties that reside in the container
+            int size = p->ArrayDim * p->ElementSize;
+            if (p->Offset_Internal + size <= func->ParmsSize) {
+                return fnDone(p);
+            }
+            return false;
+        });
+    }
+
+    // UObject - iterate its class properties
+    template <>
+    void IterateProperties(UObject *obj, std::function<bool (UProperty*)> fnDone) {
+        IterateProperties((UClass*)obj->ClassPrivate, fnDone);
     }
 
     bool findPropertyByPath(UObject* object, void *container, std::string path, std::function<void (UProperty*,void *container)> fnFound) {
@@ -70,8 +112,7 @@ namespace util {
 
         UProperty *foundProperty = nullptr;
 
-        // Search all properties for 'name'
-        iterate(object, [&](UProperty *p) {
+        auto fnIterate = [&](UProperty *p) {
 
             // Not the property we're looking for, continue
             if (strcmp(getName(p), name.c_str()) != 0) {
@@ -109,9 +150,19 @@ namespace util {
             fnFound(p, container);
 
             return true;
-        });
+        };
 
-        // This is where we should fill in a struct to return.
+        // Templatize this!
+        if (IsClass(object, CASTCLASS_UFunction)) {
+            IterateProperties<UFunction>((UFunction*)object, fnIterate);
+        } else if (IsClass(object, CASTCLASS_UClass)) {
+            IterateProperties<UClass>((UClass*)object, fnIterate);
+        } else if (IsClass(object, CASTCLASS_UStruct)) {
+            IterateProperties<UStruct>((UStruct*)object, fnIterate);
+        } else { // UObject
+            IterateProperties<UObject>((UObject*)object, fnIterate);
+        }
+
         if (foundProperty != nullptr) {
             return true;
         }
@@ -290,6 +341,7 @@ namespace util {
             int chunk = index / TUObjectArray::NumElementsPerChunk;
             int chunkOffset = index % TUObjectArray::NumElementsPerChunk;
             FUObjectItem item = objObjects.Objects[chunk][chunkOffset];
+
             if (fnDone(item.Object)) {
                 return;
             }
@@ -692,6 +744,11 @@ void dumpObjectArray(FUObjectArray* oa) {
             //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
             myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
         }
+        for (UField* p = item.Object->ClassPrivate->Children; p; p = p->Next)
+        {
+            //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
+            myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
+        }
 
     }
     myfile.close();
@@ -800,40 +857,38 @@ void iterateArray(FScriptArray *arr, UArrayProperty *ap, std::function<bool (uin
     }
 }
 
-// Can't we have a iterateObj with overloading based on the class passed in?
-void iterateProperties(UObject *obj, std::function<bool (UProperty*)> fnDone) {
-    for (UProperty *p = obj->ClassPrivate->PropertyLink; p != nullptr; p = p->PropertyLinkNext) {
-        if (fnDone(p)) {
-            return;
-        }
-    }
-    return;
-}
+// // Can't we have a iterateObj with overloading based on the class passed in?
+// void iterateProperties(UObject *obj, std::function<bool (UProperty*)> fnDone) {
+//     for (UProperty *p = obj->ClassPrivate->PropertyLink; p != nullptr; p = p->PropertyLinkNext) {
+//         if (fnDone(p)) {
+//             return;
+//         }
+//     }
+//     return;
+// }
 
-void iterateProperties(UFunction *func, std::function<bool (UProperty*)> fnDone) {
-    iterateProperties((UStruct*)func, [&](UProperty *p){
-        // Initialize the parameter pack with any param properties that reside in the container
-        int size = p->ArrayDim * p->ElementSize;
-        if (p->Offset_Internal + size <= func->ParmsSize) { //Offset_Internal + GetSize() <= ContainerSize;
-            return fnDone(p);
-        }
-        return false;
-    });
-}
+// void iterateProperties(UFunction *func, std::function<bool (UProperty*)> fnDone) {
+//     iterateProperties((UStruct*)func, [&](UProperty *p){
+//         // Initialize the parameter pack with any param properties that reside in the container
+//         int size = p->ArrayDim * p->ElementSize;
+//         if (p->Offset_Internal + size <= func->ParmsSize) { //Offset_Internal + GetSize() <= ContainerSize;
+//             return fnDone(p);
+//         }
+//         return false;
+//     });
+// }
 
-void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone) {
-    for (UProperty* p = strct->PropertyLink; p; p = p->PropertyLinkNext) {
-        if (fnDone(p)) {
-            return;
-        }
-    }
-    return;
-}
+// void iterateProperties(UStruct *strct, std::function<bool (UProperty*)> fnDone) {
+//     for (UProperty* p = strct->PropertyLink; p; p = p->PropertyLinkNext) {
+//         if (fnDone(p)) {
+//             return;
+//         }
+//     }
+//     return;
+// }
 
 
 // Iterate properties on UObject, UFunction, UClass, UArray etc.
-// Could be handled with virtual functions on each of these classes, but can't add them since
-// returning true = done/stop iterating.
 bool iteratePropertiesRecursive(UObject *obj, void *container, int depth, std::function<bool (UProperty*,void *data, int depth)> fnDone) {
     if (obj == nullptr) {
         return false;
@@ -872,21 +927,110 @@ bool iteratePropertiesRecursive(UObject *obj, void *container, int depth, std::f
 
     // Cast obj to its correct class so iterateProperties() type overloading triggers.
     if (IsClass(obj, CASTCLASS_UFunction)) {
-        iterateProperties((UFunction*)obj, propsRecursive);
+        IterateProperties((UFunction*)obj, propsRecursive);
         return false;
     }
 
     if (IsClass(obj, CASTCLASS_UStruct)) {
-        iterateProperties((UStruct*)obj, propsRecursive);
+        IterateProperties((UStruct*)obj, propsRecursive);
         return false;
     }
     
     // Is it a UObject?? But everything is a UObject..
-    iterateProperties((UObject*)obj, propsRecursive);
+    IterateProperties(obj->ClassPrivate, propsRecursive);
     return false;
     
 
 }
+
+// Not sure this makes any sense as you can't pass the updated container value without casting UField into a UProperty
+// and then doing all the stuff iteratepropertiesrecursive does.
+// bool iterateFieldsRecursive(UObject *obj, void *container, int depth, std::function<bool (UField*,void *data, int depth)> fnDone) {
+//     if (obj == nullptr || obj->ClassPrivate == nullptr) {
+//         return false;
+//     }
+
+//     util::IterateFields(obj->ClassPrivate, [&](UField *f) {
+//         if (fnDone(f, container, depth)) {
+//             return true;
+//         };
+
+//         if (f->ClassPrivate != nullptr) {
+//             return iterateFieldsRecursive(f, container, depth+1, fnDone);
+//         }
+
+//         return false;
+//     });
+
+//     return false;
+    
+
+// }
+
+
+// bool iterateFieldsRecursive(UObject *obj, void *container, int depth, std::function<bool (UField*,void *data, int depth)> fnDone) {
+//     if (obj == nullptr) {
+//         return false;
+//     }
+//     // Check if classPrivate is null?
+
+//     // Lambda to resolve this object's properties recursively.
+//     auto propsRecursive = [&](UField *f) {
+//         if (fnDone(f, container, depth)) {
+//             return true;
+//         };
+
+//         // Surely this item can be a UStruct and not just a UStructProperty?
+
+//         // // Don't dig deeper unless it's a UProperty? Seems weird. what about a UStruct?
+//         // if (!IsClass(f, CASTCLASS_UProperty)) {
+//         //     return false;
+//         // }
+
+//         // Step inside property if needed
+//         if (IsClass(f, CASTCLASS_UStructProperty)) {
+//             //void *structAddr = (void*)((uint64)container + p->Offset_Internal);
+//             UStructProperty *sp = (UStructProperty*)f;
+//             UScriptStruct* v = sp->Struct;
+//             if (v != nullptr) {
+//                 void *nextContainer = (void*)((uint64)container + sp->Offset_Internal);
+//                 return iterateFieldsRecursive((UStruct *)v, nextContainer, depth+1, fnDone);
+//             }
+
+//         } else if (IsClass(f, CASTCLASS_UObjectProperty)) {
+//             UProperty *p = (UProperty *)f;
+//             printf("%*s obj property obj flags %x prop flags: %llx classflags: %x classcastflags: %llx\n", depth, "", p->ObjectFlags, p->PropertyFlags, p->ClassPrivate->ClassFlags, p->ClassPrivate->ClassCastFlags);
+//             //UObject *v = GetObjectPropertyValue(container, p);
+//             UObject *v = GetPropertyValue<UObject>(p, container);
+//             if (v != nullptr) {
+//                 void *nextContainer = v;
+//                 return iterateFieldsRecursive((UObject *)v, nextContainer, depth+1, fnDone);
+//             }
+            
+//         } else {
+//             printf(",castflags:%llx", f->ClassPrivate->ClassCastFlags);
+//         }
+
+//         return false;
+//     };
+
+//     // Cast obj to its correct class so iterateProperties() type overloading triggers.
+//     if (IsClass(obj, CASTCLASS_UFunction)) {
+//         IterateFields((UFunction*)obj, propsRecursive);
+//         return false;
+//     }
+
+//     if (IsClass(obj, CASTCLASS_UStruct)) {
+//         IterateFields((UStruct*)obj, propsRecursive);
+//         return false;
+//     }
+    
+//     // Is it a UObject?? But everything is a UObject..
+//     IterateFields(obj->ClassPrivate, propsRecursive);
+//     return false;
+    
+
+// }
 
 // UProperty *findPropertyByName(UStruct *us, char *name) {
 

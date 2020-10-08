@@ -73,6 +73,12 @@ struct TSharedRef {
 	void *ReferenceController;
 };
 
+
+template <typename KeyType, typename ValueType>
+class TMap {
+	
+};
+
 struct FText { // size 18 bytes
 /** The internal shared data for this FText */
 	//TSharedRef<ITextData, ESPMode::ThreadSafe> TextData;
@@ -80,6 +86,15 @@ struct FText { // size 18 bytes
 
 	/** Flags with various information on what sort of FText this is */
 	uint32 Flags;
+};
+
+struct UProperty;
+//
+// Information about a property to replicate.
+//
+struct FRepRecord {
+	UProperty* Property;
+	int32 Index;
 };
 
 struct UClass;
@@ -268,6 +283,7 @@ struct UStruct : UField // class.h // 512 bytes total
 	TArray<UObject*> ScriptObjectReferences; // TArray<UObject*>
 };
 
+struct UFunction;
 // UObject/Class.h
 struct UClass : UStruct {  // Inherhits from UStruct
 	void * ClassConstructor;	// 152
@@ -287,21 +303,21 @@ struct UClass : UStruct {  // Inherhits from UStruct
 	// Other stuff here I hope we don't need to care about.
 
 	// /** List of replication records */
-	// TArray<FRepRecord> ClassReps;
+	TArray<FRepRecord> ClassReps;
 
 	// /** List of network relevant fields (properties and functions) */
-	// TArray<UField*> NetFields;
+	TArray<UField*> NetFields;
 
 
-	// /** The class default object; used for delta serialization and object initialization */
-	// UObject* ClassDefaultObject;
+	/** The class default object; used for delta serialization and object initialization */
+	UObject* ClassDefaultObject;
 
 	
 	// /** Map of all functions by name contained in this class */
-	// TMap<FName, UFunction*> FuncMap;
+	TMap<FName, UFunction*> FuncMap;
 
 	// /** A cache of all functions by name that exist in a parent (superclass or interface) context */
-	// mutable TMap<FName, UFunction*> SuperFuncMap;
+	mutable TMap<FName, UFunction*> SuperFuncMap;
 
 	// /** Scope lock to avoid the SuperFuncMap being read and written to simultaneously on multiple threads. */
 	// mutable FRWLock SuperFuncMapLock;
