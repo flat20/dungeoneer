@@ -911,13 +911,23 @@ bool iteratePropertiesRecursive(UObject *obj, void *container, int depth, std::f
                 return iteratePropertiesRecursive((UStruct *)v, nextContainer, depth+1, fnDone);
             }
 
+        } else if (IsClass(p, CASTCLASS_UClassProperty)) {
+            UClassProperty *cp = (UClassProperty *)p;
+            printf("%*s class property MetaClass = %s\n", depth, "", getName(cp->MetaClass));
+
         } else if (IsClass(p, CASTCLASS_UObjectProperty)) {
-            printf("%*s obj property obj flags %x prop flags: %llx classflags: %x classcastflags: %llx\n", depth, "", p->ObjectFlags, p->PropertyFlags, p->ClassPrivate->ClassFlags, p->ClassPrivate->ClassCastFlags);
-            //UObject *v = GetObjectPropertyValue(container, p);
+            UObjectPropertyBase *opb = (UObjectPropertyBase *)p;
+            // printf("hmm? %llx\n", (uint64)opb);
+            // for (UProperty *f = opb->PropertyClass->PropertyLink; f != nullptr; f = f->PropertyLinkNext) {
+            //     printf("%s(%s)\n", getName(f), getName(f->ClassPrivate));//, temp->Offset_Internal);
+            // }
             UObject *v = GetPropertyValue<UObject>(p, container);
             if (v != nullptr) {
                 void *nextContainer = v;
                 return iteratePropertiesRecursive((UObject *)v, nextContainer, depth+1, fnDone);
+            } else {
+                printf("%*s =nullptr", depth, "");
+                printf(" obj flags %x prop flags: %llx classflags: %x classcastflags: %llx\n",p->ObjectFlags, p->PropertyFlags, p->ClassPrivate->ClassFlags, p->ClassPrivate->ClassCastFlags);
             }
             
         }
@@ -926,13 +936,17 @@ bool iteratePropertiesRecursive(UObject *obj, void *container, int depth, std::f
     };
 
     // Cast obj to its correct class so iterateProperties() type overloading triggers.
+    // should be templatized.
     if (IsClass(obj, CASTCLASS_UFunction)) {
-        IterateProperties((UFunction*)obj, propsRecursive);
+        IterateProperties<UFunction>((UFunction*)obj, propsRecursive);
         return false;
     }
-
+    if (IsClass(obj, CASTCLASS_UClass)) {
+        IterateProperties<UClass>((UClass*)obj, propsRecursive);
+        return false;
+    }
     if (IsClass(obj, CASTCLASS_UStruct)) {
-        IterateProperties((UStruct*)obj, propsRecursive);
+        IterateProperties<UStruct>((UStruct*)obj, propsRecursive);
         return false;
     }
     

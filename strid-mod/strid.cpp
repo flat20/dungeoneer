@@ -97,14 +97,14 @@ void HandleDamageModCalculation(UObject* object, UFunction* func, void *params) 
 
     printf("(%s) %s::%s()\n", util::getName(object->ClassPrivate),getName(object),getName(func));
 
-    // iteratePropertiesRecursive(func, params, 0, [&](UProperty *p, void *container, int depth) {
+    iteratePropertiesRecursive(func, params, 0, [&](UProperty *p, void *container, int depth) {
         
-    //     printf("%*s", depth, "");
-    //     dumpProperty(p, container);
-    //     printf("\n");
+        printf("%*s", depth, "");
+        dumpProperty(p, container);
+        printf("\n");
 
-    //     return false;
-    // });
+        return false;
+    });
 
     if (params != nullptr) {
         
