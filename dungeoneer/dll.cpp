@@ -15,6 +15,7 @@
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
 signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params);
 void __stdcall AHUD_PostRender(void* hud);
+void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 void* __stdcall GetNames();
 
 HMODULE loadMod(LPCSTR filename);
@@ -103,12 +104,15 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
+        // TODO Move this in to InitSpy. Allow adding custom address lookups
+        // InitSpy can set the resulting addresses as a member on SpyData.
         HANDLE process = GetCurrentProcess();
         std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, offsets::defaultAddressLookups);
 
         spyData.detourProcessEvent = &UObject_ProcessEvent;
         spyData.detourAActor_ProcessEvent = &AActor_ProcessEvent;
         spyData.detourPostRender = &AHUD_PostRender;
+        spyData.detourProcessUserConsoleInput = &FConsoleManager_ProcessUserConsoleInput;
         InitSpy(&spyData, addresses);
 
         dng.spyData = &spyData;
@@ -420,6 +424,64 @@ void __stdcall AHUD_PostRender(void* hud) {
 }
 
 
+void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld) {
+
+    spyData.origProcessUserConsoleInput(thisConsoleManager, InInput, Ar, InWorld);
+
+    printf("process user console input happened\n");
+    printf("console manager at %llx", (uintptr_t)thisConsoleManager);
+    printf("input %ws\n", (wchar_t*)InInput);
+    FConsoleManager *cm = (FConsoleManager*)thisConsoleManager;
+
+    printf("These vars are most likely wrong. They belong inside something\n");
+    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->FirstFreeIndex, cm->NumFreeIndices);
+    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->NumFreeIndices4, cm->NumFreeIndices5, cm->NumFreeIndices6);
+
+    // NumFreeIndices6 seems to be correct at around 500.
+    for (int i=0; i<cm->ConsoleObjects.ArrayNum; i++) {
+        ConsoleManagerObjectsMapElement el = cm->ConsoleObjects.Data[i];
+        if (el.IConsoleObject == nullptr) {
+            printf("null console object!\n");
+            continue;
+        }
+        printf("%ws\n", (wchar_t*)el.Name.Data);
+        el.IConsoleObject->Flags = ECVF_Default;
+        printf("  %ws\n", (wchar_t*)el.IConsoleObject->Help.Data.Data);
+    }
+    printf("These vars are most likely wrong. They belong inside something\n");
+    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->FirstFreeIndex, cm->NumFreeIndices);
+    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->NumFreeIndices4, cm->NumFreeIndices5, cm->NumFreeIndices6);
+
+
+    {
+    TCHAR *name = _TEXT("FX.RestartAll");
+    void *command = cm->FindConsoleObject((TCHAR*)name);
+    printf("command at %llx\n", (uintptr_t)command);
+    }
+
+
+    // {
+    // TCHAR *name = _TEXT("Dungeons.Player.AddEmeralds");
+    // void *command = cm->r((TCHAR*)name);
+    // printf("command at %llx\n", (uintptr_t)command);
+    // }
+
+
+
+    {
+    wchar_t *name = L"FX.RestartAll";
+    //TCHAR *name = _TEXT("Dungeons.Player.AddEmeralds");
+    void *command = cm->FindConsoleObject((TCHAR*)name);
+    printf("command at %llx\n", (uintptr_t)command);
+    }
+
+    {
+    char *name = "FX.RestartAll";
+    void *command = cm->FindConsoleObject((TCHAR*)name);
+    printf("command at %llx\n", (uintptr_t)command);
+    }
+}
+
 bool InitConsole() {
 
     UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport/ViewportConsole");
@@ -430,7 +492,7 @@ bool InitConsole() {
     UObject *GameViewport = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport");
     if (GameViewport == nullptr) {
         printf("No gameviewport\n");
-        return;
+        return false;
     }
 
     void** ConsoleClassPtr = (void**)util::GetPropertyValueByPath<uint64>(spyData.GEngine, spyData.GEngine, "ConsoleClass");

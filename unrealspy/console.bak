@@ -1,0 +1,111 @@
+#include "unreal.h"
+
+// template <uint32 NumInlineElements, typename SecondaryAllocator = FDefaultAllocator>
+// class TInlineAllocator
+// {
+//     /** The data is stored in this array if less than NumInlineElements is needed. */
+// 		TTypeCompatibleBytes<ElementType> InlineData[NumInlineElements];
+
+// 		/** The data is allocated through the indirect allocation policy if more than NumInlineElements is needed. */
+// 		typename SecondaryAllocator::template ForElementType<ElementType> SecondaryData;
+// };
+// class FDefaultBitArrayAllocator    : public TInlineAllocator<4>     { public: typedef TInlineAllocator<4>     Typedef; };
+
+class TBitArray
+{
+    //typedef typename Allocator::template ForElementType<uint32> AllocatorType;
+
+	uint32       AllocatorInstance[4];
+	int32         NumBits;
+	int32         MaxBits;
+
+};
+template<typename InElementType,typename Allocator /*= FDefaultSparseArrayAllocator */>
+class TSparseArray {
+    //typedef TArray<FElementOrFreeListLink,typename Allocator::ElementAllocator> DataType;
+	//DataType Data;
+    TArray Data;
+
+	typedef TBitArray<typename Allocator::BitArrayAllocator> AllocationBitArrayType;
+	AllocationBitArrayType AllocationFlags;
+
+	/** The index of an unallocated element in the array that currently contains the head of the linked list of free elements. */
+	int32 FirstFreeIndex;
+
+	/** The number of elements in the free list. */
+	int32 NumFreeIndices;
+};
+
+// I _think_ the tuples are stored key,value,key,value,key,value
+template<typename T>
+struct TTuple {
+    T Value;
+};
+
+
+/** Either NULL or an identifier for an element of a set. */
+class FSetElementId
+{
+public:
+
+private:
+	
+	/** The index of the element in the set's element array. */
+	int32 Index;
+};
+
+/** An element in the set. */
+template <typename InElementType>
+class TSetElement
+{
+public:
+	typedef InElementType ElementType;
+
+	/** The element's value. */
+	ElementType Value;
+
+	/** The id of the next element in the same hash bucket. */
+	mutable FSetElementId HashNextId;
+
+	/** The hash bucket that the element is currently linked to. */
+	mutable int32 HashIndex;
+
+};
+
+template<
+	typename InElementType,
+	typename KeyFuncs /*= DefaultKeyFuncs<ElementType>*/,
+	typename Allocator /*= FDefaultSetAllocator*/
+	>
+class TSet {
+
+	typedef TSetElement<InElementType> SetElementType;
+	typedef TSparseArray<SetElementType,typename Allocator::SparseArrayAllocator>     ElementArrayType;
+//	typedef typename Allocator::HashAllocator::template ForElementType<FSetElementId> HashType;
+    typedef uint
+
+//    uint32           Elements[1];
+	ElementArrayType Elements;	// of TPair<FString,IConsoleObject*>
+
+	//mutable HashType Hash;
+    mutable uint32 Hash[1];
+	mutable int32    HashSize;
+};
+
+template <typename KeyType,typename ValueType>
+using TPair = TTuple<KeyType, ValueType>;
+
+template <typename KeyType, typename ValueType, typename SetAllocator, typename KeyFuncs>
+class TMapBase {
+    typedef TPair<KeyType, ValueType> ElementType;
+    typedef TSet<ElementType, KeyFuncs, SetAllocator> ElementSetType;
+    ElementSetType Pairs;
+
+};
+
+// TMap<FString, IConsoleObject*> ConsoleObjects;
+typedef TSet<TPair<FString, IConsoleObject>, KeyFuncs, SetAllocator> ElementSetType;
+ElementSetType Pairs;
+
+TSet ElementArrayType is a
+TSparseArray of TSetElement<TPair<FString, IConsoleObject>>

@@ -236,9 +236,217 @@ enum EConsoleVariableFlags
 	 */
 	ECVF_ReadOnly = 0x4,
 
-00007FF76EFCEE98 should point to a FAutoConsoleCommand, the one above always points to (__int64)&FAutoConsoleObject::`vftable';
+00007FF76EFCEE98 should point to a FConsoleCommandXXX (maybe with args?), the one above always points to (__int64)&FAutoConsoleObject::`vftable';
+So basically 00007FF76EFCEE90 points to the FAutoConsoleCommand class which has a vftable.
+Here's Dungeons.Player.AddEmeralds
 
 ________:00007FF76EFCEE90                                                                 ; DATA XREF: sub_7FF76B2EA920+C1↑w
 ________:00007FF76EFCEE90                                                                 ; sub_7FF76DDF4690+14↑w
 ________:00007FF76EFCEE98 50 1D 78 57 B7 01 00 00 qword_7FF76EFCEE98 dq 1B757781D50h      ; DATA XREF: sub_7FF76B2EA920+B3↑w
 ________:00007FF76EFCEE98                                                                 ; sub_7FF76DDF4690+39↑r
+
+00007FF76EFCEE90 - 00007FF76B1D0000 = 3DFEE90
+
+Dungeons.Level.Start 
+00007FF76EFCEEB0 - 00007FF76B1D0000 = 0x3DFEEB0
+
+
+class FConsoleCommandWithArgs : public FConsoleCommandBase
+{
+
+public:
+	FConsoleCommandWithArgs( const FConsoleCommandWithArgsDelegate& InitDelegate, const TCHAR* InitHelp, const EConsoleVariableFlags InitFlags )
+		: FConsoleCommandBase( InitHelp, InitFlags ),
+		  Delegate( InitDelegate )
+	{
+	}
+
+	// interface IConsoleCommand -----------------------------------
+
+	virtual void Release() override
+	{
+		delete this; 
+	} 
+
+	virtual bool Execute( const TArray< FString >& Args, UWorld* InWorld, FOutputDevice& OutputDevice ) override
+	{
+		return Delegate.ExecuteIfBound( Args );
+	}
+
+private:
+
+	/** User function to call when the console command is executed */
+	FConsoleCommandWithArgsDelegate Delegate;
+};
+
+
+class FConsoleCommandBase : public IConsoleCommand
+{
+public:
+	/**
+	 * Constructor
+	 * @param InHelp must not be 0, must not be empty
+	 */
+	FConsoleCommandBase(const TCHAR* InHelp, EConsoleVariableFlags InFlags)
+		: Help(InHelp), Flags(InFlags)
+	{
+		check(InHelp);
+		//check(*Help != 0); for now disabled as there callstack when we crash early during engine init
+	}
+
+	// interface IConsoleVariable -----------------------------------
+
+	virtual const TCHAR* GetHelp() const
+	{
+		return *Help;
+	}
+	virtual void SetHelp(const TCHAR* InValue)
+	{
+		check(InValue);
+		check(*InValue != 0);
+
+		Help = InValue;
+	}
+	virtual EConsoleVariableFlags GetFlags() const
+	{
+		return Flags;
+	}
+	virtual void SetFlags(const EConsoleVariableFlags Value)
+	{
+		Flags = Value;
+	}
+
+	virtual struct IConsoleCommand* AsCommand()
+	{
+		return this;
+	}
+
+private: // -----------------------------------------
+
+	// not using TCHAR* to allow chars support reloading of modules (otherwise we would keep a pointer into the module)
+	FString Help;
+
+	EConsoleVariableFlags Flags;
+};
+
+
+
+.text:0000000140462960                         ; public: virtual void FConsoleManager::ForEachConsoleObjectThatContains(class TBaseDelegate<void, wchar_t const *, class IConsoleObject *> const &, wchar_t const *)const
+.text:0000000140462960                         ?ForEachConsoleObjectThatContains@FConsoleManager@@UEBAXAEBV?$TBaseDelegate@XPEB_WPEAVIConsoleObject@@@@PEB_W@Z proc near
+.text:0000000140462960                                                                 ; DATA XREF: .rdata:00000001420F1598↓o
+.text:0000000140462960                                                                 ; .rdata:000000014287A404↓o ...
+.text:0000000140462960
+.text:0000000140462960                         var_90          = qword ptr -90h
+.text:0000000140462960                         var_88          = qword ptr -88h
+.text:0000000140462960                         Dst             = qword ptr -80h
+.text:0000000140462960                         var_70          = xmmword ptr -70h
+.text:0000000140462960                         var_60          = qword ptr -60h
+.text:0000000140462960                         var_58          = xmmword ptr -58h
+.text:0000000140462960                         anonymous_0     = byte ptr -48h
+.text:0000000140462960                         var_30          = qword ptr -30h
+.text:0000000140462960                         var_28          = qword ptr -28h
+.text:0000000140462960                         var_20          = qword ptr -20h
+.text:0000000140462960                         var_18          = qword ptr -18h
+.text:0000000140462960                         var_10          = qword ptr -10h
+.text:0000000140462960                         arg_0           = qword ptr  10h
+.text:0000000140462960                         arg_8           = qword ptr  18h
+.text:0000000140462960                         arg_10          = qword ptr  20h
+.text:0000000140462960                         arg_18          = qword ptr  28h
+.text:0000000140462960
+.text:0000000140462960 48 8B C4                                mov     rax, rsp
+.text:0000000140462963 4C 89 40 18                             mov     [rax+18h], r8
+.text:0000000140462967 48 89 50 10                             mov     [rax+10h], rdx
+.text:000000014046296B 55                                      push    rbp
+.text:000000014046296C 53                                      push    rbx
+.text:000000014046296D 48 8D 68 A1                             lea     rbp, [rax-5Fh]
+.text:0000000140462971 48 81 EC A8 00 00 00                    sub     rsp, 0A8h
+.text:0000000140462978
+.text:0000000140462978                         loc_140462978:                          ; DATA XREF: .rdata:000000014287A404↓o
+.text:0000000140462978                                                                 ; .rdata:000000014287A41C↓o ...
+.text:0000000140462978 48 89 70 20                             mov     [rax+20h], rsi
+.text:000000014046297C 49 8B F0                                mov     rsi, r8
+.text:000000014046297F 48 89 78 E8                             mov     [rax-18h], rdi
+.text:0000000140462983 48 8B F9                                mov     rdi, rcx
+.text:0000000140462986 33 C9                                   xor     ecx, ecx
+.text:0000000140462988 4C 89 60 E0                             mov     [rax-20h], r12
+.text:000000014046298C 4C 89 78 C8                             mov     [rax-38h], r15
+.text:0000000140462990 4C 8B E2                                mov     r12, rdx
+
+
+48 8B C4 4C 89 40 18 48 89 50 10 55 53 48 8D 68 A1 48 81 EC A8 00 00 00 48 89 70 20 49 8B F0
+
+void __fastcall UConsole::ConsoleCommand(UConsole *this, const struct FString *a2)
+this calls in to a few Exec() in 
+
+else if( GEngine->Exec( InWorld, Cmd,Ar) )
+  UnrealEngine.cpp
+        
+    bool UEngine::Exec( UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar )
+    {
+
+      	else if(IConsoleManager::Get().ProcessUserConsoleInput(Cmd, Ar, InWorld))
+        {
+          // console variable interaction (get value, set value or get help)
+          return true;
+        }
+
+      SO if we hook ProcessUserConsoleInput and run a console command that's not caught by other things
+      eventually it should reach ProcessUserConsoleInput
+
+
+.text:0000000140469070                         ; bool FConsoleManager::ProcessUserConsoleInput(FConsoleManager *__hidden this, const wchar_t *, struct FOutputDevice *, struct UWorld *)
+.text:0000000140469070                         ?ProcessUserConsoleInput@FConsoleManager@@UEAA_NPEB_WAEAVFOutputDevice@@PEAVUWorld@@@Z proc near
+.text:0000000140469070                                                                 ; DATA XREF: .rdata:00000001420F15A0↓o
+.text:0000000140469070                                                                 ; .rdata:000000014287A478↓o ...
+
+...
+
+.text:0000000140469070
+.text:0000000140469070 48 8B C4                                mov     rax, rsp
+.text:0000000140469073 4C 89 48 20                             mov     [rax+20h], r9
+.text:0000000140469077 4C 89 40 18                             mov     [rax+18h], r8
+.text:000000014046907B 48 89 48 08                             mov     [rax+8], rcx
+.text:000000014046907F 55                                      push    rbp
+.text:0000000140469080 56                                      push    rsi
+.text:0000000140469081 48 8D 68 A1                             lea     rbp, [rax-5Fh]
+.text:0000000140469085 48 81 EC B8 00 00 00                    sub     rsp, 0B8h
+.text:000000014046908C 33 F6                                   xor     esi, esi
+.text:000000014046908E
+.text:000000014046908E                         loc_14046908E:                          ; DATA XREF: .rdata:000000014287A478↓o
+.text:000000014046908E                                                                 ; .rdata:000000014287A488↓o ...
+.text:000000014046908E 48 89 58 E8                             mov     [rax-18h], rbx
+.text:0000000140469092 48 8B DA                                mov     rbx, rdx
+.text:0000000140469095 48 89 78 E0                             mov     [rax-20h], rdi
+
+48 8B C4 4C 89 48 20 4C 89 40 18 48 89 48 08 55 56 48 8D 68 A1 48 81 EC B8 00 00 00 33 F6
+00007FF76BDCFAF0 - 00007FF76B1D0000 = 0xBFFAF0
+
+
+Console.cpp
+		// If there are any players, execute the command in the first local player's context.
+		APlayerController* PC = GameInstance->GetFirstLocalPlayerController();
+		PC->ConsoleCommand(Command);
+
+    which probably leads to UPlayer
+
+    FString UPlayer::ConsoleCommand(const FString& Cmd, bool bWriteToLog) {
+
+      resulting in:
+      if (!Exec(GetWorld(), Line, EffectiveOutputDevice))
+      which calls on UObject (which belongs to the player or other things)
+      	virtual bool ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor)
+	{
+		return CallFunctionByNameWithArguments(Cmd, Ar, Executor);
+	}
+
+
+  ScriptCore.cpp
+    
+  bool UObject::CallFunctionByNameWithArguments(const TCHAR* Str, FOutputDevice& Ar, UObject* Executor, bool bForceCallWithNonExec/*=false*/)
+  {
+
+    well that just led to the code on how to call a UFunction using ProcessEvent
+
+Tmap is going to be hellish to re-create. Maybe try TBaseDelegate instead
+public: virtual void FConsoleManager::ForEachConsoleObjectThatContains(class TBaseDelegate<void, wchar_t const *, class IConsoleObject *> const &, wchar_t const *)const
+

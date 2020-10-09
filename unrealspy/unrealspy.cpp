@@ -42,11 +42,15 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     HMODULE dll = GetModuleHandle(NULL);
     uint64 baseAddress = (uint64)dll;
     //HMODULE baseAddress = GetModuleHandleA("Dungeons-Win64-Shipping.exe");
-    printf("InitSpy dll %llx\n", baseAddress);
     data->baseAddress = baseAddress;
 
+    uintptr_t offsAddEmeralds = 0x3DFEE90;
+    uintptr_t addrAddEmerals = baseAddress + offsAddEmeralds;
+    printf("addrAddEmerals %llx\n", addrAddEmerals);
+    printf("addrLevelStart %llx\n", baseAddress + 0x3DFEEB0);
+    
+    //addresses[RefFConsoleManager_ForEachConsoleObjectThatContains];
 
-    HANDLE hProc = GetCurrentProcess();
 
     data->AHUD_DrawRect = (AHUD_DrawRect)addresses["AHUD_DrawRect"];
     data->AHUD_DrawText = (AHUD_DrawText)addresses["AHUD_DrawText"];
@@ -88,6 +92,7 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
     hooks[RefAActor_ProcessEvent]  = new Hook{addresses[RefAActor_ProcessEvent],    data->detourAActor_ProcessEvent};
     hooks[RefAHUD_PostRender]       = new Hook{addresses[RefAHUD_PostRender],   data->detourPostRender};
+    hooks[RefFConsoleManager_ProcessUserConsoleInput] = new Hook{addresses[RefFConsoleManager_ProcessUserConsoleInput],   data->detourProcessUserConsoleInput};
 
     // Hook functions
     if (MH_Initialize() != MH_OK) {
@@ -112,6 +117,7 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     data->origProcessEvent = (tProcessEvent)hooks[RefUObject_ProcessEvent]->original;
     data->origAActor_ProcessEvent = (tAActor_ProcessEvent)hooks[RefAActor_ProcessEvent]->original;
     data->origPostRender = (tPostRender)hooks[RefAHUD_PostRender]->original;
+    data->origProcessUserConsoleInput = (tFConsoleManager_ProcessUserConsoleInput)hooks[RefFConsoleManager_ProcessUserConsoleInput]->original;
     
     //data->origGetNames = (tGetNames)hooks["GetNames"]->original;
 
