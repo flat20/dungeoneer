@@ -31,19 +31,22 @@ typedef UClass* (__fastcall *StaticLoadClass)(UClass* BaseClass, UObject* InOute
 // COREUOBJECT_API UPackage* LoadPackage( UPackage* InOuter, const TCHAR* InLongPackageName, uint32 LoadFlags, FArchive* InReaderOverride = nullptr, FUObjectSerializeContext* InLoadContext = nullptr );
 typedef UPackage* (__fastcall *LoadPackage)( UPackage* InOuter, const TCHAR* InLongPackageName, uint32 LoadFlags, void* InReaderOverride, void* InLoadContext );
 
+// COREUOBJECT_API UObject* StaticConstructObject_Internal(UClass* Class, UObject* InOuter = (UObject*)GetTransientPackage(), FName Name = NAME_None, EObjectFlags SetFlags = RF_NoFlags, EInternalObjectFlags InternalSetFlags = EInternalObjectFlags::None, UObject* Template = nullptr, bool bCopyTransientsFromClassDefaults = false, struct FObjectInstancingGraph* InstanceGraph = nullptr, bool bAssumeTemplateIsArchetype = false);
+typedef UObject* (__fastcall *StaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
+//typedef UObject* (__fastcall *StaticConstructObject_Internal)(__int64 a1,    int a2,           __int64 a3, int a4,                int a5,                                __int64 a6,        char a7,                               __int64 a8,          char a9);
 
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
 typedef std::string UE4Reference;
-const UE4Reference RefFName_GetNames            = "FName_GetNames";
-const UE4Reference RefFRawObjectIterator_Ctor   = "FRawObjectIterator_Ctor";
-const UE4Reference RefUObject_ProcessEvent      = "UObject_ProcessEvent";
-const UE4Reference RefAActor_ProcessEvent       = "AActor_ProcessEvent";
-const UE4Reference RefAHUD_PostRender           = "AHUD_PostRender";
-const UE4Reference RefStaticLoadObject          = "StaticLoadObject";
-const UE4Reference RefStaticLoadClass           = "StaticLoadClass";
-const UE4Reference RefLoadPackage               = "LoadPackage";
-
+const UE4Reference RefFName_GetNames                = "FName_GetNames";
+const UE4Reference RefFRawObjectIterator_Ctor       = "FRawObjectIterator_Ctor";
+const UE4Reference RefUObject_ProcessEvent          = "UObject_ProcessEvent";
+const UE4Reference RefAActor_ProcessEvent           = "AActor_ProcessEvent";
+const UE4Reference RefAHUD_PostRender               = "AHUD_PostRender";
+const UE4Reference RefStaticLoadObject              = "StaticLoadObject";
+const UE4Reference RefStaticLoadClass               = "StaticLoadClass";
+const UE4Reference RefLoadPackage                   = "LoadPackage";
+const UE4Reference RefStaticConstructObject_Internal= "StaticConstructObject_Internal";
 
 struct SpyData {
     uint64 baseAddress;             // Base address of process
@@ -59,6 +62,7 @@ struct SpyData {
     LoadPackage LoadPackage;
     FName_GetNames FName_GetNames;
     FRawObjectIterator_Ctor FRawObjectIterator_Ctor;
+    StaticConstructObject_Internal StaticConstructObject_Internal;
 
     // TODO just make a std::map or similar
     tProcessEvent origProcessEvent = NULL;

@@ -134,8 +134,8 @@ namespace util {
                 } else if (IsClass(p, CASTCLASS_UObjectProperty)) {
                     UObject *v = GetPropertyValue<UObject>(p, container);
                     if (v != nullptr) {
-                        void *nextContainer = v;
-                        return findPropertyByPath(v, nextContainer, path, fnFound);
+                        //void *nextContainer = v;
+                        return findPropertyByPath(v, v, path, fnFound);
                     }
                     
                 }
@@ -143,7 +143,6 @@ namespace util {
                 // Can't go deeper, give up looking
                 return true;
             }
-
 
             // Found a match - Now return it and a usable place to find its value.
             foundProperty = p;

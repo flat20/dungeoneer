@@ -35,6 +35,9 @@ void ClearPostRenderHandlers();
 void ClearProcessEventHandlers();
 std::vector<std::string> listMods(std::string directory);
 
+
+bool InitConsole();
+
 // std::list<void *> processEventHandlers;
 // std::mutex processEventHandlersMutex;
 // std::list<tPostRender> postRenderHandlers;
@@ -118,6 +121,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         uiData.onUnloadPressed = &onUnloadPressed;
         StartUI(&uiData);
         printf("Dungeoneer ready.\n");
+
+        bool res = InitConsole();
+        if (res == false) {
+            printf("No console\n");
+        }
 
     }
     else if (dwReason == DLL_PROCESS_DETACH) {
@@ -412,11 +420,68 @@ void __stdcall AHUD_PostRender(void* hud) {
 }
 
 
-// void* __stdcall GetNames() {
+bool InitConsole() {
 
-//     void *gnames = spyData.origGetNames();
-//     printf("getnames? %llx %llx\n", (uint64)gnames, (uint64)spyData.GNames);
+    UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport/ViewportConsole");
+    if (ViewportConsole != nullptr) {
+        return false;
+    }
 
-//     return gnames;
+    UObject *GameViewport = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport");
+    if (GameViewport == nullptr) {
+        printf("No gameviewport\n");
+        return;
+    }
 
-// }
+    void** ConsoleClassPtr = (void**)util::GetPropertyValueByPath<uint64>(spyData.GEngine, spyData.GEngine, "ConsoleClass");
+    if (ConsoleClassPtr == nullptr) {
+        printf("No console class\n");
+        return false;
+    }
+    UClass *RealClass = (UClass*)*ConsoleClassPtr;
+ 
+    // printf("New Console properties:\n");
+    // util::IterateProperties<UClass>(RealClass, [](UProperty *p) {
+    //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
+    //     return false;
+    // });
+
+    // printf("New Console fields:\n");
+    // util::IterateFields(RealClass, [](UField *p) {
+    //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
+    //     return false;
+    // });
+
+    //UClassProperty *p = (UClassProperty*)util::FindObjectByName("ConsoleClass", nullptr);
+
+    FName NameNone{0,0};
+    auto console = spyData.StaticConstructObject_Internal(RealClass, GameViewport, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
+    if (console == nullptr) {
+        printf("Unable to instantiate console class?\n");
+        return false;
+    }
+
+    // TODO Clean this up.
+    util::IterateProperties(GameViewport, [&](UProperty *p) {
+        if (strcmp(util::getName(p), "ViewportConsole") == 0) {
+            printf("Found the prop %d\n", p->Offset_Internal);
+            *(UObject**)((uint64)GameViewport + p->Offset_Internal) = console;
+            // uint8 *pt = (uint8*)GameViewport;
+            // pt += p->Offset_Internal;
+            // *pt = console;
+            // UObject **ptr = (UObject**)(uint64)GameViewport + p->Offset_Internal;
+            // *ptr = console;
+            return true;
+        }
+        return false;
+    });
+
+    
+    UObject *vc = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport/ViewportConsole");
+    if (vc == nullptr) {
+        printf("console not set!\n");
+        return false;
+    }
+    printf("console set\n");
+    return true;
+}

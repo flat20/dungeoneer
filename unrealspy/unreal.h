@@ -523,11 +523,15 @@ struct UScriptViewportClient : UObject { // Actually inherits from UObject AND F
 	FCommonViewportClient temp;
 };
 
-struct UGameViewportClient : UScriptViewportClient
-{
+struct UGameViewportClient : UScriptViewportClient {
 };
-// Is a UObject but we're
+
+struct UConsole : UObject {
+};
+
 struct UEngine : UObject {
+	// This stuff is pretty pointless now because we can just reflection our way
+	// to any UObject property, such as the GameViewport
 	char unknown[0x748 - sizeof(UObject)];
 //	class IEngineLoop* EngineLoop;
 	void* EngineLoop;				// At 0x748

@@ -48,8 +48,6 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
 
     HANDLE hProc = GetCurrentProcess();
 
-
-
     data->AHUD_DrawRect = (AHUD_DrawRect)addresses["AHUD_DrawRect"];
     data->AHUD_DrawText = (AHUD_DrawText)addresses["AHUD_DrawText"];
     data->AHUD_GetTextSize = (AHUD_GetTextSize)addresses["AHUD_GetTextSize"];
@@ -58,6 +56,7 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     data->LoadPackage = (LoadPackage)addresses[RefLoadPackage];
     data->FName_GetNames = (FName_GetNames)addresses[RefFName_GetNames];
     data->FRawObjectIterator_Ctor = (FRawObjectIterator_Ctor)addresses[RefFRawObjectIterator_Ctor];
+    data->StaticConstructObject_Internal = (StaticConstructObject_Internal)addresses[RefStaticConstructObject_Internal];
 
     // We can get GNames by calling FName::GetNames()
     data->GNames = data->FName_GetNames();
@@ -80,10 +79,10 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
     data->GEngine = (UEngine*)engine;
 
-    printf("viewport: %llx\n", (DWORD64)data->GEngine->GameViewport);
-    if (data->GEngine->GameViewport != nullptr) {
-        printf("  name: %s\n", util::getName(data->GEngine->GameViewport));
-        printf("  class: (%s)\n", util::getName(data->GEngine->GameViewport->ClassPrivate));
+    UClass *ConsoleClass = util::GetPropertyValueByPath<UClass>(data->GEngine, data->GEngine, "ConsoleClass");
+    printf("consoleclass? %llx\n", (uint64)ConsoleClass);
+    if (ConsoleClass != nullptr) {
+        printf("%s\n", util::getName(ConsoleClass));
     }
 
     hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
@@ -129,7 +128,6 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
             return false;
         }
     }
-    printf("Attached and ready\n");
     return true;
 }
 
@@ -161,7 +159,6 @@ bool DeInitSpy(SpyData *data) {
 
 // Address to target and address to our hook
 bool SetHook(LPVOID target, LPVOID detour, LPVOID* original) {
-    printf("set target: %llx\n", (uint64)target);
     //LPVOID original = nullptr;
     MH_STATUS err;
 
@@ -190,7 +187,6 @@ bool SetHook(Hook *hook) {
 
 bool EnableHook(uintptr_t address) {
     LPVOID target = (LPVOID)(address);
-    printf("enable target: %llx\n", (uint64)target);
     MH_STATUS err = MH_EnableHook(target);
     if (err != MH_OK) {
         printf("MH_EnableHook failed: %d\n", err);
@@ -198,15 +194,3 @@ bool EnableHook(uintptr_t address) {
     }
     return true;
 }
-
-// }
-
-
-// void* __stdcall GetNames() {
-
-//     void *gnames = spyData.origGetNames();
-//     printf("getnames? %llx %llx\n", (uint64)gnames, (uint64)spyData.GNames);
-
-//     return gnames;
-
-// }
