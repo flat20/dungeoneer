@@ -371,6 +371,11 @@ namespace util {
         return found;
     }
 
+    // UObject utils
+    bool HasFlags(UObject *object, EClassCastFlags flags) {
+        return (object->ClassPrivate->ClassCastFlags & flags) == flags;
+    }
+
 }
 
 using namespace util;
@@ -454,8 +459,9 @@ using namespace util;
 //     return nullptr;
 // }
 
-bool IsClass(UObject *object, EClassCastFlags flag) {
-    return (object->ClassPrivate->ClassCastFlags & flag) == flag;
+// Has exactly all flags
+bool IsClass(UObject *object, EClassCastFlags flags) {
+    return (object->ClassPrivate->ClassCastFlags & flags) == flags;
 }
 
 // bool IsByteProperty(UProperty *p) {

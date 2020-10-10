@@ -58,6 +58,9 @@ namespace util {
     // GUObjectArray
     void IterateObjectArray(std::function<bool (UObject*)> fnDone);
     UObject *FindObjectByName(char *objectName, char *className);
+
+    // UObject utils
+    bool HasFlags(UObject *object, EClassCastFlags flags);
 }
 
 
@@ -106,7 +109,7 @@ bool iterateFieldsRecursive(UObject *obj, void *container, int depth, std::funct
 // TODO Just make a bool IsClassType(UOBject *, flag);
 // And IsParmType(..)
 
-bool IsClass(UObject *object, EClassCastFlags flag);
+bool IsClass(UObject *object, EClassCastFlags flags);
 
 // bool IsByteProperty(UProperty *p);
 // bool IsFloatProperty(UProperty *p);

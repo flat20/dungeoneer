@@ -5,6 +5,14 @@
 #include "unreal_enums.h"
 #include "unreal_draw.h"
 
+struct UObject;
+struct UClass;
+struct UProperty;
+
+//typedef void (*FNativeFuncPtr)(UObject* Context, FFrame& TheStack, RESULT_DECL);
+typedef void (*FNativeFuncPtr)(UObject* Context, void * TheStack, RESULT_DECL);
+
+
 
 /** Name index. */
 typedef int32 NAME_INDEX; 	// The FNameEntry states this is a hashed value.
@@ -31,12 +39,10 @@ struct FName // NameTypes.h
 };
 
 #define NAME_INDEX_SHIFT 1 // one bit determines if it's a whide char or ansi char.
-struct FNameEntry
-{
+struct FNameEntry {
     FNameEntry* HashNext;	// For hashing purposes. It seems.
 	NAME_INDEX  Index;	// Definitely hashed. NAME_INDEX_SHIFT 1. so shr 1
 	
-
 	union
 	{
 		char AnsiName[1024];
@@ -44,6 +50,20 @@ struct FNameEntry
 	};
 };
 
+
+struct FImplementedInterface {
+	UClass* Class;
+	/** the pointer offset of the interface's vtable */
+	int32 PointerOffset;
+	/** whether or not this interface has been implemented via K2 */
+	bool bImplementedByK2;
+};
+
+/** A struct that maps a string name to a native function */
+struct FNativeFunctionLookup {
+	FName Name;
+	FNativeFuncPtr Pointer;
+};
 
 struct TSharedPtr {
 	//ObjectType* Object; // Actually ITextData..
@@ -88,19 +108,17 @@ struct FText { // size 18 bytes
 	uint32 Flags;
 };
 
-struct UProperty;
-//
-// Information about a property to replicate.
-//
 struct FRepRecord {
 	UProperty* Property;
 	int32 Index;
 };
 
-struct UClass;
 
 struct UObject // From UObjectBase
 {
+	// TODO Figure this out for a better iterator
+	static const EClassCastFlags StaticClassCastFlags = CASTCLASS_None;//CLASS_Abstract|CLASS_NoExport|CLASS_Intrinsic|CLASS_MatchedSerializers;
+
 	void *    VTableObject; // 0
 	EObjectFlags  ObjectFlags; // uint32_t // 8
 	/** Index into GObjectArray...very private. */
@@ -166,7 +184,8 @@ struct UEnum : UField
 
 struct UProperty : UField
 {
-	
+	// TODO Figure this out
+	static const EClassCastFlags StaticClassCastFlags = CASTCLASS_None;//CLASS_Abstract|CLASS_NoExport|CLASS_Intrinsic|CLASS_MatchedSerializers;
 	// Persistent variables.
 	int32	ArrayDim;	// 48 - set to 1 in asm
 	int32	ElementSize;	// 52
@@ -320,21 +339,20 @@ struct UClass : UStruct {  // Inherhits from UStruct
 	mutable TMap<FName, UFunction*> SuperFuncMap;
 
 	// /** Scope lock to avoid the SuperFuncMap being read and written to simultaneously on multiple threads. */
-	// mutable FRWLock SuperFuncMapLock;
+	void *SuperFuncMapLock;
 
-	// TArray<FImplementedInterface> Interfaces;
+	TArray<FImplementedInterface> Interfaces;
 
 	// /** Reference token stream used by realtime garbage collector, finalized in AssembleReferenceTokenStream */
 	// FGCReferenceTokenStream ReferenceTokenStream;
+	TArray<uint32>	ReferenceTokenStreamTokens;
 	// /** CS for the token stream. Token stream can assemble code can sometimes be called from two threads throuh a web of async loading calls. */
 	// FCriticalSection ReferenceTokenStreamCritical;
+	void* Opaque1[1]; long Opaque2[2]; void* Opaque3[3];
 
-	// TArray<FNativeFunctionLookup> NativeFunctionLookupTable;
+	TArray<FNativeFunctionLookup> NativeFunctionLookupTable;
 };
 
-
-//typedef void (*FNativeFuncPtr)(UObject* Context, FFrame& TheStack, RESULT_DECL);
-typedef void (*FNativeFuncPtr)(UObject* Context, void * TheStack, RESULT_DECL);
 
 struct UFunction : UStruct {
 	
