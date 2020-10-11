@@ -35,10 +35,7 @@ typedef UPackage* (__fastcall *LoadPackage)( UPackage* InOuter, const TCHAR* InL
 typedef UObject* (__fastcall *StaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
 //typedef UObject* (__fastcall *StaticConstructObject_Internal)(__int64 a1,    int a2,           __int64 a3, int a4,                int a5,                                __int64 a6,        char a7,                               __int64 a8,          char a9);
 
-// public: virtual void FConsoleManager::ForEachConsoleObjectThatContains(class TBaseDelegate<void, wchar_t const *, class IConsoleObject *> const &, wchar_t const *)const
-//void __fastcall FConsoleManager::ForEachConsoleObjectThatContains(__int64 a1, _DWORD *a2, _WORD *a3, __int64 a4)
-//void FConsoleManager::ForEachConsoleObjectThatContains(const FConsoleObjectVisitor& Visitor, const TCHAR* ThatContains) const
-//typedef void (__thiscall *FConsoleManager_ForEachConsoleObjectThatContains)(FConsoleManager* thisConsoleManager, class TBaseDelegate<void, wchar_t const *, class IConsoleObject *> const &Visitor, wchar_t const *ThatContains);
+typedef void (__thiscall *UConsole_ConsoleCommand)(UConsole *thisUConsole, const struct FString *);
 
 // bool FConsoleManager::ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld)
 // __int64 __fastcall FConsoleManager::ProcessUserConsoleInput(FConsoleManager *this, const wchar_t *a2, struct FOutputDevice *a3, struct UWorld *a4)
@@ -58,11 +55,30 @@ const UE4Reference RefStaticLoadObject              = "StaticLoadObject";
 const UE4Reference RefStaticLoadClass               = "StaticLoadClass";
 const UE4Reference RefLoadPackage                   = "LoadPackage";
 const UE4Reference RefStaticConstructObject_Internal= "StaticConstructObject_Internal";
-const UE4Reference RefFConsoleManager_ForEachConsoleObjectThatContains = "FConsoleManager_ForEachConsoleObjectThatContains";
+const UE4Reference RefUConsole_ConsoleCommand       = "UConsole_ConsoleCommand";    // Run console command
 const UE4Reference RefFConsoleManager_ProcessUserConsoleInput = "FConsoleManager::ProcessUserConsoleInput";
+
+// Hooking.h?
+struct Hook {
+    uintptr_t address;
+    void *detour;   // Point this to function
+    LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
+};
+
+// Offsets to functions. Name each entry?
+extern std::map<UE4Reference, Hook*> hooks;
+
+// We shouldn't force a user into our basic API. Leaving some options
+bool SetHook(LPVOID target, LPVOID detour, LPVOID* original);
+// Address to target and address to our hook
+bool SetHook(Hook *hook);
+bool EnableHook(uintptr_t address);
+bool RemoveHook(Hook *hook);
 
 struct SpyData {
     uint64 baseAddress;             // Base address of process, never used but let's leave for now.
+    std::map<UE4Reference,uintptr_t> addresses; // Looked up addresses
+
     FUObjectArray *GUObjectArray;
     TNameEntryArray* GNames;
     UEngine* GEngine; // Just get from GUObjectArray?
@@ -76,6 +92,8 @@ struct SpyData {
     FName_GetNames FName_GetNames;
     FRawObjectIterator_Ctor FRawObjectIterator_Ctor;
     StaticConstructObject_Internal StaticConstructObject_Internal;
+    UConsole_ConsoleCommand UConsole_ConsoleCommand;
+
 
     // TODO just make a std::map or similar
     tProcessEvent origProcessEvent = NULL;
@@ -90,6 +108,10 @@ struct SpyData {
 
 };
 
+
+namespace spy {
+    extern SpyData *spyData;
+}
 
 // Hook everything up, pass in offsets.
 bool InitSpy(SpyData*, std::map<UE4Reference, uintptr_t> addresses);

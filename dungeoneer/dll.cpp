@@ -7,6 +7,7 @@
 #include <unrealspy.h>
 #include <offsets.h>
 #include <util.h>
+#include <console.h>
 
 #include "dungeoneer.h"
 #include "ui.h"
@@ -15,7 +16,7 @@
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
 signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params);
 void __stdcall AHUD_PostRender(void* hud);
-void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
+//void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 void* __stdcall GetNames();
 
 HMODULE loadMod(LPCSTR filename);
@@ -37,7 +38,7 @@ void ClearProcessEventHandlers();
 std::vector<std::string> listMods(std::string directory);
 
 
-bool InitConsole();
+//bool InitConsole();
 
 // std::list<void *> processEventHandlers;
 // std::mutex processEventHandlersMutex;
@@ -104,15 +105,12 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
-        // TODO Move this in to InitSpy. Allow adding custom address lookups
-        // InitSpy can set the resulting addresses as a member on SpyData.
-        HANDLE process = GetCurrentProcess();
-        std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, offsets::defaultAddressLookups);
+        // Any extra addresses to lookup
+        std::map<UE4Reference,uintptr_t> addresses;
 
         spyData.detourProcessEvent = &UObject_ProcessEvent;
         spyData.detourAActor_ProcessEvent = &AActor_ProcessEvent;
         spyData.detourPostRender = &AHUD_PostRender;
-        spyData.detourProcessUserConsoleInput = &FConsoleManager_ProcessUserConsoleInput;
         InitSpy(&spyData, addresses);
 
         dng.spyData = &spyData;
@@ -126,7 +124,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         StartUI(&uiData);
         printf("Dungeoneer ready.\n");
 
-        bool res = InitConsole();
+        bool res = InitConsole(&spyData);
         if (res == false) {
             printf("No console\n");
         }
@@ -424,126 +422,101 @@ void __stdcall AHUD_PostRender(void* hud) {
 }
 
 
-void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld) {
+// void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld) {
 
-    spyData.origProcessUserConsoleInput(thisConsoleManager, InInput, Ar, InWorld);
+//     spyData.origProcessUserConsoleInput(thisConsoleManager, InInput, Ar, InWorld);
 
-    printf("process user console input happened\n");
-    printf("console manager at %llx", (uintptr_t)thisConsoleManager);
-    printf("input %ws\n", (wchar_t*)InInput);
-    FConsoleManager *cm = (FConsoleManager*)thisConsoleManager;
+//     if (_tcscmp(InInput, TEXT("flat20")) != 0) {
+//         return;
+//     }
 
-    printf("These vars are most likely wrong. They belong inside something\n");
-    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->FirstFreeIndex, cm->NumFreeIndices);
-    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->NumFreeIndices4, cm->NumFreeIndices5, cm->NumFreeIndices6);
+//     // Disable all cheat flags
+//     FConsoleManager *cm = (FConsoleManager*)thisConsoleManager;
+//     for (int i=0; i<cm->ConsoleObjects.ArrayNum; i++) {
+//         ConsoleManagerObjectsMapElement el = cm->ConsoleObjects.Data[i];
+//         if (el.IConsoleObject == nullptr) {
+//             printf("null console object!\n");
+//             continue;
+//         }
+// //        printf("%ws\n", (wchar_t*)el.Name.Data);
+//         el.IConsoleObject->Flags = ECVF_Default;
+// //        printf("  %ws\n", (wchar_t*)el.IConsoleObject->Help.Data.Data);
+//     }
 
-    // NumFreeIndices6 seems to be correct at around 500.
-    for (int i=0; i<cm->ConsoleObjects.ArrayNum; i++) {
-        ConsoleManagerObjectsMapElement el = cm->ConsoleObjects.Data[i];
-        if (el.IConsoleObject == nullptr) {
-            printf("null console object!\n");
-            continue;
-        }
-        printf("%ws\n", (wchar_t*)el.Name.Data);
-        el.IConsoleObject->Flags = ECVF_Default;
-        printf("  %ws\n", (wchar_t*)el.IConsoleObject->Help.Data.Data);
-    }
-    printf("These vars are most likely wrong. They belong inside something\n");
-    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->FirstFreeIndex, cm->NumFreeIndices);
-    printf("num: %d freeindex %d numfree %d\n", cm->ConsoleObjects.ArrayNum, cm->NumFreeIndices4, cm->NumFreeIndices5, cm->NumFreeIndices6);
+//     // Now unhook us
+// }
 
+// bool InitConsole() {
 
-    {
-    TCHAR *name = _TEXT("FX.RestartAll");
-    void *command = cm->FindConsoleObject((TCHAR*)name);
-    printf("command at %llx\n", (uintptr_t)command);
-    }
+//     UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport/ViewportConsole");
+//     if (ViewportConsole != nullptr) {
+//         return false;
+//     }
 
+//     UObject *GameViewport = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport");
+//     if (GameViewport == nullptr) {
+//         printf("No gameviewport\n");
+//         return false;
+//     }
 
-    // {
-    // TCHAR *name = _TEXT("Dungeons.Player.AddEmeralds");
-    // void *command = cm->r((TCHAR*)name);
-    // printf("command at %llx\n", (uintptr_t)command);
-    // }
-
-
-
-    {
-    wchar_t *name = L"FX.RestartAll";
-    //TCHAR *name = _TEXT("Dungeons.Player.AddEmeralds");
-    void *command = cm->FindConsoleObject((TCHAR*)name);
-    printf("command at %llx\n", (uintptr_t)command);
-    }
-
-    {
-    char *name = "FX.RestartAll";
-    void *command = cm->FindConsoleObject((TCHAR*)name);
-    printf("command at %llx\n", (uintptr_t)command);
-    }
-}
-
-bool InitConsole() {
-
-    UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport/ViewportConsole");
-    if (ViewportConsole != nullptr) {
-        return false;
-    }
-
-    UObject *GameViewport = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport");
-    if (GameViewport == nullptr) {
-        printf("No gameviewport\n");
-        return false;
-    }
-
-    void** ConsoleClassPtr = (void**)util::GetPropertyValueByPath<uint64>(spyData.GEngine, spyData.GEngine, "ConsoleClass");
-    if (ConsoleClassPtr == nullptr) {
-        printf("No console class\n");
-        return false;
-    }
-    UClass *RealClass = (UClass*)*ConsoleClassPtr;
+//     void** ConsoleClassPtr = (void**)util::GetPropertyValueByPath<uint64>(spyData.GEngine, spyData.GEngine, "ConsoleClass");
+//     if (ConsoleClassPtr == nullptr) {
+//         printf("No console class\n");
+//         return false;
+//     }
+//     UClass *RealClass = (UClass*)*ConsoleClassPtr;
  
-    // printf("New Console properties:\n");
-    // util::IterateProperties<UClass>(RealClass, [](UProperty *p) {
-    //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
-    //     return false;
-    // });
+//     // printf("New Console properties:\n");
+//     // util::IterateProperties<UClass>(RealClass, [](UProperty *p) {
+//     //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
+//     //     return false;
+//     // });
 
-    // printf("New Console fields:\n");
-    // util::IterateFields(RealClass, [](UField *p) {
-    //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
-    //     return false;
-    // });
+//     // printf("New Console fields:\n");
+//     // util::IterateFields(RealClass, [](UField *p) {
+//     //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
+//     //     return false;
+//     // });
 
-    //UClassProperty *p = (UClassProperty*)util::FindObjectByName("ConsoleClass", nullptr);
+//     //UClassProperty *p = (UClassProperty*)util::FindObjectByName("ConsoleClass", nullptr);
 
-    FName NameNone{0,0};
-    auto console = spyData.StaticConstructObject_Internal(RealClass, GameViewport, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
-    if (console == nullptr) {
-        printf("Unable to instantiate console class?\n");
-        return false;
-    }
+//     FName NameNone{0,0};
+//     auto console = spyData.StaticConstructObject_Internal(RealClass, GameViewport, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
+//     if (console == nullptr) {
+//         printf("Unable to instantiate console class?\n");
+//         return false;
+//     }
 
-    // TODO Clean this up.
-    util::IterateProperties(GameViewport, [&](UProperty *p) {
-        if (strcmp(util::getName(p), "ViewportConsole") == 0) {
-            printf("Found the prop %d\n", p->Offset_Internal);
-            *(UObject**)((uint64)GameViewport + p->Offset_Internal) = console;
-            // uint8 *pt = (uint8*)GameViewport;
-            // pt += p->Offset_Internal;
-            // *pt = console;
-            // UObject **ptr = (UObject**)(uint64)GameViewport + p->Offset_Internal;
-            // *ptr = console;
-            return true;
-        }
-        return false;
-    });
+//     // TODO Clean this up.
+//     util::IterateProperties(GameViewport, [&](UProperty *p) {
+//         if (strcmp(util::getName(p), "ViewportConsole") == 0) {
+//             printf("Found the prop %d\n", p->Offset_Internal);
+//             *(UObject**)((uint64)GameViewport + p->Offset_Internal) = console;
+//             // uint8 *pt = (uint8*)GameViewport;
+//             // pt += p->Offset_Internal;
+//             // *pt = console;
+//             // UObject **ptr = (UObject**)(uint64)GameViewport + p->Offset_Internal;
+//             // *ptr = console;
+//             return true;
+//         }
+//         return false;
+//     });
 
     
-    UObject *vc = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport/ViewportConsole");
-    if (vc == nullptr) {
-        printf("console not set!\n");
-        return false;
-    }
-    printf("console set\n");
-    return true;
-}
+//     UObject *vc = util::GetPropertyValueByPath<UObject>(spyData.GEngine, spyData.GEngine, "GameViewport/ViewportConsole");
+//     if (vc == nullptr) {
+//         printf("console not set!\n");
+//         return false;
+//     }
+//     printf("console set\n");
+
+//     printf("Now issuing command");
+
+//     FString str;
+//     wchar_t *text = L"flat20test";
+//     str.Data.Data = (TCHAR*)text;
+//     str.Data.ArrayNum = 10;
+//     str.Data.ArrayMax = 10;
+//     spyData.UConsole_ConsoleCommand((UConsole*)console, &str);
+//     return true;
+// }

@@ -2,56 +2,44 @@
 #include <Psapi.h>
 #include <map>
 #include "unrealspy.h"
-//#include "unreal_util.h"
 #include "util.h"
+#include "offsets.h"
+#include "console.h"
 
 #include <MinHook.h>
 
 
 
-struct Hook {
-    uintptr_t address;
-    void *detour;   // Point this to function
-    LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
-};
 
 // struct Offset {
 //     uint64 offset;
 //     void *ptr;      // Pointer to location in running process, once the Offset has been looked up.
 // };
 
-// We shouldn't force a user into our basic API. Leaving some options
-bool SetHook(LPVOID target, LPVOID detour, LPVOID* original);
-// Address to target and address to our hook
-bool SetHook(Hook *hook);
-bool EnableHook(uintptr_t address);
-
-
-
-
-
-// Offsets to functions. Name each entry?
+// Do we have to have a global?
+namespace spy {
+    SpyData *spyData = nullptr;
+}
 std::map<UE4Reference, Hook*> hooks;
 //std::map<UE4Reference, Offset*> offsets; // Rename to variables? or references?
 
 // Call from within the UE game process
 // Sets up GNames global for the util:: namespace to work
-bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
+bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> additionalAddresses) {
 
+    spy::spyData = data;
     // We end up with the same base address as the one we're injected in
     HMODULE dll = GetModuleHandle(NULL);
     uint64 baseAddress = (uint64)dll;
     //HMODULE baseAddress = GetModuleHandleA("Dungeons-Win64-Shipping.exe");
     data->baseAddress = baseAddress;
 
-    uintptr_t offsAddEmeralds = 0x3DFEE90;
-    uintptr_t addrAddEmerals = baseAddress + offsAddEmeralds;
-    printf("addrAddEmerals %llx\n", addrAddEmerals);
-    printf("addrLevelStart %llx\n", baseAddress + 0x3DFEEB0);
-    
-    //addresses[RefFConsoleManager_ForEachConsoleObjectThatContains];
+        // TODO Move this in to InitSpy. Allow adding custom address lookups
+    // InitSpy can set the resulting addresses as a member on SpyData.
+    HANDLE process = GetCurrentProcess();
+    std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, offsets::defaultAddressLookups);
 
-
+    data->addresses = addresses;
     data->AHUD_DrawRect = (AHUD_DrawRect)addresses["AHUD_DrawRect"];
     data->AHUD_DrawText = (AHUD_DrawText)addresses["AHUD_DrawText"];
     data->AHUD_GetTextSize = (AHUD_GetTextSize)addresses["AHUD_GetTextSize"];
@@ -61,24 +49,25 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     data->FName_GetNames = (FName_GetNames)addresses[RefFName_GetNames];
     data->FRawObjectIterator_Ctor = (FRawObjectIterator_Ctor)addresses[RefFRawObjectIterator_Ctor];
     data->StaticConstructObject_Internal = (StaticConstructObject_Internal)addresses[RefStaticConstructObject_Internal];
+    data->UConsole_ConsoleCommand = (UConsole_ConsoleCommand)addresses[RefUConsole_ConsoleCommand];
 
     // We can get GNames by calling FName::GetNames()
     data->GNames = data->FName_GetNames();
     util::GNames = data->GNames;
 
-    // We can get GUObjectArray by instantiating FRawObjectIterator. It happens that it
+    // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
     // holds a reference to GUObjectArray.
     char bla[256];
     void **ref = (void**)data->FRawObjectIterator_Ctor(&bla[0], false);
     data->GUObjectArray = (FUObjectArray*)*ref;
     util::GUObjectArray = data->GUObjectArray;
 
-    printf("guobjectarray: %llx\n", (uint64)data->GUObjectArray);
-    printf("  NumElements %d\n", data->GUObjectArray->ObjObjects.NumElements);
-    printf("  NumElementsPerChunk %d\n", data->GUObjectArray->ObjObjects.NumElementsPerChunk);
-    printf("  NumChunks %d\n", data->GUObjectArray->ObjObjects.NumChunks);
-    printf("  MaxChunks %d\n", data->GUObjectArray->ObjObjects.MaxChunks);
-    printf("  MaxElements %d\n", data->GUObjectArray->ObjObjects.MaxElements);
+    // printf("guobjectarray: %llx\n", (uint64)data->GUObjectArray);
+    // printf("  NumElements %d\n", data->GUObjectArray->ObjObjects.NumElements);
+    // printf("  NumElementsPerChunk %d\n", data->GUObjectArray->ObjObjects.NumElementsPerChunk);
+    // printf("  NumChunks %d\n", data->GUObjectArray->ObjObjects.NumChunks);
+    // printf("  MaxChunks %d\n", data->GUObjectArray->ObjObjects.MaxChunks);
+    // printf("  MaxElements %d\n", data->GUObjectArray->ObjObjects.MaxElements);
 
     UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
     data->GEngine = (UEngine*)engine;
@@ -88,6 +77,9 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
     if (ConsoleClass != nullptr) {
         printf("%s\n", util::getName(ConsoleClass));
     }
+
+    // Should be setup by console.cpp when needed
+    data->detourProcessUserConsoleInput = &FConsoleManager_ProcessUserConsoleInput;
 
     hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
     hooks[RefAActor_ProcessEvent]  = new Hook{addresses[RefAActor_ProcessEvent],    data->detourAActor_ProcessEvent};
@@ -174,11 +166,6 @@ bool SetHook(LPVOID target, LPVOID detour, LPVOID* original) {
         return false;
     }
 
-    // err = MH_EnableHook(target);
-    // if (err != MH_OK) {
-    //     printf("MH_EnableHook failed: %d\n", err);
-    //     return false;
-    // }
     return true;
 }
 
@@ -189,6 +176,16 @@ bool SetHook(Hook *hook) {
     LPVOID target = (LPVOID)(hook->address);
 
     return SetHook(target, hook->detour, &hook->original);
+}
+
+bool RemoveHook(Hook *hook) {
+    if (hook->address == 0) {
+        return false;
+    }
+    if (MH_DisableHook((LPVOID)hook->address) != MH_OK) {
+        return false;
+    }
+    return true;
 }
 
 bool EnableHook(uintptr_t address) {

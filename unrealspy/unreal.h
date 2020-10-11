@@ -604,127 +604,15 @@ public:
 	// virtual IConsoleVariable* RegisterConsoleVariableRef(const TCHAR* Name, bool& RefValue, const TCHAR* Help, uint32 Flags) override;
 	// virtual IConsoleVariable* RegisterConsoleVariableBitRef(const TCHAR* CVarName, const TCHAR* FlagName, uint32 BitNumber, uint8* Force0MaskPtr, uint8* Force1MaskPtr, const TCHAR* Help, uint32 Flags) override;
 	virtual void *a();
-	virtual void *b();
-	virtual void *c();
-	virtual void *d();
-	virtual void *e();
-	virtual void *f();
-	virtual void *g();
 	
-	// virtual void CallAllConsoleVariableSinks() override;
-	virtual void *h();
-
-	// virtual FConsoleVariableSinkHandle RegisterConsoleVariableSink_Handle(const FConsoleCommandDelegate& Command) override;
-	// virtual void UnregisterConsoleVariableSink_Handle(FConsoleVariableSinkHandle Handle) override;
-	virtual void *j();
-	virtual void *k();
-
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithArgsDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithWorldDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithWorldAndArgsDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithWorldArgsAndOutputDeviceDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithOutputDeviceDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, uint32 Flags) override;
-	virtual void *l();
-	virtual void *m();
-	virtual void *n();
-	virtual void *o();
-	virtual void *p();
-	virtual void *q();
-	virtual void *r();
-
-	// virtual IConsoleObject* FindConsoleObject(const TCHAR* Name) const override;
-	virtual void* FindConsoleObject(const TCHAR* Name);
-	// virtual IConsoleVariable* FindConsoleVariable(const TCHAR* Name) const override;
-	virtual void* FindConsoleVariable(const TCHAR* Name);
-	// virtual void ForEachConsoleObjectThatStartsWith(const FConsoleObjectVisitor& Visitor, const TCHAR* ThatStartsWith) const override;
-	// virtual void ForEachConsoleObjectThatContains(const FConsoleObjectVisitor& Visitor, const TCHAR* ThatContains) const override;
-	// virtual bool ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld) override;
-	// virtual void AddConsoleHistoryEntry(const TCHAR* Key, const TCHAR* Input) override;
-	// virtual void GetConsoleHistory(const TCHAR* Key, TArray<FString>& Out) override;
-	// virtual bool IsNameRegistered(const TCHAR* Name) const override;	
-	// virtual void RegisterThreadPropagation(uint32 ThreadId, IConsoleThreadPropagation* InCallback) override;
-	// virtual void UnregisterConsoleObject( IConsoleObject* Object, bool bKeepState) override;
 
 //private: // ----------------------------------------------------
 
 	// Poor man's implementation of TMap - in other words: No way am I implementing all of the TMap stuff.
 	// Actually TSet Pairs is the variable. TMap->Num() -> Pairs.Num() -> Elements->Num() -> return Data.Num() - NumFreeIndices;
 	TArray<ConsoleManagerObjectsMapElement> ConsoleObjects;
-	/** The index of an unallocated element in the array that currently contains the head of the linked list of free elements. */
-	int32 FirstFreeIndex;
 
-	/** The number of elements in the free list. */
-	int32 NumFreeIndices;
-	int32 NumFreeIndices2;
-	int32 NumFreeIndices3;
-	int32 NumFreeIndices4;
-	int32 NumFreeIndices5; // Might be it? Was 550
-	int32 NumFreeIndices6;
-	int32 NumFreeIndices7;
-	int32 NumFreeIndices8;
 
-	/** Map of console variables and commands, indexed by the name of that command or variable */
-	// [name] = pointer (pointer must not be 0)
-	//TMap<FString, IConsoleObject*> ConsoleObjects;
-
-	//bool bHistoryWasLoaded;
-	//TMap<FString, TArray<FString>>	HistoryEntriesMap;
-	//TArray<FConsoleCommandDelegate>	ConsoleVariableChangeSinks;
-
-	//IConsoleThreadPropagation* ThreadPropagationCallback;
-	//uint32 ThreadPropagationThreadId;
-
-	// if true the next call to CallAllConsoleVariableSinks() we will call all registered sinks
-	//bool bCallAllConsoleVariableSinks;
-
-	/** 
-		* Used to prevent concurrent access to ConsoleObjects.
-		* We don't aim to solve all concurrency problems (for example registering and unregistering a cvar on different threads, or reading a cvar from one thread while writing it from a different thread).
-		* Rather we just ensure that operations on a cvar from one thread will not conflict with operations on another cvar from another thread.
-	**/
-	//mutable FCriticalSection ConsoleObjectsSynchronizationObject;
-
-	// /** 
-	//  * @param Name must not be 0, must not be empty
-	//  * @param Obj must not be 0
-	//  * @return 0 if the name was already in use
-	//  */
-	// IConsoleObject* AddConsoleObject(const TCHAR* Name, IConsoleObject* Obj);
-
-	// /**
-	//  * @param Stream must not be 0
-	//  * @param Pattern must not be 0
-	//  */
-	// static bool MatchPartialName(const TCHAR* Stream, const TCHAR* Pattern);
-
-	// /** Returns true if Pattern is found in Stream, case insensitive. */
-	// static bool MatchSubstring(const TCHAR* Stream, const TCHAR* Pattern);
-
-	// /**
-	//  * Get string till whitespace, jump over whitespace
-	//  * inefficient but this code is not performance critical
-	//  */
-	// static FString GetTextSection(const TCHAR* &It);
-
-	// /** same as FindConsoleObject() but ECVF_CreatedFromIni are not filtered out (for internal use) */
-	// IConsoleObject* FindConsoleObjectUnfiltered(const TCHAR* Name) const;
-
-	// /**
-	//  * Unregisters a console variable or command, if that object was registered.  In the case of variables, this will actually only
-	//  * "deactivate" the variable, so if it becomes registered again the state may persist.
-	//  *
-	//  * @param	Name	Name of the console object to remove (not case sensitive)
-	//  * @param bool bKeepState if the current state is kept in memory until a cvar with the same name is registered
-	//  */
-	// void UnregisterConsoleObject(const TCHAR* Name, bool bKeepState);
-
-	// // reads HistoryEntriesMap from the .ini file (if not already loaded)
-	// void LoadHistoryIfNeeded();
-
-	// // writes HistoryEntriesMap to the .ini file
-	// void SaveHistory();
 };
 
 
