@@ -1,13 +1,24 @@
-#include <Windows.h>
+#include <windows.h>
+//#include <initguid.h>
+//#include <KnownFolders.h>
+#include <shlobj.h>
+#pragma comment(lib, "shell32.lib")
 
 #include <cstdio>
 #include <tlhelp32.h>
 #include <sstream>
+#include <fstream>
 #include <vector>
+#include "json.hpp"
 
 
 int Error(HANDLE process, const char *fmt);
+DWORD GetDungeonsProcessID();
 DWORD GetProcessID(const char *exeFile);
+bool LaunchGame();
+bool LaunchStandaloneGame();
+bool LaunchWinstoreGame();
+bool HasModule(const DWORD &pid, const char *moduleName);
 
 int main(int argc, char *argv[]) {
 
@@ -20,29 +31,36 @@ int main(int argc, char *argv[]) {
     TCHAR dir[MAX_PATH];
     char  dllPath[MAX_PATH];
     DWORD len = GetCurrentDirectory(MAX_PATH, &dir[0]);
-    sprintf(dllPath, "%s\\%s", dir, dll.c_str()); // console.dll
-
-    printf("Dll: %s\n", dllPath);
+    sprintf(dllPath, "%s\\%s", dir, dll.c_str());
 
     // Find the running .exe
-    DWORD pid = 0;
-    const std::vector<std::string> exeFiles = {"Dungeons.exe", "Dungeons-Win64-Shipping.exe"};
-    for(const auto& exeFile: exeFiles) {
-        pid = GetProcessID(exeFile.c_str());
-        if (pid != 0) {
-            printf("Found %s\n", exeFile.c_str());
-            break;
+    DWORD pid = GetDungeonsProcessID();
+    if (pid == 0) {
+        // Attempt to launch the game.
+        if (LaunchGame() == false) {
+            printf("Unable to find or launch Minecraft Dungeons.\n");
+            return -1;
         }
 
-        printf("Unable to find %s process\n", exeFile.c_str());
+        printf("Launching Minecraft Dungeons..\n");
+
+        // Wait until we think the game has launched and is ready for us to inject the dll.
+        // TODO Maybe loop and check for loaded dlls to see if we're ready? Or something similar
+        Sleep(10000);
+        pid = GetDungeonsProcessID();
+        if (pid == 0) {
+            printf("Unable to find pid for Minecraft Dungeons\n");
+            return -1;
+        }
     }
 
-    if (pid == 0) {
-        printf("Unable to find any Minecraft Dungeons processes running\n");
+    printf("Minecraft Dungeons Process ID: (%d)\n", pid);
+
+    // TODO Check modules and see if our module is already loaded.
+    if (HasModule(pid, dll.c_str())) {
+        printf("%s already running in Minecraft Dungeons\n", dll.c_str());
         return -1;
     }
-
-    printf("Process: (%d)\n", pid);
 
     //Open the target process with read , write and execute priviledges
     HANDLE process = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION, FALSE, pid); 
@@ -81,7 +99,6 @@ int main(int argc, char *argv[]) {
          return Error(NULL, "Unable to close process. %d\n");
     }
 
-    printf("Injected %s in to (%d)\n", dllPath, pid);
     return 0;
 }
 
@@ -93,6 +110,97 @@ int Error(HANDLE process, const char *fmt) {
     return -1;
 }
 
+// True if this process has the "module.dll" moduleName loaded. No paths
+bool HasModule(const DWORD &pid, const char *moduleName) {
+    bool found = false;
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
+
+    if (snapshot != INVALID_HANDLE_VALUE) {
+        MODULEENTRY32 curr = {0};
+        curr.dwSize = sizeof(MODULEENTRY32);
+
+        if (Module32First(snapshot, &curr)) {
+            do {
+                if (strcmp((const char*)curr.szModule, moduleName) == 0) {
+                    found = true;
+                    break;
+                }
+            } while (Module32Next(snapshot, &curr));
+        }
+        CloseHandle(snapshot);
+    }
+    return found;
+}
+
+// Launch any version
+bool LaunchGame() {
+    if (LaunchStandaloneGame()) {
+        return true;
+    }
+
+    if (LaunchWinstoreGame()) {
+        return true;
+    }
+    return false;
+}
+
+bool LaunchStandaloneGame() {
+
+    char path[MAX_PATH];
+    HRESULT hr = SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, (LPSTR)&path);
+    if (!SUCCEEDED(hr)) {
+        return false;
+    }
+
+    // Read launcher_settings.json for Minecraft Dungeons path
+    using json = nlohmann::json;
+    std::string filename = std::string(path) + "\\.minecraft_dungeons\\launcher_settings.json";
+    std::ifstream in(filename);
+    if (in.is_open() == false) {
+        return false;
+    }
+    json j;
+    in >> j;
+
+    // Get the path to the .exe and attempt launching it
+    std::string mcdCommand = j["productLibraryDir"].get<std::string>() + "\\dungeons\\dungeons\\Dungeons\\Binaries\\Win64\\Dungeons-Win64-Shipping.exe";
+
+    STARTUPINFOA info={sizeof(info)};
+    PROCESS_INFORMATION processInfo;
+
+    if (CreateProcessA(NULL, (char*)mcdCommand.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo) == FALSE) {
+        printf("Failed to launch standalone Minecraft Dungeons at %s\n", mcdCommand.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+
+
+bool LaunchWinstoreGame() {
+
+    HINSTANCE h = ShellExecuteW(NULL, L"open", L"shell:AppsFolder\\Microsoft.Lovika_8wekyb3d8bbwe!Game", NULL, NULL, SW_SHOWNORMAL);
+    if ((DWORD64)h > 32) {
+        return true;
+    }
+    return false;
+}
+
+// Attempt to find the running .exe PID
+DWORD GetDungeonsProcessID() {
+    const std::vector<std::string> exeFiles = {"Dungeons.exe", "Dungeons-Win64-Shipping.exe"};
+    for(const auto& exeFile: exeFiles) {
+        DWORD pid = GetProcessID(exeFile.c_str());
+        if (pid != 0) {
+            return pid;
+        }
+    }
+    return 0;
+}
+
+// Find process ID by exe name.
 DWORD GetProcessID(const char *exeFile) {
     PROCESSENTRY32 entry;
     ZeroMemory(&entry, sizeof(entry));

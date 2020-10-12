@@ -70,3 +70,58 @@ else if( GEngine->Exec( InWorld, Cmd,Ar) )
 .text:00000001417E49F4 48 83 C1 68                             add     rcx, 68h ; 'h'
 
 48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57 48 83 EC 30 48 8B F2 48 89 54 24 40 48 8B D9 48 8D 54 24 40 48 83 C1 68
+
+How a delegate with params and a AutoConsoleCommand is created.
+TODO Write our own FAutoConsoleCommand WithParams and see how that looks in IDA pro
+
+// Dungeons.Player.AddEmeralds
+v0FConsoleCommandDelegate = (_QWORD *)sub_7FF76BDF2490(0i64, 32i64, 0);
+  v1 = v0FConsoleCommandDelegate;
+  v6 = v0FConsoleCommandDelegate;
+  v7 = 2;
+  if ( v0FConsoleCommandDelegate )
+  {
+    *v0FConsoleCommandDelegate = &TBaseStaticDelegateInstanceButWithParams;
+    v0FConsoleCommandDelegate[1] = sub_7FF76B90F700;
+    v0FConsoleCommandDelegate[3] = FDelegateHandle::GenerateNewID();
+    *v1 = &TBaseStaticDelegateInstance<void (void),>::`vftable';
+  }
+  v2 = IConsoleManager::Singleton;
+  if ( !IConsoleManager::Singleton )
+  {
+    IConsoleManager::SetupSingleton();
+    v2 = IConsoleManager::Singleton;
+  }
+  qword_7FF76EFCEE98 = (*(__int64 (__fastcall **)(__int64, const wchar_t *, const wchar_t *, _QWORD **, int))(*(_QWORD *)v2 + 96i64))(
+                         v2,
+                         L"Dungeons.Player.AddEmeralds",
+                         L"Adds the specified number of emeralds",
+                         &v6,
+                         1);
+  off_7FF76EFCEE90 = &unk_7FF76DE79700;
+
+  Dungeons.Level.Start
+  v0FConsoleCommandDelegate = (_QWORD *)sub_7FF76BDF2490(0i64, 32i64, 0);
+  v1 = v0FConsoleCommandDelegate;
+  v6 = v0FConsoleCommandDelegate;
+  v7 = 2;
+  if ( v0FConsoleCommandDelegate )
+  {
+    *v0FConsoleCommandDelegate = &TBaseStaticDelegateInstanceButWithParams;
+    v0FConsoleCommandDelegate[1] = sub_7FF76B92F8D0;
+    v0FConsoleCommandDelegate[3] = FDelegateHandle::GenerateNewID();
+    *v1 = &TBaseStaticDelegateInstance<void (void),>::`vftable';
+  }
+  v2 = IConsoleManager::Singleton;
+  if ( !IConsoleManager::Singleton )
+  {
+    IConsoleManager::SetupSingleton();
+    v2 = IConsoleManager::Singleton;
+  }
+  startLevelCmd = (*(__int64 (__fastcall **)(__int64, const wchar_t *, const wchar_t *, _QWORD **, int))(*(_QWORD *)v2 + 96i64))(
+                    v2,
+                    L"Dungeons.Level.Start",
+                    L"Start a mission with a given difficulty, threatlevel and an optional seed. (e.g. pumpkinpastures 2 5 1337",
+                    &v6,
+                    1);
+  vftableStartLevelCmd = &unk_7FF76DE79700;
