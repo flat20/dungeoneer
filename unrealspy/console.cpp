@@ -4,14 +4,6 @@
 #include "util.h"
 #include "console.h"
 
-// struct Hook {
-//     uintptr_t address;
-//     void *detour;   // Point this to function
-//     LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
-// };
-
-
-
 bool InitConsole(SpyData *data) {
 
     // We should hook the function here.

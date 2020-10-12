@@ -78,6 +78,7 @@ bool RemoveHook(Hook *hook);
 struct SpyData {
     uint64 baseAddress;             // Base address of process, never used but let's leave for now.
     std::map<UE4Reference,uintptr_t> addresses; // Looked up addresses
+    std::map<UE4Reference, Hook*> hooks;        // enabled hooks
 
     FUObjectArray *GUObjectArray;
     TNameEntryArray* GNames;

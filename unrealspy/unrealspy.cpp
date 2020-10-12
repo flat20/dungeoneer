@@ -8,19 +8,16 @@
 
 #include <MinHook.h>
 
-
-
-
-// struct Offset {
-//     uint64 offset;
-//     void *ptr;      // Pointer to location in running process, once the Offset has been looked up.
-// };
-
-// Do we have to have a global?
+// TODO Make a class? InitConsole would be part of that class then.
+// Although that process has steps and states so should be its own
+// class..
 namespace spy {
     SpyData *spyData = nullptr;
 }
-std::map<UE4Reference, Hook*> hooks;
+
+// TODO app Gets() defaults and then adds its own to the list. Then pass
+// in that list to InitSpy
+//std::map<UE4Reference, Hook*> hooks;
 //std::map<UE4Reference, Offset*> offsets; // Rename to variables? or references?
 
 // Call from within the UE game process
@@ -62,13 +59,6 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> additionalAddresse
     data->GUObjectArray = (FUObjectArray*)*ref;
     util::GUObjectArray = data->GUObjectArray;
 
-    // printf("guobjectarray: %llx\n", (uint64)data->GUObjectArray);
-    // printf("  NumElements %d\n", data->GUObjectArray->ObjObjects.NumElements);
-    // printf("  NumElementsPerChunk %d\n", data->GUObjectArray->ObjObjects.NumElementsPerChunk);
-    // printf("  NumChunks %d\n", data->GUObjectArray->ObjObjects.NumChunks);
-    // printf("  MaxChunks %d\n", data->GUObjectArray->ObjObjects.MaxChunks);
-    // printf("  MaxElements %d\n", data->GUObjectArray->ObjObjects.MaxElements);
-
     UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
     data->GEngine = (UEngine*)engine;
 
@@ -81,10 +71,10 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> additionalAddresse
     // Should be setup by console.cpp when needed
     data->detourProcessUserConsoleInput = &FConsoleManager_ProcessUserConsoleInput;
 
-    hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
-    hooks[RefAActor_ProcessEvent]  = new Hook{addresses[RefAActor_ProcessEvent],    data->detourAActor_ProcessEvent};
-    hooks[RefAHUD_PostRender]       = new Hook{addresses[RefAHUD_PostRender],   data->detourPostRender};
-    hooks[RefFConsoleManager_ProcessUserConsoleInput] = new Hook{addresses[RefFConsoleManager_ProcessUserConsoleInput],   data->detourProcessUserConsoleInput};
+    data->hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
+    data->hooks[RefAActor_ProcessEvent]  = new Hook{addresses[RefAActor_ProcessEvent],    data->detourAActor_ProcessEvent};
+    data->hooks[RefAHUD_PostRender]       = new Hook{addresses[RefAHUD_PostRender],   data->detourPostRender};
+    data->hooks[RefFConsoleManager_ProcessUserConsoleInput] = new Hook{addresses[RefFConsoleManager_ProcessUserConsoleInput],   data->detourProcessUserConsoleInput};
 
     // Hook functions
     if (MH_Initialize() != MH_OK) {
@@ -106,10 +96,10 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> additionalAddresse
         }
     }
 
-    data->origProcessEvent = (tProcessEvent)hooks[RefUObject_ProcessEvent]->original;
-    data->origAActor_ProcessEvent = (tAActor_ProcessEvent)hooks[RefAActor_ProcessEvent]->original;
-    data->origPostRender = (tPostRender)hooks[RefAHUD_PostRender]->original;
-    data->origProcessUserConsoleInput = (tFConsoleManager_ProcessUserConsoleInput)hooks[RefFConsoleManager_ProcessUserConsoleInput]->original;
+    data->origProcessEvent = (tProcessEvent)data->hooks[RefUObject_ProcessEvent]->original;
+    data->origAActor_ProcessEvent = (tAActor_ProcessEvent)data->hooks[RefAActor_ProcessEvent]->original;
+    data->origPostRender = (tPostRender)data->hooks[RefAHUD_PostRender]->original;
+    data->origProcessUserConsoleInput = (tFConsoleManager_ProcessUserConsoleInput)data->hooks[RefFConsoleManager_ProcessUserConsoleInput]->original;
     
     //data->origGetNames = (tGetNames)hooks["GetNames"]->original;
 
