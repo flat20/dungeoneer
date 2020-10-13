@@ -108,6 +108,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         // Any extra addresses to lookup
         std::map<UE4Reference,uintptr_t> addresses;
 
+        // TODO InitSpy(.., hookListeners[RefUObject_ProcessEvent] = &UObject_ProcessEvent)
         spyData.detourProcessEvent = &UObject_ProcessEvent;
         spyData.detourAActor_ProcessEvent = &AActor_ProcessEvent;
         spyData.detourPostRender = &AHUD_PostRender;

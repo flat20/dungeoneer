@@ -57,6 +57,8 @@ const UE4Reference RefLoadPackage                   = "LoadPackage";
 const UE4Reference RefStaticConstructObject_Internal= "StaticConstructObject_Internal";
 const UE4Reference RefUConsole_ConsoleCommand       = "UConsole_ConsoleCommand";    // Run console command
 const UE4Reference RefFConsoleManager_ProcessUserConsoleInput = "FConsoleManager::ProcessUserConsoleInput";
+const UE4Reference RefAddEmeralds                   = "AddEmeralds";
+const UE4Reference RefLoadLevel                     = "LoadLevel";
 
 // Hooking.h?
 struct Hook {
@@ -66,7 +68,7 @@ struct Hook {
 };
 
 // Offsets to functions. Name each entry?
-extern std::map<UE4Reference, Hook*> hooks;
+//extern std::map<UE4Reference, Hook*> hooks;
 
 // We shouldn't force a user into our basic API. Leaving some options
 bool SetHook(LPVOID target, LPVOID detour, LPVOID* original);

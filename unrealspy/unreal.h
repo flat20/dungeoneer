@@ -283,6 +283,14 @@ struct UStruct : UField // class.h // 512 bytes total
 	TArray<UObject*> ScriptObjectReferences; // TArray<UObject*>
 };
 
+struct FImplementedInterface {
+	UClass* Class;
+	/** the pointer offset of the interface's vtable */
+	int32 PointerOffset;
+	/** whether or not this interface has been implemented via K2 */
+	bool bImplementedByK2;
+};
+
 struct UFunction;
 // UObject/Class.h
 struct UClass : UStruct {  // Inherhits from UStruct

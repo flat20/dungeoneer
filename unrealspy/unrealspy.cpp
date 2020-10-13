@@ -8,6 +8,26 @@
 
 #include <MinHook.h>
 
+// __int64 __fastcall subAddEmeraldsDelegateListener(__int64 a1, __int64 a2)
+typedef void* (__thiscall *tAddEmeralds) (void *a1, void *a2);
+void* AddEmeralds(void *, void *);
+
+// Params passed to LoadLevel. Not completed, but has what we need for now.
+struct LoadLevelParams {
+    byte difficulty;
+    byte threatLevel;
+    TArray<TCHAR> loadType; // "lobby", "ingame"
+    uint64 something;   // 0x17, 
+    TArray<TCHAR> levelName; // "Lobby", "soggyswamp"
+    uint64 seed;    // Could be uint32 as well.
+    TArray<TArray<TCHAR>> characterUnlockKeys;
+    // Probably more stuff, but stopped looking for now.
+};
+
+// __int64 __fastcall subLevelLoad(__int64 a1, __int64 a2, char a3)
+typedef void (__fastcall *tLoadLevel)(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
+
 // TODO Make a class? InitConsole would be part of that class then.
 // Although that process has steps and states so should be its own
 // class..
@@ -17,7 +37,7 @@ namespace spy {
 
 // TODO app Gets() defaults and then adds its own to the list. Then pass
 // in that list to InitSpy
-//std::map<UE4Reference, Hook*> hooks;
+//std::map<UE4Reference, Hook*> hookas;
 //std::map<UE4Reference, Offset*> offsets; // Rename to variables? or references?
 
 // Call from within the UE game process
@@ -75,6 +95,8 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> additionalAddresse
     data->hooks[RefAActor_ProcessEvent]  = new Hook{addresses[RefAActor_ProcessEvent],    data->detourAActor_ProcessEvent};
     data->hooks[RefAHUD_PostRender]       = new Hook{addresses[RefAHUD_PostRender],   data->detourPostRender};
     data->hooks[RefFConsoleManager_ProcessUserConsoleInput] = new Hook{addresses[RefFConsoleManager_ProcessUserConsoleInput],   data->detourProcessUserConsoleInput};
+    //data->hooks[RefAddEmeralds] = new Hook{addresses[RefAddEmeralds], &AddEmeralds};
+    data->hooks[RefLoadLevel] = new Hook{addresses[RefLoadLevel], &LoadLevel};
 
     // Hook functions
     if (MH_Initialize() != MH_OK) {
@@ -82,7 +104,7 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> additionalAddresse
         return false;
     }
 
-    for(const auto &v: hooks) {
+    for(const auto &v: data->hooks) {
         std::string label = v.first;
         Hook *hook = v.second;
         if (hook->detour == nullptr) {
@@ -104,7 +126,7 @@ bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> additionalAddresse
     //data->origGetNames = (tGetNames)hooks["GetNames"]->original;
 
     // Enable hooks once we have pointers to original functions
-    for(const auto &v: hooks) {
+    for(const auto &v: data->hooks) {
         std::string label = v.first;
         Hook *hook = v.second;
         if (hook->detour == nullptr) {
@@ -186,4 +208,38 @@ bool EnableHook(uintptr_t address) {
         return false;
     }
     return true;
+}
+
+// a1 should be this. and a2 should be a TArray of arguments? or something. Suppose it depends
+// on what function type was added as a listener.
+// void* AddEmeralds(void *a1, void *a2) {
+
+//     // a1 is a TArray, Num matches number of arguments.
+//     auto args = (TArray<void *>*)a1;
+//     printf("args %d\n", args->ArrayNum);
+//     for (int i=0; i<args->ArrayNum; i++) {
+//         hexDump(args->Data, 64);
+//     }
+
+//     printf("a1 %llx\n", (uintptr_t)a1);
+//     hexDump(a1, 32);
+//     printf("at a1's first pointer\n");
+//     hexDump(*(void**)a1, 32);
+//     printf("a2 %llx\n", (uintptr_t)a2);
+//     hexDump(a2, 32);
+//     void *result = ((tAddEmeralds)spy::spyData->hooks[RefAddEmeralds]->original)(a1, a2);
+
+//     return result;
+// }
+
+
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat) {
+    printf("level loaded? %s\n", util::getName(thisBpGameInstance));
+    printf("levelName: %ws\n", (wchar_t*)params->levelName.Data);
+    printf("loadType: %ws\n", (wchar_t*)params->loadType.Data);
+    printf("seed: %I64d\n", params->seed);
+//    params->seed = 91081;
+
+    ((tLoadLevel)spy::spyData->hooks[RefLoadLevel]->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
+    return;
 }

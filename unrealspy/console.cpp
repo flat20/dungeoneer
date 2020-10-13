@@ -99,11 +99,10 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
 
     // Should be _tstrcmp!?
     if (wcscmp((const wchar_t*)InInput, L"flat20") != 0) { // TEXT("flat20")
-        printf("Not flat20\n");
         return;
     }
 
-    printf("Enabling cheats");
+    printf("Enabling cheats\n");
 
     // Disable all cheat flags
     FConsoleManager *cm = (FConsoleManager*)thisConsoleManager;
