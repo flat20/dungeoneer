@@ -20,11 +20,72 @@ namespace offsets {
 
     // Actual pattern scanning:
     void* PatternScan(char* bytes, size_t size, const char* pattern, const char* mask);
+        
+    class MemoryIterator {
 
-    // Wrapper:
-    void* PatternScanProcess(HANDLE hProc, uintptr_t begin, uintptr_t end, const char* pattern, const char* mask);
+    private:
 
-    // Wrapper for scanning modules:
-    void* PatternScanModule(HANDLE hProc, MODULEENTRY32 modEntry, const char* pattern, const char* mask);
+        HANDLE hProc;
+        char buffer[4096];
+        SIZE_T bytesRead = 0;
+
+        uintptr_t currentChunk;
+        uintptr_t end;
+
+    public:
+        MemoryIterator(const HANDLE hProc, uintptr_t begin, uintptr_t end) : hProc(hProc), currentChunk(begin), end(end)
+        {
+            ReadData();
+        }
+
+        /** conversion to "bool" returning true if the iterator is valid. */
+        inline explicit operator bool() const
+        { 
+            return hProc != NULL; 
+        }
+        /** inverse of the "bool" operator */
+        inline bool operator !() const 
+        {
+            return !(bool)*this;
+        }
+
+        inline friend bool operator==(const MemoryIterator& Lhs, const MemoryIterator& Rhs) { return Lhs.hProc == Rhs.hProc; }
+        inline friend bool operator!=(const MemoryIterator& Lhs, const MemoryIterator& Rhs) { return Lhs.hProc != Rhs.hProc; }
+
+        inline void operator++() {
+            ReadData();
+        }
+
+        inline char* operator*(){
+            return (char*)&buffer;
+        }
+
+        inline char* operator->() {
+            return (char*)&buffer;
+        }
+
+        inline SIZE_T GetBytesRead() {
+            return bytesRead;
+        }
+
+        inline SIZE_T GetCurrentAddr() {
+            return currentChunk;
+        }
+
+    protected:
+        inline void ReadData() {
+            currentChunk = currentChunk + bytesRead; // 0 first time anyway
+            if (currentChunk < end) {
+                DWORD oldProtect;
+                VirtualProtectEx(hProc, (void*)currentChunk, sizeof(buffer), PAGE_EXECUTE_READWRITE, &oldProtect);
+                ReadProcessMemory(hProc, (void *)currentChunk, &buffer, sizeof(buffer), &bytesRead);
+                VirtualProtectEx(hProc, (void *)currentChunk, sizeof(buffer), oldProtect, &oldProtect);
+
+                if (bytesRead == 0) {
+                    hProc = NULL;
+                }
+            }
+        }
+    };
+
 }
-
