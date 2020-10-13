@@ -131,15 +131,6 @@ void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHa
 
     functionHandlers[funcName].push_back(fnHandler);
 
-    // printf("dll.cpp functionHandlers size %zd\n", functionHandlers.size());
-    // printf("mod functionHandlers size %zd\n", mod->functionHandlers.size());
-    // // Eventually get rid of this
-    // if (funcName.compare("UObject_ProcessEvent")) {
-    //     AddProcessEventHandler(handler);
-    // } else if (funcName.compare("AHUD_PostRender")) {
-    //     AddPostRenderHandler((tPostRender)handler->fnHandler);
-    // }
-
 }
 
 void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
@@ -149,7 +140,7 @@ void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) 
 }
 
 void ClearFunctionHandlers(Module *mod) {
-    // 
+
     for (auto &it = mod->functionHandlers.begin(); it !=  mod->functionHandlers.end(); it++) {
         UE4Reference funcName = it->first;
         void *fnHandler = it->second;
@@ -157,17 +148,9 @@ void ClearFunctionHandlers(Module *mod) {
         if (functionHandlers[funcName].size() == 0) {
             functionHandlers.erase(funcName);
         }
-//            RemoveFunctionHandler(funcName, fnHandler);
-//            functionHandlers.erase(funcName);
     }
 
     mod->functionHandlers.clear();
-
-    // printf("dll.cpp functionHandlers size %zd\n", functionHandlers.size());
-    // printf("mod functionHandlers size %zd\n", mod->functionHandlers.size());
-    // ClearPostRenderHandlers();
-    // ClearProcessEventHandlers();
-
 }
 
 
@@ -323,30 +306,6 @@ std::string getDllDirectory() {
     pathname = fullname.substr(0, lastindex); 
     return pathname;
 }
-
-// void AddProcessEventHandler(void *fnHandler) {
-//     const std::lock_guard<std::mutex> lock(processEventHandlersMutex);
-//     processEventHandlers.push_back(fnHandler);
-//     //printf("added %s\n", handler->filterName);
-// }
-
-// void AddPostRenderHandler(tPostRender handler) {
-//     const std::lock_guard<std::mutex> lock(postRenderHandlersMutex);
-//     postRenderHandlers.push_back(handler);
-// }
-
-// // TEMP Just for testing loading/unloading dll
-// void ClearProcessEventHandlers() {
-//     const std::lock_guard<std::mutex> lock(processEventHandlersMutex);
-//     processEventHandlers.clear();
-// }
-
-
-// // TEMP Just for testing loading/unloading dll
-// void ClearPostRenderHandlers() {
-//     const std::lock_guard<std::mutex> lock(postRenderHandlersMutex);
-//     postRenderHandlers.clear();
-// }
 
 HMODULE temp = nullptr;
 void onLoadPressed(const char *modName) {
