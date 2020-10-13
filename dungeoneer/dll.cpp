@@ -26,10 +26,14 @@ std::string getDllDirectory();
 std::string dllDirectory;
 
 // Global function handlers for all mods.
-std::map<FunctionName,std::list<void *>> functionHandlers;
+std::map<UE4Reference,std::list<void *>> functionHandlers;
 
 // Lookup for loaded modules.
 std::map<std::string,Module*> loadedModules;
+
+void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler);
+void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler);
+void ClearFunctionHandlers(Module *mod);
 
 void onLoadPressed(const char *);
 void onUnloadPressed(const char *);
@@ -38,20 +42,91 @@ void ClearProcessEventHandlers();
 std::vector<std::string> listMods(std::string directory);
 
 
-//bool InitConsole();
-
-// std::list<void *> processEventHandlers;
-// std::mutex processEventHandlersMutex;
-// std::list<tPostRender> postRenderHandlers;
-// std::mutex postRenderHandlersMutex;
 
 Dungeoneer dng;
-SpyData spyData;
+spy::Data *spyData;
 UIData uiData;
+
+// TODO just make a std::map or similar
+tUObject_ProcessEvent origUObject_ProcessEvent = NULL;
+tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
+tAHUD_PostRender origAHUD_PostRender = NULL;
+
+
+// Testing: Params passed to LoadLevel. Not completed, but has what we need for now.
+struct LoadLevelParams {
+    byte difficulty;
+    byte threatLevel;
+    TArray<TCHAR> loadType; // "lobby", "ingame"
+    uint64 something;   // 0x17, 
+    TArray<TCHAR> levelName; // "Lobby", "soggyswamp"
+    uint64 seed;    // Could be uint32 as well.
+    TArray<TArray<TCHAR>> characterUnlockKeys;
+    // Probably more stuff, but stopped looking for now.
+};
+
+// __int64 __fastcall subLevelLoad(__int64 a1, __int64 a2, char a3)
+typedef void (__fastcall *tLoadLevel)(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
+
 
 using namespace util;
 
-void __stdcall AddFunctionHandler(Module *mod, FunctionName funcName, void *fnHandler) {
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+
+    if (dwReason == DLL_PROCESS_ATTACH) {
+
+        AllocConsole();
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+
+        spy::Init([&](spy::Data *data) {
+            spyData = data;
+
+            spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
+            spy::HookFunctionRef(RefAActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
+            spy::HookFunctionRef(RefAHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
+            // Testing
+            spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
+
+            dng.spyData = spyData;
+            dng.AddFunctionHandler = &AddFunctionHandler;
+
+            // Some ui vars
+            dllDirectory = getDllDirectory();
+            uiData.modNames = listMods(dllDirectory.c_str());
+            uiData.onLoadPressed = &onLoadPressed;
+            uiData.onUnloadPressed = &onUnloadPressed;
+            StartUI(&uiData);
+            printf("Dungeoneer ready\n");
+
+            bool result = spy::EnableConsole([](bool result) {
+                printf("Console enabled with all commands\n");
+            });
+            if (result == false) {
+                printf("No console\n");
+            }
+            // bool res = InitConsole(&spyData);
+            // if (res == false) {
+            //     printf("No console\n");
+            // }
+
+        }, offsets::defaultAddressLookups);
+
+
+    }
+    else if (dwReason == DLL_PROCESS_DETACH) {
+
+        printf("detach dll\n");
+
+        bool result = true;//DeInitSpy(&spyData);
+
+        printf("detach %s\n", result ? "successful" : "failed");
+    }
+    return TRUE;
+}
+
+void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
     mod->functionHandlers[funcName] = fnHandler;
 
     functionHandlers[funcName].push_back(fnHandler);
@@ -67,7 +142,7 @@ void __stdcall AddFunctionHandler(Module *mod, FunctionName funcName, void *fnHa
 
 }
 
-void RemoveFunctionHandler(Module *mod, FunctionName funcName, void *fnHandler) {
+void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
     mod->functionHandlers.erase(funcName);
     
     functionHandlers[funcName].remove(fnHandler);
@@ -76,7 +151,7 @@ void RemoveFunctionHandler(Module *mod, FunctionName funcName, void *fnHandler) 
 void ClearFunctionHandlers(Module *mod) {
     // 
     for (auto &it = mod->functionHandlers.begin(); it !=  mod->functionHandlers.end(); it++) {
-        FunctionName funcName = it->first;
+        UE4Reference funcName = it->first;
         void *fnHandler = it->second;
         functionHandlers[funcName].remove(fnHandler);
         if (functionHandlers[funcName].size() == 0) {
@@ -96,51 +171,6 @@ void ClearFunctionHandlers(Module *mod) {
 }
 
 
-
-
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-
-    if (dwReason == DLL_PROCESS_ATTACH) {
-
-        AllocConsole();
-        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-
-        // Any extra addresses to lookup
-        std::map<UE4Reference,uintptr_t> addresses;
-
-        // TODO InitSpy(.., hookListeners[RefUObject_ProcessEvent] = &UObject_ProcessEvent)
-        spyData.detourProcessEvent = &UObject_ProcessEvent;
-        spyData.detourAActor_ProcessEvent = &AActor_ProcessEvent;
-        spyData.detourPostRender = &AHUD_PostRender;
-        InitSpy(&spyData, addresses);
-
-        dng.spyData = &spyData;
-        dng.AddFunctionHandler = &AddFunctionHandler;
-
-        // Some ui vars
-        dllDirectory = getDllDirectory();
-        uiData.modNames = listMods(dllDirectory.c_str());
-        uiData.onLoadPressed = &onLoadPressed;
-        uiData.onUnloadPressed = &onUnloadPressed;
-        StartUI(&uiData);
-        printf("Dungeoneer ready.\n");
-
-        bool res = InitConsole(&spyData);
-        if (res == false) {
-            printf("No console\n");
-        }
-
-    }
-    else if (dwReason == DLL_PROCESS_DETACH) {
-
-        printf("detach dll\n");
-
-        bool result = DeInitSpy(&spyData);
-
-        printf("detach %s\n", result ? "successful" : "failed");
-    }
-    return TRUE;
-}
 
 // TODO rename to initializeMod?
 HMODULE loadMod(LPCSTR filename) {
@@ -349,7 +379,7 @@ void onUnloadPressed(const char *modName) {
 
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params) {
 
-    int result = spyData.origProcessEvent(object, func, params);
+    int result = origUObject_ProcessEvent(object, func, params);
 
     // Call all handlers
     {
@@ -362,7 +392,7 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
         std::list<void *>handlers = it->second;
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
-            tProcessEvent fnHandler = (tProcessEvent)*it;
+            tUObject_ProcessEvent fnHandler = (tUObject_ProcessEvent)*it;
             fnHandler(object, func, params);
         }
     }
@@ -373,7 +403,7 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
 
 signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params) {
     
-    int result = spyData.origAActor_ProcessEvent(thisActor, func, params);
+    int result = origAActor_ProcessEvent(thisActor, func, params);
     
     // Call all handlers
     {
@@ -386,7 +416,7 @@ signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, voi
         std::list<void *>handlers = it->second;
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
-            tAActor_ProcessEvent fnHandler = (tAActor_ProcessEvent)*it;
+            auto fnHandler = (tAActor_ProcessEvent)*it;
             fnHandler(thisActor, func, params);
         }
     }
@@ -396,7 +426,7 @@ signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, voi
 
 void __stdcall AHUD_PostRender(void* hud) {
 
-    spyData.origPostRender(hud);
+    origAHUD_PostRender(hud);
 
     {
 
@@ -407,9 +437,21 @@ void __stdcall AHUD_PostRender(void* hud) {
         std::list<void *>handlers = it->second;
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
-            tPostRender fnHandler = (tPostRender)*it;
+            auto fnHandler = (tAHUD_PostRender)*it;
             fnHandler(hud);
         }
     }
 }
 
+// Just for testing LoadLevel
+
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat) {
+    printf("level loaded? %s\n", util::getName(thisBpGameInstance));
+    printf("levelName: %ws\n", (wchar_t*)params->levelName.Data);
+    printf("loadType: %ws\n", (wchar_t*)params->loadType.Data);
+    printf("seed: %I64d\n", params->seed);
+//    params->seed = 91081;
+
+    ((tLoadLevel)spy::data.hooks[RefLoadLevel]->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
+    return;
+}

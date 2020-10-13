@@ -4,26 +4,25 @@
 #include "util.h"
 #include "console.h"
 
-bool InitConsole(SpyData *data) {
+std::function<void (bool success)> fnEnableConsoleResult = 0;
+tFConsoleManager_ProcessUserConsoleInput origProcessConsoleInput = nullptr;
 
-    // We should hook the function here.
-    // hooks[RefFConsoleManager_ProcessUserConsoleInput] = 
-    // spyData.detourProcessUserConsoleInput = &FConsoleManager_ProcessUserConsoleInput;
-    // SetHook()
+// TODO Enabling all commands should be a second function call
+bool spy::EnableConsole(std::function<void (bool result)> fnResult) {
 
     // Have we already got a console?
-    UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(data->GEngine, data->GEngine, "GameViewport/ViewportConsole");
+    UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(data.GEngine, data.GEngine, "GameViewport/ViewportConsole");
     if (ViewportConsole != nullptr) {
         return false;
     }
 
-    UObject *GameViewport = util::GetPropertyValueByPath<UObject>(data->GEngine, data->GEngine, "GameViewport");
+    UObject *GameViewport = util::GetPropertyValueByPath<UObject>(data.GEngine, data.GEngine, "GameViewport");
     if (GameViewport == nullptr) {
         printf("No gameviewport\n");
         return false;
     }
 
-    void** ConsoleClassPtr = (void**)util::GetPropertyValueByPath<uint64>(data->GEngine, data->GEngine, "ConsoleClass");
+    void** ConsoleClassPtr = (void**)util::GetPropertyValueByPath<uint64>(data.GEngine, data.GEngine, "ConsoleClass");
     if (ConsoleClassPtr == nullptr) {
         printf("No console class\n");
         return false;
@@ -45,7 +44,8 @@ bool InitConsole(SpyData *data) {
     //UClassProperty *p = (UClassProperty*)util::FindObjectByName("ConsoleClass", nullptr);
 
     FName NameNone{0,0};
-    UConsole *console = (UConsole*)data->StaticConstructObject_Internal(ConsoleClass, GameViewport, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
+    auto ConstructObject = GetFunction<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
+    UConsole *console = (UConsole*)ConstructObject(ConsoleClass, GameViewport, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
     if (console == nullptr) {
         printf("Unable to instantiate console class?\n");
         return false;
@@ -54,29 +54,27 @@ bool InitConsole(SpyData *data) {
     // TODO Clean this up.
     util::IterateProperties(GameViewport, [&](UProperty *p) {
         if (strcmp(util::getName(p), "ViewportConsole") == 0) {
-            printf("Found the prop %d\n", p->Offset_Internal);
             *(UObject**)((uint64)GameViewport + p->Offset_Internal) = console;
-            // uint8 *pt = (uint8*)GameViewport;
-            // pt += p->Offset_Internal;
-            // *pt = console;
-            // UObject **ptr = (UObject**)(uint64)GameViewport + p->Offset_Internal;
-            // *ptr = console;
             return true;
         }
         return false;
     });
 
-    
-    UObject *vc = util::GetPropertyValueByPath<UObject>(data->GEngine, data->GEngine, "GameViewport/ViewportConsole");
+    UObject *vc = util::GetPropertyValueByPath<UObject>(data.GEngine, data.GEngine, "GameViewport/ViewportConsole");
     if (vc == nullptr) {
         printf("console not set!\n");
         return false;
     }
-    printf("console set\n");
+    printf("Console enabled\n");
 
-    printf("Now issuing command\n");
+    bool result = spy::HookFunctionRef(RefFConsoleManager_ProcessUserConsoleInput, &FConsoleManager_ProcessUserConsoleInput, (void**)&origProcessConsoleInput);
+    if (result == false) {
+        return false;
+    }
 
-    UConsole_ConsoleCommand consoleCommand = (UConsole_ConsoleCommand)data->addresses[RefUConsole_ConsoleCommand];
+    fnEnableConsoleResult = fnResult;
+
+    auto consoleCommand = GetFunction<tUConsole_ConsoleCommand>(RefUConsole_ConsoleCommand);
 
     FString str;
     wchar_t *text = L"flat20";
@@ -84,25 +82,27 @@ bool InitConsole(SpyData *data) {
     str.Data.ArrayNum = 7;
     str.Data.ArrayMax = 7;
     consoleCommand(console, &str);
-//    data->UConsole_ConsoleCommand((UConsole*)console, &str);
+
     return true;
 }
 
 void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld) {
 
-//    printf("console input! %ws\n", (wchar*)InInput);
     // Call original
-    //tFConsoleManager_ProcessUserConsoleInput puci = (tFConsoleManager_ProcessUserConsoleInput)spyData->origProcessUserConsoleInput;
-    //puci(thisConsoleManager, InInput, Ar, InWorld);
+    origProcessConsoleInput(thisConsoleManager, InInput, Ar, InWorld);
 
-    spy::spyData->origProcessUserConsoleInput(thisConsoleManager, InInput, Ar, InWorld);
+    // Unhook immediately? Or only after we've received the cheat command?
 
-    // Should be _tstrcmp!?
     if (wcscmp((const wchar_t*)InInput, L"flat20") != 0) { // TEXT("flat20")
         return;
     }
 
-    printf("Enabling cheats\n");
+    bool result = spy::UnhookFunctionRef(RefFConsoleManager_ProcessUserConsoleInput);
+    if (result == true) {
+        origProcessConsoleInput = nullptr;
+    }
+
+    // Might be useful to save FConsoleManager somewhere, considering how hard it was to get it.
 
     // Disable all cheat flags
     FConsoleManager *cm = (FConsoleManager*)thisConsoleManager;
@@ -117,5 +117,5 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
 //        printf("  %ws\n", (wchar_t*)el.IConsoleObject->Help.Data.Data);
     }
 
-    // Now unhook us
+    fnEnableConsoleResult(true);
 }

@@ -1,41 +1,42 @@
 #pragma once
 #include <map>
+#include <functional>
 #include "unreal.h"
 
 
-typedef signed int (__thiscall *tProcessEvent) (UObject* thisObject, UFunction* func, void *params);
+typedef signed int (__thiscall *tUObject_ProcessEvent) (UObject* thisObject, UFunction* func, void *params);
 typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
-typedef void (__thiscall *tPostRender) (void *hud);
-typedef TNameEntryArray* (__stdcall *FName_GetNames) ();
+typedef void (__thiscall *tAHUD_PostRender) (void *hud);
+typedef TNameEntryArray* (__stdcall *tFName_GetNames) ();
 //typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
-typedef void* (__thiscall *FRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
+typedef void* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
 
 // void __stdcall __high AHUD::DrawRect(struct FLinearColor, float, float, float, float)
-typedef void (__thiscall *AHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
+typedef void (__thiscall *tAHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
 
 // void __stdcall __high AHUD::DrawText(const struct FString *, struct FLinearColor, float, float, struct UFont *, float, bool)
 // 	void DrawText(const FString& Text, FLinearColor TextColor, float ScreenX, float ScreenY, UFont* Font=NULL, float Scale=1.f, bool bScalePosition=false);
-typedef void (__thiscall *AHUD_DrawText)(void *hud, const FString* Text, FLinearColor TextColor, float ScreenX, float ScreenY, UFont* Font, float Scale, bool bScalePosition);
+typedef void (__thiscall *tAHUD_DrawText)(void *hud, const FString* Text, FLinearColor TextColor, float ScreenX, float ScreenY, UFont* Font, float Scale, bool bScalePosition);
 
 // Sadly does not take linebreaks in to account so no good for multiline, if we care about that.
 //void __fastcall AHUD::GetTextSize(AHUD *__hidden this, const struct FString *, float *, float *, struct UFont *, float)
-typedef void (__thiscall *AHUD_GetTextSize)(void *hud, const FString* Text, float* OutWidth, float* OutHeight, UFont* Font, float Scale);
+typedef void (__thiscall *tAHUD_GetTextSize)(void *hud, const FString* Text, float* OutWidth, float* OutHeight, UFont* Font, float Scale);
 
 //  UClass* Class, UObject* InOuter, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32 LoadFlags = LOAD_None, UPackageMap* Sandbox = nullptr, bool bAllowObjectReconciliation = true, FUObjectSerializeContext* InSerializeContext = nullptr );
 // _int64 __fastcall StaticLoadObject(struct UClass *a1, struct UObject *a2, const wchar_t *a3, const wchar_t *a4, unsigned int a5, struct UPackageMap *a6, bool a7, struct FUObjectSerializeContext *a8)
-typedef UObject* (__fastcall *StaticLoadObject)(UClass* Class, UObject* Inouter, const TCHAR* Name, const TCHAR* Filename, uint32 LoadFlags, void* Sandbox, bool bAllowObjectReconciliation, void *InSerializeContext);
+typedef UObject* (__fastcall *tStaticLoadObject)(UClass* Class, UObject* Inouter, const TCHAR* Name, const TCHAR* Filename, uint32 LoadFlags, void* Sandbox, bool bAllowObjectReconciliation, void *InSerializeContext);
 
 // COREUOBJECT_API UClass* StaticLoadClass(UClass* BaseClass, UObject* InOuter, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32 LoadFlags = LOAD_None, UPackageMap* Sandbox = nullptr);
-typedef UClass* (__fastcall *StaticLoadClass)(UClass* BaseClass, UObject* InOuter, const TCHAR* Name, const TCHAR* Filename, uint32 LoadFlags, void* Sandbox);
+typedef UClass* (__fastcall *tStaticLoadClass)(UClass* BaseClass, UObject* InOuter, const TCHAR* Name, const TCHAR* Filename, uint32 LoadFlags, void* Sandbox);
 
 // COREUOBJECT_API UPackage* LoadPackage( UPackage* InOuter, const TCHAR* InLongPackageName, uint32 LoadFlags, FArchive* InReaderOverride = nullptr, FUObjectSerializeContext* InLoadContext = nullptr );
-typedef UPackage* (__fastcall *LoadPackage)( UPackage* InOuter, const TCHAR* InLongPackageName, uint32 LoadFlags, void* InReaderOverride, void* InLoadContext );
+typedef UPackage* (__fastcall *tLoadPackage)( UPackage* InOuter, const TCHAR* InLongPackageName, uint32 LoadFlags, void* InReaderOverride, void* InLoadContext );
 
 // COREUOBJECT_API UObject* StaticConstructObject_Internal(UClass* Class, UObject* InOuter = (UObject*)GetTransientPackage(), FName Name = NAME_None, EObjectFlags SetFlags = RF_NoFlags, EInternalObjectFlags InternalSetFlags = EInternalObjectFlags::None, UObject* Template = nullptr, bool bCopyTransientsFromClassDefaults = false, struct FObjectInstancingGraph* InstanceGraph = nullptr, bool bAssumeTemplateIsArchetype = false);
-typedef UObject* (__fastcall *StaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
+typedef UObject* (__fastcall *tStaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
 //typedef UObject* (__fastcall *StaticConstructObject_Internal)(__int64 a1,    int a2,           __int64 a3, int a4,                int a5,                                __int64 a6,        char a7,                               __int64 a8,          char a9);
 
-typedef void (__thiscall *UConsole_ConsoleCommand)(UConsole *thisUConsole, const struct FString *);
+typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const struct FString *);
 
 // bool FConsoleManager::ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld)
 // __int64 __fastcall FConsoleManager::ProcessUserConsoleInput(FConsoleManager *this, const wchar_t *a2, struct FOutputDevice *a3, struct UWorld *a4)
@@ -60,62 +61,96 @@ const UE4Reference RefFConsoleManager_ProcessUserConsoleInput = "FConsoleManager
 const UE4Reference RefAddEmeralds                   = "AddEmeralds";
 const UE4Reference RefLoadLevel                     = "LoadLevel";
 
-// Hooking.h?
-struct Hook {
-    uintptr_t address;
-    void *detour;   // Point this to function
-    LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
-};
+// // Hooking.h?
+// struct Hook {
+//     uintptr_t address;
+//     void *detour;   // Point this to function
+//     LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
+// };
 
 // Offsets to functions. Name each entry?
 //extern std::map<UE4Reference, Hook*> hooks;
 
-// We shouldn't force a user into our basic API. Leaving some options
-bool SetHook(LPVOID target, LPVOID detour, LPVOID* original);
-// Address to target and address to our hook
-bool SetHook(Hook *hook);
-bool EnableHook(uintptr_t address);
-bool RemoveHook(Hook *hook);
-
-struct SpyData {
-    uint64 baseAddress;             // Base address of process, never used but let's leave for now.
-    std::map<UE4Reference,uintptr_t> addresses; // Looked up addresses
-    std::map<UE4Reference, Hook*> hooks;        // enabled hooks
-
-    FUObjectArray *GUObjectArray;
-    TNameEntryArray* GNames;
-    UEngine* GEngine; // Just get from GUObjectArray?
-
-    AHUD_DrawRect AHUD_DrawRect;
-    AHUD_DrawText AHUD_DrawText;
-    AHUD_GetTextSize AHUD_GetTextSize;
-    StaticLoadObject StaticLoadObject;
-    StaticLoadClass StaticLoadClass;
-    LoadPackage LoadPackage;
-    FName_GetNames FName_GetNames;
-    FRawObjectIterator_Ctor FRawObjectIterator_Ctor;
-    StaticConstructObject_Internal StaticConstructObject_Internal;
-    UConsole_ConsoleCommand UConsole_ConsoleCommand;
 
 
-    // TODO just make a std::map or similar
-    tProcessEvent origProcessEvent = NULL;
-    void *detourProcessEvent = NULL;
-    tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
-    void *detourAActor_ProcessEvent = NULL;
-    tPostRender origPostRender = NULL;
-    void *detourPostRender = NULL;
+// struct SpyData {
+//     uint64 baseAddress;             // Base address of process, never used but let's leave for now.
+//     std::map<UE4Reference,uintptr_t> addresses; // Looked up addresses
+//     std::map<UE4Reference, Hook*> hooks;        // enabled hooks
 
-    tFConsoleManager_ProcessUserConsoleInput origProcessUserConsoleInput = NULL;
-    void *detourProcessUserConsoleInput = NULL;
+//     FUObjectArray *GUObjectArray;
+//     TNameEntryArray* GNames;
+//     UEngine* GEngine; // Just get from GUObjectArray?
 
-};
+//     AHUD_DrawRect AHUD_DrawRect;
+//     AHUD_DrawText AHUD_DrawText;
+//     AHUD_GetTextSize AHUD_GetTextSize;
+//     StaticLoadObject StaticLoadObject;
+//     StaticLoadClass StaticLoadClass;
+//     LoadPackage LoadPackage;
+//     FName_GetNames FName_GetNames;
+//     FRawObjectIterator_Ctor FRawObjectIterator_Ctor;
+//     StaticConstructObject_Internal StaticConstructObject_Internal;
+//     UConsole_ConsoleCommand UConsole_ConsoleCommand;
+
+
+//     // TODO just make a std::map or similar
+//     tProcessEvent origProcessEvent = NULL;
+//     void *detourProcessEvent = NULL;
+//     tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
+//     void *detourAActor_ProcessEvent = NULL;
+//     tPostRender origPostRender = NULL;
+//     void *detourPostRender = NULL;
+
+//     tFConsoleManager_ProcessUserConsoleInput origProcessUserConsoleInput = NULL;
+//     void *detourProcessUserConsoleInput = NULL;
+
+// };
+
+
+// namespace spy {
+//     extern SpyData *spyData;
+// }
+
+// // Hook everything up, pass in offsets.
+// bool InitSpy(SpyData*, std::map<UE4Reference, uintptr_t> addresses);
+// bool DeInitSpy(SpyData*);
+
 
 
 namespace spy {
-    extern SpyData *spyData;
-}
 
-// Hook everything up, pass in offsets.
-bool InitSpy(SpyData*, std::map<UE4Reference, uintptr_t> addresses);
-bool DeInitSpy(SpyData*);
+    struct Hook {
+        uintptr_t address;
+        const void *detour;       // Function to call
+        LPVOID original;    // original implementation
+    };
+
+    struct Data {
+        uintptr_t baseAddress;                          // Base address of process, never used but let's leave for now.
+        std::map<UE4Reference, uintptr_t> functionPtrs;  // Looked up addresses
+        std::map<UE4Reference, Hook*> hooks;            // enabled hooks
+
+        FUObjectArray *GUObjectArray;
+        TNameEntryArray* GNames;
+        UEngine* GEngine; // Just get from GUObjectArray?
+
+    };
+
+    // For internal use, but I guess I'll work that out later..
+    //namespace {
+    extern Data data;
+    //}
+
+    Data *Init(std::function<void (Data *spyData)> fnInitialized, std::map<UE4Reference, std::string> functionPatterns);
+    uintptr_t AddFunctionRef(UE4Reference refName, std::string pattern);
+    uintptr_t GetFunctionRef(const UE4Reference refName);
+    template<typename T>
+    T GetFunction(const UE4Reference refName) {
+        return (T)data.functionPtrs[refName];
+    }
+
+    bool HookFunctionRef(UE4Reference refName, const void *detour, void **original);
+    bool UnhookFunctionRef(UE4Reference refName);
+    bool EnableConsole(std::function<void (bool result)> fnResult);
+}
