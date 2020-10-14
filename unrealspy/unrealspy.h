@@ -40,7 +40,6 @@ typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, cons
 
 // bool FConsoleManager::ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld)
 // __int64 __fastcall FConsoleManager::ProcessUserConsoleInput(FConsoleManager *this, const wchar_t *a2, struct FOutputDevice *a3, struct UWorld *a4)
-//typedef void (__thiscall *FConsoleManager_ProcessUserConsoleInput)(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 typedef void (__thiscall *tFConsoleManager_ProcessUserConsoleInput) (FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 
 
@@ -60,63 +59,6 @@ const UE4Reference RefUConsole_ConsoleCommand       = "UConsole_ConsoleCommand";
 const UE4Reference RefFConsoleManager_ProcessUserConsoleInput = "FConsoleManager::ProcessUserConsoleInput";
 const UE4Reference RefAddEmeralds                   = "AddEmeralds";
 const UE4Reference RefLoadLevel                     = "LoadLevel";
-
-// // Hooking.h?
-// struct Hook {
-//     uintptr_t address;
-//     void *detour;   // Point this to function
-//     LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
-// };
-
-// Offsets to functions. Name each entry?
-//extern std::map<UE4Reference, Hook*> hooks;
-
-
-
-// struct SpyData {
-//     uint64 baseAddress;             // Base address of process, never used but let's leave for now.
-//     std::map<UE4Reference,uintptr_t> addresses; // Looked up addresses
-//     std::map<UE4Reference, Hook*> hooks;        // enabled hooks
-
-//     FUObjectArray *GUObjectArray;
-//     TNameEntryArray* GNames;
-//     UEngine* GEngine; // Just get from GUObjectArray?
-
-//     AHUD_DrawRect AHUD_DrawRect;
-//     AHUD_DrawText AHUD_DrawText;
-//     AHUD_GetTextSize AHUD_GetTextSize;
-//     StaticLoadObject StaticLoadObject;
-//     StaticLoadClass StaticLoadClass;
-//     LoadPackage LoadPackage;
-//     FName_GetNames FName_GetNames;
-//     FRawObjectIterator_Ctor FRawObjectIterator_Ctor;
-//     StaticConstructObject_Internal StaticConstructObject_Internal;
-//     UConsole_ConsoleCommand UConsole_ConsoleCommand;
-
-
-//     // TODO just make a std::map or similar
-//     tProcessEvent origProcessEvent = NULL;
-//     void *detourProcessEvent = NULL;
-//     tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
-//     void *detourAActor_ProcessEvent = NULL;
-//     tPostRender origPostRender = NULL;
-//     void *detourPostRender = NULL;
-
-//     tFConsoleManager_ProcessUserConsoleInput origProcessUserConsoleInput = NULL;
-//     void *detourProcessUserConsoleInput = NULL;
-
-// };
-
-
-// namespace spy {
-//     extern SpyData *spyData;
-// }
-
-// // Hook everything up, pass in offsets.
-// bool InitSpy(SpyData*, std::map<UE4Reference, uintptr_t> addresses);
-// bool DeInitSpy(SpyData*);
-
-
 
 namespace spy {
 

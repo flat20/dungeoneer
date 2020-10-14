@@ -4,15 +4,13 @@
 #include <cstdio>
 #include <tlhelp32.h>
 #include <sstream>
-#include <vector>
-#include <map>
 #include "offsets.h"
-#include "unrealspy.h"
 
 namespace offsets {
 
     // Some defaults for us.
     std::map<UE4Reference, std::string> defaultAddressLookups = {
+        {"test", "48 83"},
         {RefFName_GetNames,                 "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? B9 08 08 00 00 48 89 5C 24 20"},
         {RefFRawObjectIterator_Ctor,        "84 D2 48 C7 41 10 00 00 00 00 B8 FF FF FF FF ?? ?? ?? ?? ?? ?? ?? 89 41 08 4C 8B D1 4C 89 01"},
 
@@ -38,8 +36,7 @@ namespace offsets {
     // lookups is a map like:
     // ["AHUD_DrawRect"] = "48 8B C4 48 89 ?? ?? 57 48 81 EC E0"
     // Returns a map keyed by the same string name and a uintptr_t which is the found address.
-    // TODO void* ?
-    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> lookups) {
+    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> opcodes) {
 
         std::map<UE4Reference,uintptr_t> results;
 
@@ -50,71 +47,81 @@ namespace offsets {
             return results;
         }
 
-        uintptr_t baseAddr = (uintptr_t)modEntry.modBaseAddr;
-        uintptr_t offset;
-        for (auto &it = std::begin(lookups); it != std::end(lookups); ++it) {
-            std::string name = it->first;
-            std::string opcodes = it->second;
-            offset = FindOffset(process, modEntry, opcodes);
-            uintptr_t addr = baseAddr + offset;
-            printf("%s: %llx = %llx\n", name.c_str(), (uint64)offset, (uint64)addr);
-            results[name] = addr;
-        }
-        return results;
+        return FindAddresses(process, modEntry, opcodes);
     }
 
+    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, MODULEENTRY32 modEntry, std::map<UE4Reference, std::string> opcodes) {
 
-    uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, std::string opcodes) {
-        
+        struct Pattern {
+            UE4Reference refName;
+            BYTE values[128];
+            char mask[128]; // Not null-terminated
+            size_t length;
+        };
+
+        std::vector<Pattern> patterns;
+        for (auto &it = std::begin(opcodes); it != std::end(opcodes); ++it) {
+            UE4Reference name = it->first;
+            std::string opcode = it->second;
+
+            Pattern pattern = {name};
+            pattern.length = parseHex(opcode, &pattern.values[0], &pattern.mask[0]);
+
+            patterns.push_back(pattern);
+        }
+
+        std::map<UE4Reference,uintptr_t> offsets;
+
         uintptr_t baseAddr = (uintptr_t)modEntry.modBaseAddr;
-        BYTE pattern[64]; // Could allocate correct size
-        std::stringstream mask;
-        int len = parseHex(opcodes, &pattern[0], &mask);
-        uintptr_t begin = (uintptr_t)modEntry.modBaseAddr;
-        uintptr_t end = begin + modEntry.modBaseSize;
-        //void *addr = PatternScanProcess(process, begin, end, (char*)&pattern[0], mask.str().c_str());
+        uintptr_t endAddr = baseAddr + modEntry.modBaseSize;
+        int numPatterns = patterns.size();
 
-        // TODO get mask ptr before looping.
-        // Make iterator figure out offsets. PatternScan could return offset in data rather than
-        // pointer to it
-        // Pass strlen to PatternScan
-        // Loop all patterns.
-        // inverse PatternScan if-check? Looks backwards
+        for (MemoryIterator it(process, baseAddr, endAddr); it; ++it) {
 
-        for (MemoryIterator it(process, begin, end); it; ++it) {
+            for(auto pit = std::begin(patterns); pit != std::end(patterns); ++pit) {
 
-            void *internalAddress = PatternScan(*it, it.GetBytesRead(), (char*)&pattern[0], mask.str().c_str());
+            //for (int i=0; i<patterns.size(); i++) {
+                Pattern pattern = *pit;//patterns[i];
 
-            if (internalAddress != nullptr) {
-                uintptr_t offsetFromBuffer = (uintptr_t)internalAddress - (uintptr_t)*it;
-                uintptr_t addr = it.GetCurrentAddr() + offsetFromBuffer;
-                return addr - baseAddr;
+                int index = PatternScan(*it, it.GetBytesRead(), &pattern.values[0], &pattern.mask[0], pattern.length);
+
+                if (index != -1) {
+                    uintptr_t addr = it.GetCurrentAddr() + index;
+                    offsets[pattern.refName] = addr;
+                    patterns.erase(pit);
+                    numPatterns--;
+                    break;
+                }
+            }
+            if (numPatterns == 0) {
+                break;
             }
         }
-        return 0;
+
+        return offsets;
     }
 
-    // Actual pattern scanning:
-    void* PatternScan(char* bytes, size_t size, const char* pattern, const char* mask) {
-        size_t patternLength = strlen(mask);
-        for (unsigned int i = 0; i < size - patternLength; i++) {
+    uintptr_t PatternScan(char* bytes, size_t size, const BYTE* pattern, const char* mask, size_t patternLength) {
+
+        //printf("size %zd patlen %zd\n", size, patternLength);
+        for (unsigned int i = 0; i <= size - patternLength; i++) {
             bool found = true;
             for (unsigned int j = 0; j < patternLength; j++) {
-                if (mask[j] != '?' && pattern[j] != *(bytes + i + j)) {
+                if (mask[j] != '?' && pattern[j] != (BYTE)*(bytes + i + j)) {
                     found = false;
                     break;
                 }
             }
             if (found) {
-                return (void *)(bytes + i);
+                return (uintptr_t)i;
             }
         }
-        return nullptr;
+        return -1;
     }
 
     // Convert IDA Pro binary search strings into an array of bytes and a mask
     // "48 8B ?? C4 53" = 0x48 0x8b 0x0 0xC4 mask = xx?x
-    int parseHex(std::string hex, BYTE *bytes, std::stringstream *mask) {
+    size_t parseHex(std::string hex, BYTE *bytes, char *mask) {
 
         std::istringstream ss(hex);
         std::string text;
@@ -122,12 +129,13 @@ namespace offsets {
         while (std::getline(ss, text, ' ')) {
             BYTE value = 0;
             if (text.c_str()[0] == '?') {
-                *mask << "?"; 
+                mask[i] = '?'; 
             } else {
-                *mask << "x";
+                mask[i] = 'x';
                 value = strtol(text.c_str(), NULL, 16);
             }
             bytes[i] = value;
+
             i++;
         }
         return i;
@@ -150,6 +158,7 @@ namespace offsets {
 
             if (Module32First(snapshot, &curr)) {
                 modEntry = curr;
+                printf("%s\n", curr.szModule);
                 // do {
                 //     if (strcmp((const char*)curr.szModule, modName) == 0) {
                 //         modEntry = curr;

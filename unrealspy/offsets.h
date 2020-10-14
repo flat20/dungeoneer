@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <TlHelp32.h>
 #include <string>
+#include <vector>
 #include <map>
 #include <unrealspy.h>
 
@@ -10,30 +11,32 @@ namespace offsets {
     // ["name"] = opcodes string
     extern std::map<UE4Reference,std::string> defaultAddressLookups;
 
-    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<std::string,std::string> lookups);
-    uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, std::string opcodes);
+    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> lookups);
+    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, MODULEENTRY32 modEntry, std::map<UE4Reference, std::string> opcodes);
+
+    //uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, std::string opcodes);
     MODULEENTRY32 GetModule(const DWORD &pid);
-    int parseHex(std::string hex, BYTE *bytes, std::stringstream *mask);
+    size_t parseHex(std::string hex, BYTE *bytes, char *mask);
 
 
     // Taken from https://github.com/0xZ0F/CPPMemory/blob/master/x64/Scanning.cpp
 
     // Actual pattern scanning:
-    void* PatternScan(char* bytes, size_t size, const char* pattern, const char* mask);
+    uintptr_t PatternScan(char* bytes, size_t size, const BYTE* pattern, const char* mask, size_t patternLen);
         
     class MemoryIterator {
 
     private:
-
+        static const int CHUNK_SIZE = 4096;
         HANDLE hProc;
-        char buffer[4096];
+        char buffer[CHUNK_SIZE];
         SIZE_T bytesRead = 0;
 
-        uintptr_t currentChunk;
+        uintptr_t current;
         uintptr_t end;
 
     public:
-        MemoryIterator(const HANDLE hProc, uintptr_t begin, uintptr_t end) : hProc(hProc), currentChunk(begin), end(end)
+        MemoryIterator(const HANDLE hProc, uintptr_t begin, uintptr_t end) : hProc(hProc), current(begin), end(end)
         {
             ReadData();
         }
@@ -57,33 +60,36 @@ namespace offsets {
         }
 
         inline char* operator*(){
-            return (char*)&buffer;
+            return (char*)&buffer[0];
         }
 
         inline char* operator->() {
-            return (char*)&buffer;
+            return (char*)&buffer[0];
         }
 
         inline SIZE_T GetBytesRead() {
             return bytesRead;
         }
 
-        inline SIZE_T GetCurrentAddr() {
-            return currentChunk;
+        inline uintptr_t GetCurrentAddr() {
+            return current;
         }
 
     protected:
         inline void ReadData() {
-            currentChunk = currentChunk + bytesRead; // 0 first time anyway
-            if (currentChunk < end) {
-                DWORD oldProtect;
-                VirtualProtectEx(hProc, (void*)currentChunk, sizeof(buffer), PAGE_EXECUTE_READWRITE, &oldProtect);
-                ReadProcessMemory(hProc, (void *)currentChunk, &buffer, sizeof(buffer), &bytesRead);
-                VirtualProtectEx(hProc, (void *)currentChunk, sizeof(buffer), oldProtect, &oldProtect);
+            current = current + bytesRead; // 0 first time anyway
+            if (current >= end) {
+                hProc = NULL;
+                return;
+            }
 
-                if (bytesRead == 0) {
-                    hProc = NULL;
-                }
+            DWORD oldProtect;
+            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE, PAGE_EXECUTE_READWRITE, &oldProtect);
+            ReadProcessMemory(hProc, (void*)current, &buffer, CHUNK_SIZE, &bytesRead);
+            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE, oldProtect, &oldProtect);
+
+            if (bytesRead == 0) {
+                hProc = NULL;
             }
         }
     };

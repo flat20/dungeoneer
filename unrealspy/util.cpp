@@ -738,16 +738,16 @@ void dumpObjectArray(FUObjectArray* oa) {
         //printf("%s (%s)\n", getName(item.Object), getName(item.Object->ClassPrivate));
         myfile << getName(item.Object) << " (" << getName(item.Object->ClassPrivate) << ")" << std::endl;
         //printFullObjectName(item.Object);
-        for (UProperty* p = item.Object->ClassPrivate->PropertyLink; p; p = p->PropertyLinkNext)
-        {
-            //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
-            myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
-        }
-        for (UField* p = item.Object->ClassPrivate->Children; p; p = p->Next)
-        {
-            //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
-            myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
-        }
+        // for (UProperty* p = item.Object->ClassPrivate->PropertyLink; p; p = p->PropertyLinkNext)
+        // {
+        //     //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
+        //     myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
+        // }
+        // for (UField* p = item.Object->ClassPrivate->Children; p; p = p->Next)
+        // {
+        //     //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
+        //     myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
+        // }
 
     }
     myfile.close();

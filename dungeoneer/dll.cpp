@@ -106,10 +106,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
             if (result == false) {
                 printf("No console\n");
             }
-            // bool res = InitConsole(&spyData);
-            // if (res == false) {
-            //     printf("No console\n");
-            // }
+
+            // dumpObjectArray(util::GUObjectArray);
 
         }, offsets::defaultAddressLookups);
 
