@@ -22,6 +22,9 @@ void ModMain(Dungeoneer *dng, Module *mod) {
 
 void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
     // Print out the name of the function and the object it belongs to.
+    if (strstr(util::getName(func), "My") == nullptr) {
+        return;
+    }
     printf("%s::", util::getName(object->ClassPrivate));
     printf("%s.%s(%d) ", util::getName(object), util::getName(func), func->NumParms);
     for (UObject *outer = object; outer != nullptr; outer = outer->OuterPrivate) {
@@ -29,28 +32,31 @@ void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
     }
     printf("\n");
 
-    // Uncomment to show all params for the function.
-    util::IterateProperties(func, [&](UProperty *p) {
+    // // Uncomment to show all params for the function.
+    // util::IterateProperties(func, [&](UProperty *p) {
 
-        printf("  ");
-        util::dumpProperty(p, params);
-        printf("\n");
+    //     printf("  ");
+    //     util::dumpProperty(p, params);
+    //     printf("\n");
         
-        return false;
-    });
+    //     return false;
+    // });
 
-    // Not sure how to get the values of these. It's not in params it seems.
-    printf(" Variables:\n");
-    util::IterateFields(func, [&](UField *f) {
-        printf(" %s", util::getName(f));
-        return false;
-    });
-    printf("\n");
+    // // Not sure how to get the values of these. It's not in params it seems.
+    // printf(" Variables:\n");
+    // util::IterateFields(func, [&](UField *f) {
+    //     printf(" %s", util::getName(f));
+    //     return false;
+    // });
+    // printf("\n");
 
 }
 
 
 void AActor_ProcessEvent(AActor* thisActor, UFunction* func, void *params) {
+    if (strstr(util::getName(func), "My") == nullptr) {
+        return;
+    }
     printf("%s::", util::getName(thisActor->ClassPrivate));
     printf("%s.%s(%d) ", util::getName(thisActor), util::getName(func), func->NumParms);
     printf("\n");

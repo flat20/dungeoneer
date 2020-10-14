@@ -107,6 +107,29 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
                 printf("No console\n");
             }
 
+            UEnum *lvlNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
+            printf("%s (%s)\n", getName(lvlNames), getName(lvlNames->ClassPrivate));
+            FString n = lvlNames->CppType;
+            printf("%ws\n", (wchar_t*)n.Data.Data);
+            printf("numNames %d %d\n", lvlNames->Names.ArrayNum, lvlNames->Names.ArrayMax);
+            hexDump((void*)lvlNames->Names.Data, 64);
+            struct Bla {
+                FName name;
+                uint64 val;
+            };
+            Bla *an = (Bla *)lvlNames->Names.Data;
+            
+            printf("  %s\n", getName(an->name), an->val);
+            char *p = (char*)lvlNames->Names.Data;
+            p += 16;
+            an = (Bla *)p;
+            printf("  %s\n", getName(an->name), an->val);
+
+            // for (int i=0; i<lvlNames->Names.ArrayNum; i++) {
+            //     printf("  %ws\n", (wchar_t*)lvlNames->Names.Data[i]);
+            // }
+            
+
             // dumpObjectArray(util::GUObjectArray);
 
         }, offsets::defaultAddressLookups);

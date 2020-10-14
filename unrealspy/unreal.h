@@ -153,7 +153,7 @@ struct UEnum : UField
 
 	/** List of pairs of all enum names and values. */
 //	TArray<TPair<FName, int64>> Names;
-	TArray<void *> Names;
+	TArray<TCHAR> Names;
 
 	/** How the enum was originally defined. */
 	ECppForm CppForm;
