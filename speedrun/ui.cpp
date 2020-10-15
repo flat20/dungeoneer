@@ -36,8 +36,10 @@ struct MainWindow
 
         static int item_current = 0;
 
-        for (const auto &level: data->levels) {
-            ImGui::Text("%s = %I32d", level.first.c_str(), level.second);
+        //for (const auto &level: data->levels) {
+        for (auto it = data->levels.begin(); it != data->levels.end(); it++) {
+            auto level = *it;
+//            ImGui::Text("%s = %I32d", level.first.c_str(), level.second);
             ImGui::InputInt(level.first.c_str(), &(int)level.second);
         }
 

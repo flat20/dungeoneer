@@ -6,6 +6,9 @@
 #include <offsets.h>
 #include <util.h>
 #include <console.h>
+#include <fstream>
+#include <utility>
+#include "json.hpp"
 
 #include "ui.h"
 
@@ -62,7 +65,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 void Init() {
     
     uiData.levels = {
-        {"squidcoast",          0},
         {"creeperwoods",        0},
         {"pumpkinpastures",     0},
         {"soggyswamp",          0},
@@ -72,6 +74,35 @@ void Init() {
         {"obsidianpinnacle",    0},
         {"cacticanyon",         0},
     };
+
+
+    // Read launcher_settings.json for Minecraft Dungeons path
+    using json = nlohmann::json;
+    std::string filename = "speedrun_defaults.json";
+
+    char path[MAX_PATH];
+    GetCurrentDirectoryA(MAX_PATH, (LPSTR)&path[0]);
+
+    printf("Reading %s\\%s\n", path, filename.c_str());
+    std::ifstream in(filename);
+    if (in.is_open() == true) {
+        json j;
+        in >> j;
+        
+        // It's ordered by key.. Unfortunately
+        uiData.levels = j.get<std::map<std::string,int32_t>>();
+
+        // uiData.levels.clear();
+        // for(auto &entry: levels) {
+        //     printf("%s\n", entry.first.c_str());
+        //     uiData.levels[entry.first] = entry.second;
+        // }
+
+        in.close();
+    } else {
+        printf("File not found\n");
+    }
+
 
     StartUI(&uiData);
 
@@ -108,11 +139,10 @@ void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, d
 
     auto element = uiData.levels.find(levelName);
     if (element != uiData.levels.end()) {
-        printf("found %d\n",  element->second);
         params->seed = element->second;
+        printf("  New Seed: %I32d\n", params->seed);
     }
 
-    printf("  New Seed: %I32d\n", params->seed);
 
     ((tLoadLevel)spy::data.hooks[RefLoadLevel]->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
     return;
