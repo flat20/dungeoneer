@@ -84,7 +84,8 @@ namespace spy {
     extern Data data;
     //}
 
-    Data *Init(std::function<void (Data *spyData)> fnInitialized, std::map<UE4Reference, std::string> functionPatterns);
+    Data *Init(std::map<UE4Reference, std::string> functionPatterns);
+    bool initVars();
     uintptr_t AddFunctionRef(UE4Reference refName, std::string pattern);
     uintptr_t GetFunctionRef(const UE4Reference refName);
     template<typename T>
@@ -95,4 +96,5 @@ namespace spy {
     bool HookFunctionRef(UE4Reference refName, const void *detour, void **original);
     bool UnhookFunctionRef(UE4Reference refName);
     bool EnableConsole(std::function<void (bool result)> fnResult);
+
 }

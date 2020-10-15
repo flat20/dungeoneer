@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <Psapi.h>
 #include <map>
+#include <thread>
 #include "unrealspy.h"
 #include "util.h"
 #include "offsets.h"
@@ -91,9 +92,9 @@ bool EnableHook(uintptr_t address) {
     return true;
 }
 
-
-
-spy::Data *spy::Init(std::function<void (Data *spyData)> fnInitialized, std::map<UE4Reference, std::string> functionPatterns) {
+// Can block for up to 60 seconds while getting the needed variables.
+// Run in a separate thread if that's a problem.
+spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
 
     // Get our DLL's base address
     HMODULE dll = GetModuleHandle(NULL);
@@ -103,39 +104,96 @@ spy::Data *spy::Init(std::function<void (Data *spyData)> fnInitialized, std::map
     HANDLE process = GetCurrentProcess();
     data.functionPtrs = offsets::FindAddresses(process, functionPatterns); // offsets::defaultAddressLookups
 
-    // TODO Separate thread and loop until we have them or have to give up.
+    // Attempt to find the vars for 60 seconds before giving up
+    for (int i=0; i<30; i++) {
 
         // We can get GNames by calling FName::GetNames()
         //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
-        data.GNames = GetFunction<tFName_GetNames>(RefFName_GetNames)();
+        if (data.GNames == nullptr) {
+            data.GNames = GetFunction<tFName_GetNames>(RefFName_GetNames)();
+            util::GNames = data.GNames;
+        }
 
         // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
         // holds a reference to GUObjectArray.
+        if (data.GUObjectArray == nullptr) {
+            char bla[256];
+            auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
+            void **ref = (void**)objectIteratorCtor(&bla[0], false);
+            data.GUObjectArray = (FUObjectArray*)*ref;
+            util::GUObjectArray = data.GUObjectArray;
+        }
+
+        // Check for GEngine and also make sure there's a GameViewport assigned
+        // so console works.
+        if (data.GEngine == nullptr) {
+            UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
+
+            UObject *GameViewport = util::GetPropertyValueByPath<UObject>(engine, engine, "GameViewport");
+            if (GameViewport != nullptr) {
+                data.GEngine = (UEngine*)engine;
+            }
+        }
+
+        if (data.GNames != nullptr && data.GUObjectArray != nullptr && data.GEngine != nullptr) {
+
+
+            // Hook functions
+            if (MH_Initialize() != MH_OK) {
+                printf("MH_Initialize failed. No hooking will work\n");
+                return nullptr;
+            }
+
+            return &data;
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    }
+
+    printf("Failed to find the UE4 variables after 60 seconds :(\n");
+    printf("GNames: %llx\n", (uintptr_t)data.GNames);
+    printf("GUObjectArray: %llx\n", (uintptr_t)data.GUObjectArray);
+    printf("GEngine: %llx\n", (uintptr_t)data.GEngine);
+
+    return nullptr;
+}
+
+bool spy::initVars() {
+    // We can get GNames by calling FName::GetNames()
+    //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
+    if (data.GNames == nullptr) {
+        data.GNames = GetFunction<tFName_GetNames>(RefFName_GetNames)();
+        util::GNames = data.GNames;
+        printf("GNames found.\n");
+    }
+
+    // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
+    // holds a reference to GUObjectArray.
+    if (data.GUObjectArray == nullptr) {
+        printf("GUObjectArray found.\n");
         char bla[256];
         auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
         void **ref = (void**)objectIteratorCtor(&bla[0], false);
+        printf("%llx\n", (uint64)ref);
         data.GUObjectArray = (FUObjectArray*)*ref;
-
-        // Setup util functions
-        util::GNames = data.GNames;
+        hexDump((void*)data.GUObjectArray, 128);
         util::GUObjectArray = data.GUObjectArray;
 
-
-        UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
-        data.GEngine = (UEngine*)engine;
-
-        printf("initspy gengine? %s\n", util::getName(data.GEngine));
-
-
-    // Hook functions
-    if (MH_Initialize() != MH_OK) {
-        printf("MH_Initialize failed\n");
-        return false;
+        printf("GUObjectArray found.\n");
     }
 
-    fnInitialized(&data);
+    if (data.GEngine == nullptr) {
+        UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
+        data.GEngine = (UEngine*)engine;
+        printf("GEngine found.\n");
+    }
 
-    return &data;
+    // Still haven't got all variables
+    if (data.GNames == nullptr || data.GUObjectArray == nullptr || data.GEngine == nullptr) {
+        return false;
+    }
+    return true;
 }
 
 uintptr_t spy::AddFunctionRef(UE4Reference refName, std::string pattern) {

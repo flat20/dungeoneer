@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <list>
 #include <map>
-#include <mutex>
+#include <thread>
 
 #include <unrealspy.h>
 #include <offsets.h>
@@ -31,6 +31,7 @@ std::map<UE4Reference,std::list<void *>> functionHandlers;
 // Lookup for loaded modules.
 std::map<std::string,Module*> loadedModules;
 
+void Init();
 void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler);
 void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler);
 void ClearFunctionHandlers(Module *mod);
@@ -80,63 +81,69 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
-        spy::Init([&](spy::Data *data) {
-            spyData = data;
-
-            spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
-            spy::HookFunctionRef(RefAActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
-            spy::HookFunctionRef(RefAHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
-            // Testing
-            spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
-
-            dng.spyData = spyData;
-            dng.AddFunctionHandler = &AddFunctionHandler;
-
-            // Some ui vars
-            dllDirectory = getDllDirectory();
-            uiData.modNames = listMods(dllDirectory.c_str());
-            uiData.onLoadPressed = &onLoadPressed;
-            uiData.onUnloadPressed = &onUnloadPressed;
-            StartUI(&uiData);
-            printf("Dungeoneer ready\n");
-
-            bool result = spy::EnableConsole([](bool result) {
-                printf("Console enabled with all commands\n");
-            });
-            if (result == false) {
-                printf("No console\n");
-            }
-
-            UEnum *levelNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
-            printf("%s (%s)\n", getName(levelNames), getName(levelNames->ClassPrivate));
-            printf("cpp type %ws\n", (wchar_t*)levelNames->CppType.Data.Data);
-            printf("numNames %d %d\n", levelNames->Names.ArrayNum, levelNames->Names.ArrayMax);
-            printf("display names function: %llx\n", (uintptr_t)levelNames->EnumDisplayNameFn);
-
-            for (int i=0; i<levelNames->Names.ArrayNum; i++) {
-                auto pair = levelNames->Names.Data[i];
-                printf("%s = %I64d\n", getName(pair.key), pair.value);
-            }
-
-            // UEnum has a virtual:. Maybe it's time to get the full UE4 classes imported..
-            // virtual bool SetEnums(TArray<TPair<FName, int64>>& InNames, ECppForm InCppForm, bool bAddMaxKeyIfMissing = true);
-            
-
-            // dumpObjectArray(util::GUObjectArray);
-
-        }, offsets::defaultAddressLookups);
-
+        // Init in separate thread.
+        // Works in a dll as long as we don't wait for thread to join
+        std::thread t(Init);
+        t.detach();
 
     }
     else if (dwReason == DLL_PROCESS_DETACH) {
 
-        printf("detach dll\n");
-
-        bool result = true;//DeInitSpy(&spyData);
-
-        printf("detach %s\n", result ? "successful" : "failed");
     }
     return TRUE;
+}
+
+void Init() {
+
+    // Some ui vars
+    dllDirectory = getDllDirectory();
+    uiData.modNames = listMods(dllDirectory.c_str());
+    uiData.onLoadPressed = &onLoadPressed;
+    uiData.onUnloadPressed = &onUnloadPressed;
+    uiData.modsDisabled = true; // Until Init is done.
+    StartUI(&uiData);
+
+    // Can block for up to 60s until it finds all vars.
+    // We run in a thread for that reason
+    spyData = spy::Init(offsets::defaultAddressLookups);
+
+    spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
+    spy::HookFunctionRef(RefAActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
+    spy::HookFunctionRef(RefAHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
+    // Testing
+    spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
+
+    dng.spyData = spyData;
+    dng.AddFunctionHandler = &AddFunctionHandler;
+
+    uiData.modsDisabled = false;
+
+    printf("Dungeoneer ready\n");
+
+    bool result = spy::EnableConsole([](bool result) {
+        printf("Console enabled with all commands\n");
+    });
+    if (result == false) {
+        printf("No console\n");
+    }
+
+    UEnum *levelNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
+    printf("%s (%s)\n", getName(levelNames), getName(levelNames->ClassPrivate));
+    printf("cpp type %ws\n", (wchar_t*)levelNames->CppType.Data.Data);
+    printf("numNames %d %d\n", levelNames->Names.ArrayNum, levelNames->Names.ArrayMax);
+    printf("display names function: %llx\n", (uintptr_t)levelNames->EnumDisplayNameFn);
+
+    for (int i=0; i<levelNames->Names.ArrayNum; i++) {
+        auto pair = levelNames->Names.Data[i];
+        printf("%s = %I64d\n", getName(pair.key), pair.value);
+    }
+
+    // UEnum has a virtual:. Maybe it's time to get the full UE4 classes imported..
+    // virtual bool SetEnums(TArray<TPair<FName, int64>>& InNames, ECppForm InCppForm, bool bAddMaxKeyIfMissing = true);
+    
+
+    // dumpObjectArray(util::GUObjectArray);
+        
 }
 
 void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {

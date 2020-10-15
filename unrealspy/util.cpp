@@ -336,7 +336,8 @@ namespace util {
     void IterateObjectArray(std::function<bool (UObject*)> fnDone) {
         TUObjectArray objObjects = GUObjectArray->ObjObjects;
         int index = 0;
-        for (index = 0; index < objObjects.NumElements; index++) {
+        const int32 numElements = objObjects.NumElements;
+        for (index = 0; index < numElements; index++) {
             int chunk = index / TUObjectArray::NumElementsPerChunk;
             int chunkOffset = index % TUObjectArray::NumElementsPerChunk;
             FUObjectItem item = objObjects.Objects[chunk][chunkOffset];
@@ -353,7 +354,6 @@ namespace util {
     UObject *FindObjectByName(char *objectName, char *className) {
         UObject *found = nullptr;
         IterateObjectArray([&](UObject *object) {
-
             // if objectName is requested but doesn't match, continue
             if (objectName != nullptr && strcmp(getName(object), objectName) != 0) {
                 return false;

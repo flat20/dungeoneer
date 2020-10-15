@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <stdio.h>
+#include <thread>
 
 #include <unrealspy.h>
 #include <offsets.h>
@@ -13,6 +14,7 @@
 spy::Data *spyData;
 UIData uiData;
 
+void Init();
 
 // Testing: Params passed to LoadLevel. Not completed, but has what we need for now.
 struct LoadLevelParams {
@@ -41,48 +43,55 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
-        spy::Init([&](spy::Data *data) {
-            spyData = data;
-
-            spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
-
-
-            uiData.levels = {
-                {"squidcoast",          0},
-                {"creeperwoods",       0},
-                {"pumpkinpastures",     0},
-                {"soggyswamp",          0},
-                {"fieryforge",          0},
-                {"deserttemple",        0},
-                {"highblockhalls",      0},
-                {"obsidianpinnacle",    0},
-                {"cacticanyon",         0},
-            };
-
-            StartUI(&uiData);
-
-            bool result = spy::EnableConsole([](bool result) {
-                printf("Console enabled with all commands\n");
-            });
-            if (result == false) {
-                printf("No console\n");
-            }
-
-        }, offsets::defaultAddressLookups);
-
+        // Init in separate thread.
+        // Works in a dll as long as we don't wait for thread to join
+        std::thread t(Init);
+        t.detach();
 
     }
     else if (dwReason == DLL_PROCESS_DETACH) {
 
-        printf("detach dll\n");
+        // bool result = true;//DeInitSpy(&spyData);
 
-        bool result = true;//DeInitSpy(&spyData);
-
-        printf("detach %s\n", result ? "successful" : "failed");
+        // printf("detach %s\n", result ? "successful" : "failed");
     }
     return TRUE;
 }
 
+// Initializing in a separate thread
+void Init() {
+    
+    uiData.levels = {
+        {"squidcoast",          0},
+        {"creeperwoods",        0},
+        {"pumpkinpastures",     0},
+        {"soggyswamp",          0},
+        {"fieryforge",          0},
+        {"deserttemple",        0},
+        {"highblockhalls",      0},
+        {"obsidianpinnacle",    0},
+        {"cacticanyon",         0},
+    };
+
+    StartUI(&uiData);
+
+    spyData = spy::Init(offsets::defaultAddressLookups);
+    if (spyData == nullptr) {
+        printf("Unable to init Unreal Spy\n");
+        return;
+    }
+
+    spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
+
+
+    bool result = spy::EnableConsole([](bool result) {
+        printf("Console enabled with all commands\n");
+    });
+    if (result == false) {
+        printf("No console\n");
+    }
+
+}
 
 void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat) {
     printf("LevelLoad\n");

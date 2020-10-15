@@ -11,6 +11,7 @@ struct UIData {
     std::vector<std::string> modNames;
     OnLoadPressed onLoadPressed;
     OnUnloadPressed onUnloadPressed;
+    bool modsDisabled;
 };
 
 int StartUI(UIData *data);
