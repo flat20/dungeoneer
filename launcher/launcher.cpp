@@ -29,7 +29,7 @@ int Launch(std::string dll) {
         }
     }
 
-    printf("Minecraft Dungeons Process ID: (%d)\n", pid);
+    printf("Minecraft Dungeons Process ID: %d\n", pid);
 
     // TODO Check modules and see if our module is already loaded.
     if (HasModule(pid, dll.c_str())) {

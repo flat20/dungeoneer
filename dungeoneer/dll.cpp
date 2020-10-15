@@ -107,27 +107,19 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
                 printf("No console\n");
             }
 
-            UEnum *lvlNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
-            printf("%s (%s)\n", getName(lvlNames), getName(lvlNames->ClassPrivate));
-            FString n = lvlNames->CppType;
-            printf("%ws\n", (wchar_t*)n.Data.Data);
-            printf("numNames %d %d\n", lvlNames->Names.ArrayNum, lvlNames->Names.ArrayMax);
-            hexDump((void*)lvlNames->Names.Data, 64);
-            struct Bla {
-                FName name;
-                uint64 val;
-            };
-            Bla *an = (Bla *)lvlNames->Names.Data;
-            
-            printf("  %s\n", getName(an->name), an->val);
-            char *p = (char*)lvlNames->Names.Data;
-            p += 16;
-            an = (Bla *)p;
-            printf("  %s\n", getName(an->name), an->val);
+            UEnum *levelNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
+            printf("%s (%s)\n", getName(levelNames), getName(levelNames->ClassPrivate));
+            printf("cpp type %ws\n", (wchar_t*)levelNames->CppType.Data.Data);
+            printf("numNames %d %d\n", levelNames->Names.ArrayNum, levelNames->Names.ArrayMax);
+            printf("display names function: %llx\n", (uintptr_t)levelNames->EnumDisplayNameFn);
 
-            // for (int i=0; i<lvlNames->Names.ArrayNum; i++) {
-            //     printf("  %ws\n", (wchar_t*)lvlNames->Names.Data[i]);
-            // }
+            for (int i=0; i<levelNames->Names.ArrayNum; i++) {
+                auto pair = levelNames->Names.Data[i];
+                printf("%s = %I64d\n", getName(pair.key), pair.value);
+            }
+
+            // UEnum has a virtual:. Maybe it's time to get the full UE4 classes imported..
+            // virtual bool SetEnums(TArray<TPair<FName, int64>>& InNames, ECppForm InCppForm, bool bAddMaxKeyIfMissing = true);
             
 
             // dumpObjectArray(util::GUObjectArray);

@@ -18,6 +18,13 @@ struct TArray {
 	int32 ArrayMax;
 };
 
+// TPair is actually TTuple in case we need that one we can change this
+template<typename KeyType,typename ValueType>
+struct TPair {
+	KeyType key;
+	ValueType value;
+};
+
 struct FString {
 	/** Array holding the character data */
 	//typedef TArray<TCHAR> DataType;
@@ -152,8 +159,7 @@ struct UEnum : UField
 	FString CppType;
 
 	/** List of pairs of all enum names and values. */
-//	TArray<TPair<FName, int64>> Names;
-	TArray<TCHAR> Names;
+	TArray<TPair<FName, int64>> Names;
 
 	/** How the enum was originally defined. */
 	ECppForm CppForm;
