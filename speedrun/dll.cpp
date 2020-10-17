@@ -16,6 +16,7 @@
 
 spy::Data *spyData;
 UIData uiData;
+std::string dllPath;
 
 void Init();
 
@@ -43,9 +44,21 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
     if (dwReason == DLL_PROCESS_ATTACH) {
 
+
+        char dllFilename[MAX_PATH];
+        DWORD len = GetModuleFileNameA(hinst, (LPSTR)&dllFilename, sizeof(dllFilename));
+        if (len == 0) {
+            printf("No dll filename?\n");
+            return FALSE;
+        }
+        printf("Dll filename %s\n", dllFilename);
+        std::string filename = dllFilename;
+        size_t pos = filename.find_last_of("/\\");
+        dllPath = filename.substr(0,pos);
+
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-
+    
         // Init in separate thread.
         // Works in a dll as long as we don't wait for thread to join
         std::thread t(Init);
@@ -80,11 +93,11 @@ void Init() {
     using json = nlohmann::json;
     std::string filename = "speedrun_defaults.json";
 
-    char path[MAX_PATH];
-    GetCurrentDirectoryA(MAX_PATH, (LPSTR)&path[0]);
+    // char path[MAX_PATH];
+    // GetCurrentDirectoryA(MAX_PATH, (LPSTR)&path[0]);
 
-    printf("Reading %s\\%s\n", path, filename.c_str());
-    std::ifstream in(filename);
+    printf("Reading %s\\%s\n", dllPath.c_str(), filename.c_str());
+    std::ifstream in(dllPath + "\\" + filename);
     if (in.is_open() == true) {
         json j;
         in >> j;

@@ -34,7 +34,7 @@ private:
 	const UStruct* Struct;
 	/** The current location in the list of fields being iterated */
 	UField* Field;
-	/** The index of the current interface being iterated */
+	/** The index of the current interface being iterated */                             
 	int32 InterfaceIndex;
 	/** Whether to include the super class or not */
 	const bool bIncludeSuper;

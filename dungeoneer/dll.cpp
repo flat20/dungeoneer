@@ -81,6 +81,13 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
+        char dllFilename[MAX_PATH];
+        DWORD len = GetModuleFileNameA(hinst, (LPSTR)&dllFilename, sizeof(dllFilename));
+        if (len == 0) {
+            printf("No dll filename?\n");
+        }
+        printf("Dll filename %s\n", dllFilename);
+        
         // Init in separate thread.
         // Works in a dll as long as we don't wait for thread to join
         std::thread t(Init);
