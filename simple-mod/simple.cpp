@@ -24,14 +24,9 @@ void ModMain(Dungeoneer *dng, Module *mod) {
     printf("simple.cpp\n");
     //printf("%x %x\n", UProperty::StaticClassCastFlags)
     // Listen for UObject_ProcessEvent (UFunctions being called basically)
-<<<<<<< HEAD
-    dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
-    //dng->AddFunctionHandler(mod, RefAActor_ProcessEvent, &AActor_ProcessEvent);
-=======
     //dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
     dng->AddFunctionHandler(mod, RefAActor_ProcessEvent, &AActor_ProcessEvent);
     origUObject_ProcessEvent = (tUObject_ProcessEvent)dng->spyData->functionPtrs[RefUObject_ProcessEvent];
->>>>>>> master
 
     StaticLoadObject = (tStaticLoadObject)dng->spyData->functionPtrs[RefStaticLoadObject];
     StaticLoadClass = (tStaticLoadClass)dng->spyData->functionPtrs[RefStaticLoadClass];
