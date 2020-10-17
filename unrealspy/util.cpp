@@ -750,6 +750,8 @@ void dumpObjectArray(FUObjectArray* oa) {
         // }
 
     }
+    printf("done dumping\n");
+
     myfile.close();
 
 }
@@ -764,7 +766,7 @@ void dumpNameEntries() {
         if (entry == nullptr)
             continue;
         myfile << i << " NameIndex " << entry->Index << " " << entry->AnsiName << std::endl;
-        std::cout << i << " NameIndex " << entry->Index << " " << entry->AnsiName << std::endl;
+        //std::cout << i << " NameIndex " << entry->Index << " " << entry->AnsiName << std::endl;
     }
     myfile.close();
 }

@@ -42,6 +42,24 @@ typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, cons
 // __int64 __fastcall FConsoleManager::ProcessUserConsoleInput(FConsoleManager *this, const wchar_t *a2, struct FOutputDevice *a3, struct UWorld *a4)
 typedef void (__thiscall *tFConsoleManager_ProcessUserConsoleInput) (FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 
+//typedef UObject* (__thiscall *tFSoftObjectPtr_LoadSynchronous) (FSoftObjectPtr *thisSoftObjectPtr);
+	/**
+	 * Spawn Actors with given transform and SpawnParameters
+	 * 
+	 * @param	Class					Class to Spawn
+	 * @param	Location				Location To Spawn
+	 * @param	Rotation				Rotation To Spawn
+	 * @param	SpawnParameters			Spawn Parameters
+	 *
+	 * @return	Actor that just spawned
+	 */
+    // TODO UWorld* not UObject..
+typedef AActor* (__thiscall *tUWorld_SpawnActor)( UObject* thisUWorld, UClass* InClass, FVector const* Location, FRotator const* Rotation, const FActorSpawnParameters& SpawnParameters );
+
+
+//  UObject* InOuter, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32 LoadFlags = LOAD_None, UPackageMap* Sandbox = nullptr, bool bAllowObjectReconciliation = true, FUObjectSerializeContext* InSerializeContext = nullptr );
+// struct UObject *__fastcall StaticLoadObject(struct UClass *a1, struct UObject *a2, const wchar_t *a3, const wchar_t *a4, unsigned int a5, struct UPackageMap *a6, bool a7, struct FUObjectSerializeContext *a8)
+//typedef UObject* (__fastcall *tStaticLoadObject)(UClass *Class, UObject *InOuter, const TCHAR *Name, const TCHAR* Filename, uint32 LoadFlags, void *Sandbox, bool bAllowObjectReconciliation, void *InSerializeContext);
 
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
@@ -59,6 +77,8 @@ const UE4Reference RefUConsole_ConsoleCommand       = "UConsole_ConsoleCommand";
 const UE4Reference RefFConsoleManager_ProcessUserConsoleInput = "FConsoleManager::ProcessUserConsoleInput";
 const UE4Reference RefAddEmeralds                   = "AddEmeralds";
 const UE4Reference RefLoadLevel                     = "LoadLevel";
+//const UE4Reference RefFSoftObjectPtr_LoadSynchronous= "RefFSoftObjectPtr::LoadSynchronous";
+const UE4Reference RefUWorld_SpawnActor             = "UWorld_SpawnActor";
 
 namespace spy {
 

@@ -127,23 +127,7 @@ void Init() {
         printf("No console\n");
     }
 
-    UEnum *levelNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
-    printf("%s (%s)\n", getName(levelNames), getName(levelNames->ClassPrivate));
-    printf("cpp type %ws\n", (wchar_t*)levelNames->CppType.Data.Data);
-    printf("numNames %d %d\n", levelNames->Names.ArrayNum, levelNames->Names.ArrayMax);
-    printf("display names function: %llx\n", (uintptr_t)levelNames->EnumDisplayNameFn);
 
-    for (int i=0; i<levelNames->Names.ArrayNum; i++) {
-        auto pair = levelNames->Names.Data[i];
-        printf("%s = %I64d\n", getName(pair.key), pair.value);
-    }
-
-    // UEnum has a virtual:. Maybe it's time to get the full UE4 classes imported..
-    // virtual bool SetEnums(TArray<TPair<FName, int64>>& InNames, ECppForm InCppForm, bool bAddMaxKeyIfMissing = true);
-    
-
-    // dumpObjectArray(util::GUObjectArray);
-        
 }
 
 void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
@@ -354,7 +338,6 @@ void onUnloadPressed(const char *modName) {
         temp = nullptr;
     }
 }
-
 
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params) {
 
