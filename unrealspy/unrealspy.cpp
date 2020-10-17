@@ -1,194 +1,85 @@
 #include <windows.h>
 #include <Psapi.h>
 #include <map>
+#include <thread>
 #include "unrealspy.h"
-//#include "unreal_util.h"
 #include "util.h"
+#include "offsets.h"
+#include "console.h"
 
 #include <MinHook.h>
 
 
 
-struct Hook {
-    uintptr_t address;
-    void *detour;   // Point this to function
-    LPVOID original; // Pointer so we can call the original implementation of the function. Returned after hooking
-};
+namespace spy {
+    Data data = {};
+}
 
-// struct Offset {
-//     uint64 offset;
-//     void *ptr;      // Pointer to location in running process, once the Offset has been looked up.
-// };
+
+// __int64 __fastcall subAddEmeraldsDelegateListener(__int64 a1, __int64 a2)
+// typedef void* (__thiscall *tAddEmeralds) (void *a1, void *a2);
+// void* AddEmeralds(void *, void *);
+
+// a1 should be this. and a2 should be a TArray of arguments? or something. Suppose it depends
+// on what function type was added as a listener.
+// void* AddEmeralds(void *a1, void *a2) {
+
+//     // a1 is a TArray, Num matches number of arguments.
+//     auto args = (TArray<void *>*)a1;
+//     printf("args %d\n", args->ArrayNum);
+//     for (int i=0; i<args->ArrayNum; i++) {
+//         hexDump(args->Data, 64);
+//     }
+
+//     printf("a1 %llx\n", (uintptr_t)a1);
+//     hexDump(a1, 32);
+//     printf("at a1's first pointer\n");
+//     hexDump(*(void**)a1, 32);
+//     printf("a2 %llx\n", (uintptr_t)a2);
+//     hexDump(a2, 32);
+//     void *result = ((tAddEmeralds)spy::spyData->hooks[RefAddEmeralds]->original)(a1, a2);
+
+//     return result;
+// }
 
 // We shouldn't force a user into our basic API. Leaving some options
-bool SetHook(LPVOID target, LPVOID detour, LPVOID* original);
+bool SetHook(LPVOID target, const void *detour, LPVOID *original);
 // Address to target and address to our hook
-bool SetHook(Hook *hook);
+bool SetHook(spy::Hook *hook);
 bool EnableHook(uintptr_t address);
-
-
-
-
-
-// Offsets to functions. Name each entry?
-std::map<UE4Reference, Hook*> hooks;
-//std::map<UE4Reference, Offset*> offsets; // Rename to variables? or references?
-
-// Call from within the UE game process
-// Sets up GNames global for the util:: namespace to work
-bool InitSpy(SpyData *data, std::map<UE4Reference, uintptr_t> addresses) {
-
-    // We end up with the same base address as the one we're injected in
-    HMODULE dll = GetModuleHandle(NULL);
-    uint64 baseAddress = (uint64)dll;
-    //HMODULE baseAddress = GetModuleHandleA("Dungeons-Win64-Shipping.exe");
-    data->baseAddress = baseAddress;
-
-    uintptr_t offsAddEmeralds = 0x3DFEE90;
-    uintptr_t addrAddEmerals = baseAddress + offsAddEmeralds;
-    printf("addrAddEmerals %llx\n", addrAddEmerals);
-    printf("addrLevelStart %llx\n", baseAddress + 0x3DFEEB0);
-    
-    //addresses[RefFConsoleManager_ForEachConsoleObjectThatContains];
-
-
-    data->AHUD_DrawRect = (AHUD_DrawRect)addresses["AHUD_DrawRect"];
-    data->AHUD_DrawText = (AHUD_DrawText)addresses["AHUD_DrawText"];
-    data->AHUD_GetTextSize = (AHUD_GetTextSize)addresses["AHUD_GetTextSize"];
-    data->StaticLoadObject = (StaticLoadObject)addresses[RefStaticLoadObject];
-    data->StaticLoadClass = (StaticLoadClass)addresses[RefStaticLoadClass];
-    data->LoadPackage = (LoadPackage)addresses[RefLoadPackage];
-    data->FName_GetNames = (FName_GetNames)addresses[RefFName_GetNames];
-    data->FRawObjectIterator_Ctor = (FRawObjectIterator_Ctor)addresses[RefFRawObjectIterator_Ctor];
-    data->StaticConstructObject_Internal = (StaticConstructObject_Internal)addresses[RefStaticConstructObject_Internal];
-
-    // We can get GNames by calling FName::GetNames()
-    data->GNames = data->FName_GetNames();
-    util::GNames = data->GNames;
-
-    // We can get GUObjectArray by instantiating FRawObjectIterator. It happens that it
-    // holds a reference to GUObjectArray.
-    char bla[256];
-    void **ref = (void**)data->FRawObjectIterator_Ctor(&bla[0], false);
-    data->GUObjectArray = (FUObjectArray*)*ref;
-    util::GUObjectArray = data->GUObjectArray;
-
-    printf("guobjectarray: %llx\n", (uint64)data->GUObjectArray);
-    printf("  NumElements %d\n", data->GUObjectArray->ObjObjects.NumElements);
-    printf("  NumElementsPerChunk %d\n", data->GUObjectArray->ObjObjects.NumElementsPerChunk);
-    printf("  NumChunks %d\n", data->GUObjectArray->ObjObjects.NumChunks);
-    printf("  MaxChunks %d\n", data->GUObjectArray->ObjObjects.MaxChunks);
-    printf("  MaxElements %d\n", data->GUObjectArray->ObjObjects.MaxElements);
-
-    UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
-    data->GEngine = (UEngine*)engine;
-
-    UClass *ConsoleClass = util::GetPropertyValueByPath<UClass>(data->GEngine, data->GEngine, "ConsoleClass");
-    printf("consoleclass? %llx\n", (uint64)ConsoleClass);
-    if (ConsoleClass != nullptr) {
-        printf("%s\n", util::getName(ConsoleClass));
-    }
-
-    hooks[RefUObject_ProcessEvent]  = new Hook{addresses[RefUObject_ProcessEvent],    data->detourProcessEvent};
-    hooks[RefAActor_ProcessEvent]  = new Hook{addresses[RefAActor_ProcessEvent],    data->detourAActor_ProcessEvent};
-    hooks[RefAHUD_PostRender]       = new Hook{addresses[RefAHUD_PostRender],   data->detourPostRender};
-    hooks[RefFConsoleManager_ProcessUserConsoleInput] = new Hook{addresses[RefFConsoleManager_ProcessUserConsoleInput],   data->detourProcessUserConsoleInput};
-
-    // Hook functions
-    if (MH_Initialize() != MH_OK) {
-        printf("MH_Initialize failed\n");
-        return false;
-    }
-
-    for(const auto &v: hooks) {
-        std::string label = v.first;
-        Hook *hook = v.second;
-        if (hook->detour == nullptr) {
-            continue;
-        }
-
-        bool success = SetHook(hook);
-        if (success == false) {
-            printf("%s hook not set\n", label.c_str());
-            return false;
-        }
-    }
-
-    data->origProcessEvent = (tProcessEvent)hooks[RefUObject_ProcessEvent]->original;
-    data->origAActor_ProcessEvent = (tAActor_ProcessEvent)hooks[RefAActor_ProcessEvent]->original;
-    data->origPostRender = (tPostRender)hooks[RefAHUD_PostRender]->original;
-    data->origProcessUserConsoleInput = (tFConsoleManager_ProcessUserConsoleInput)hooks[RefFConsoleManager_ProcessUserConsoleInput]->original;
-    
-    //data->origGetNames = (tGetNames)hooks["GetNames"]->original;
-
-    // Enable hooks once we have pointers to original functions
-    for(const auto &v: hooks) {
-        std::string label = v.first;
-        Hook *hook = v.second;
-        if (hook->detour == nullptr) {
-            continue;
-        }
-        bool success = EnableHook(hook->address);
-        if (success == false) {
-            printf("%s hook not enabled\n", label.c_str());
-            return false;
-        }
-    }
-    return true;
-}
-
-
-bool DeInitSpy(SpyData *data) {
-
-    // Disable hooks
-    HMODULE dll = GetModuleHandle(NULL);
-    uint64 baseAddress = (uint64)dll;
-
-    // if (data->detourProcessEvent != nullptr) {
-    //     if (MH_DisableHook((LPVOID)(baseAddress + ofsUObject_ProcessEvent)) != MH_OK) {
-    //         return false;
-    //     }
-    // }
-
-    // if (data->detourPostRender != nullptr) {
-    //     if (MH_DisableHook((LPVOID)(baseAddress + ofsAHUD_PostRender)) != MH_OK) {
-    //         return false;
-    //     }
-    // }
-
-    // Uninitialize MinHook.
-    if (MH_Uninitialize() != MH_OK) {
-        return false;
-    }
-    return true;
-}
+bool RemoveHook(spy::Hook *hook);
 
 // Address to target and address to our hook
-bool SetHook(LPVOID target, LPVOID detour, LPVOID* original) {
-    //LPVOID original = nullptr;
+bool SetHook(LPVOID target, const void* detour, LPVOID* original) {
+
     MH_STATUS err;
 
-    err = MH_CreateHook(target, detour, original);
+    err = MH_CreateHook(target, (LPVOID)detour, original);
     if (err != MH_OK) {
         printf("MH_CreateHook failed: %d\n", err);
         return false;
     }
 
-    // err = MH_EnableHook(target);
-    // if (err != MH_OK) {
-    //     printf("MH_EnableHook failed: %d\n", err);
-    //     return false;
-    // }
     return true;
 }
 
 
 // Address to target and address to our hook
-bool SetHook(Hook *hook) {
+bool SetHook(spy::Hook *hook) {
 
     LPVOID target = (LPVOID)(hook->address);
 
     return SetHook(target, hook->detour, &hook->original);
+}
+
+bool RemoveHook(spy::Hook *hook) {
+    if (hook->address == 0) {
+        return false;
+    }
+    if (MH_DisableHook((LPVOID)hook->address) != MH_OK) {
+        return false;
+    }
+    return true;
 }
 
 bool EnableHook(uintptr_t address) {
@@ -200,3 +91,204 @@ bool EnableHook(uintptr_t address) {
     }
     return true;
 }
+
+// Can block for up to 60 seconds while getting the needed variables.
+// Run in a separate thread if that's a problem.
+spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
+
+    // Get our DLL's base address
+    HMODULE dll = GetModuleHandle(NULL);
+    uintptr_t baseAddress = (uintptr_t)dll;
+    data.baseAddress = baseAddress;
+
+    HANDLE process = GetCurrentProcess();
+    data.functionPtrs = offsets::FindAddresses(process, functionPatterns); // offsets::defaultAddressLookups
+
+    // Attempt to find the vars for 60 seconds before giving up
+    for (int i=0; i<30; i++) {
+
+        // We can get GNames by calling FName::GetNames()
+        //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
+        if (data.GNames == nullptr) {
+            data.GNames = GetFunction<tFName_GetNames>(RefFName_GetNames)();
+            util::GNames = data.GNames;
+        }
+
+        // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
+        // holds a reference to GUObjectArray.
+        if (data.GUObjectArray == nullptr) {
+            char bla[256];
+            auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
+            void **ref = (void**)objectIteratorCtor(&bla[0], false);
+            data.GUObjectArray = (FUObjectArray*)*ref;
+            util::GUObjectArray = data.GUObjectArray;
+        }
+
+        // Check for GEngine and also make sure there's a GameViewport assigned
+        // so console works.
+        if (data.GEngine == nullptr) {
+            UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
+
+            UObject *GameViewport = util::GetPropertyValueByPath<UObject>(engine, engine, "GameViewport");
+            if (GameViewport != nullptr) {
+                data.GEngine = (UEngine*)engine;
+            }
+        }
+
+        if (data.GNames != nullptr && data.GUObjectArray != nullptr && data.GEngine != nullptr) {
+
+
+            // Hook functions
+            if (MH_Initialize() != MH_OK) {
+                printf("MH_Initialize failed. No hooking will work\n");
+                return nullptr;
+            }
+
+            return &data;
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    }
+
+    printf("Failed to find the UE4 variables after 60 seconds :(\n");
+    printf("GNames: %llx\n", (uintptr_t)data.GNames);
+    printf("GUObjectArray: %llx\n", (uintptr_t)data.GUObjectArray);
+    printf("GEngine: %llx\n", (uintptr_t)data.GEngine);
+
+    return nullptr;
+}
+
+bool spy::initVars() {
+    // We can get GNames by calling FName::GetNames()
+    //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
+    if (data.GNames == nullptr) {
+        data.GNames = GetFunction<tFName_GetNames>(RefFName_GetNames)();
+        util::GNames = data.GNames;
+        printf("GNames found.\n");
+    }
+
+    // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
+    // holds a reference to GUObjectArray.
+    if (data.GUObjectArray == nullptr) {
+        printf("GUObjectArray found.\n");
+        char bla[256];
+        auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
+        void **ref = (void**)objectIteratorCtor(&bla[0], false);
+        printf("%llx\n", (uint64)ref);
+        data.GUObjectArray = (FUObjectArray*)*ref;
+        hexDump((void*)data.GUObjectArray, 128);
+        util::GUObjectArray = data.GUObjectArray;
+
+        printf("GUObjectArray found.\n");
+    }
+
+    if (data.GEngine == nullptr) {
+        UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
+        data.GEngine = (UEngine*)engine;
+        printf("GEngine found.\n");
+    }
+
+    // Still haven't got all variables
+    if (data.GNames == nullptr || data.GUObjectArray == nullptr || data.GEngine == nullptr) {
+        return false;
+    }
+    return true;
+}
+
+uintptr_t spy::AddFunctionRef(UE4Reference refName, std::string pattern) {
+
+    // Already have it
+    if (data.functionPtrs.count(refName) > 0) {
+        return data.functionPtrs[refName];
+    }
+
+    // TODO Refactor offset namespace
+    std::map<UE4Reference,std::string> functionPatterns = {{refName, pattern}};
+
+    HANDLE process = GetCurrentProcess();
+    std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, functionPatterns);
+
+    data.functionPtrs[refName] = addresses[refName];
+
+    return addresses[refName];
+}
+
+uintptr_t spy::GetFunctionRef(UE4Reference refName) {
+    return data.functionPtrs[refName];
+}
+
+
+// We need the original set immediately or our detour
+// could get called without having an original function to call
+bool spy::HookFunctionRef(UE4Reference refName, const void *detour, void **original) {
+    
+    // Already have it
+    if (data.hooks.count(refName) > 0) {
+        return false;
+    }
+
+    Hook *hook = new Hook{GetFunctionRef(refName), detour};
+    bool result = SetHook(hook);
+    if (result == false) {
+        return false;
+    }
+
+    // Update original if it's wanted.
+    // Can still be found in data.hooks[]->original
+    if (original != nullptr) {
+        *original = hook->original;
+    }
+
+    result = EnableHook(hook->address);
+    if (result == false) {
+        delete hook;
+        return false;
+    }
+
+    data.hooks[refName] = hook;
+
+    return true;
+}
+
+bool spy::UnhookFunctionRef(UE4Reference refName) {
+    
+    // Don't have it
+    if (data.hooks.count(refName) == 0) {
+        return false;
+    }
+
+    Hook *hook = data.hooks[refName];
+    bool result = RemoveHook(hook);
+
+    // Delete regardless of removal result. Maybe?
+    delete hook;
+    data.hooks.erase(refName);
+
+    return result;
+}
+
+// bool DeInitSpy(SpyData *data) {
+
+//     // Disable hooks
+//     HMODULE dll = GetModuleHandle(NULL);
+//     uint64 baseAddress = (uint64)dll;
+
+//     // if (data->detourProcessEvent != nullptr) {
+//     //     if (MH_DisableHook((LPVOID)(baseAddress + ofsUObject_ProcessEvent)) != MH_OK) {
+//     //         return false;
+//     //     }
+//     // }
+
+//     // if (data->detourPostRender != nullptr) {
+//     //     if (MH_DisableHook((LPVOID)(baseAddress + ofsAHUD_PostRender)) != MH_OK) {
+//     //         return false;
+//     //     }
+//     // }
+
+//     // Uninitialize MinHook.
+//     if (MH_Uninitialize() != MH_OK) {
+//         return false;
+//     }
+//     return true;
+// }

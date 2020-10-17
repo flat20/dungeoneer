@@ -26,6 +26,13 @@ struct TArray {
 	int32 ArrayMax;
 };
 
+// TPair is actually TTuple in case we need that one we can change this
+template<typename KeyType,typename ValueType>
+struct TPair {
+	KeyType key;
+	ValueType value;
+};
+
 struct FString {
 	/** Array holding the character data */
 	//typedef TArray<TCHAR> DataType;
@@ -50,6 +57,49 @@ struct FNameEntry {
 	};
 };
 
+struct FWeakObjectPtr // #WeakObjectPtr.h - used when passing UObjects, at least sometimes.
+{
+	int32		ObjectIndex;
+	int32		ObjectSerialNumber;
+};
+
+struct FSoftObjectPath
+{
+	/** Asset path, patch to a top level object in a package */
+	FName AssetPathName;
+
+	/** Optional FString for subobject within an asset */
+	FString SubPathString;
+};
+
+template<class TObjectID>
+struct TPersistentObjectPtr
+{
+	// 	/** Default constructor, will be null */
+	// TPersistentObjectPtr()
+	// {
+	// 	Reset();
+	// }
+
+	// /** Reset the lazy pointer back to the null state */
+	// void Reset()
+	// {
+	// 	WeakPtr.Reset();
+	// 	ObjectID.Reset();
+	// 	TagAtLastTest = 0;
+	// }
+
+	/** Once the object has been noticed to be loaded, this is set to the object weak pointer **/
+	mutable FWeakObjectPtr	WeakPtr;
+	/** Compared to CurrentAnnotationTag and if they are not equal, a guid search will be performed **/
+	mutable int32			TagAtLastTest;
+	/** Guid for the object this pointer points to or will point to. **/
+	TObjectID				ObjectID;
+};
+struct FSoftObjectPtr : public TPersistentObjectPtr<FSoftObjectPath>
+{
+
+};
 
 struct FImplementedInterface {
 	UClass* Class;
@@ -93,6 +143,71 @@ struct TSharedRef {
 	void *ReferenceController;
 };
 
+enum class ESpawnActorCollisionHandlingMethod : uint8
+{
+	/** Fall back to default settings. */
+	Undefined,
+	/** Actor will spawn in desired location, regardless of collisions. */
+	AlwaysSpawn,
+	/** Actor will try to find a nearby non-colliding location (based on shape components), but will always spawn even if one cannot be found. */
+	AdjustIfPossibleButAlwaysSpawn,
+	/** Actor will try to find a nearby non-colliding location (based on shape components), but will NOT spawn unless one is found. */
+	AdjustIfPossibleButDontSpawnIfColliding,
+	/** Actor will fail to spawn. */
+	DontSpawnIfColliding,
+};
+
+struct AActor;
+struct FActorSpawnParameters
+{
+	//FActorSpawnParameters();
+
+	/* A name to assign as the Name of the Actor being spawned. If no value is specified, the name of the spawned Actor will be automatically generated using the form [Class]_[Number]. */
+	FName Name;
+
+	/* An Actor to use as a template when spawning the new Actor. The spawned Actor will be initialized using the property values of the template Actor. If left NULL the class default object (CDO) will be used to initialize the spawned Actor. */
+	AActor* Template;
+
+	/* The Actor that spawned this Actor. (Can be left as NULL). */
+	AActor* Owner;
+
+	/* The APawn that is responsible for damage done by the spawned Actor. (Can be left as NULL). */
+	//APawn*	Instigator;
+	void* Instigator;
+
+	/* The ULevel to spawn the Actor in, i.e. the Outer of the Actor. If left as NULL the Outer of the Owner is used. If the Owner is NULL the persistent level is used. */
+	class	ULevel* OverrideLevel;
+
+	/** Method for resolving collisions at the spawn point. Undefined means no override, use the actor's setting. */
+	ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingOverride;
+
+private:
+
+
+	/* Is the actor remotely owned. This should only be set true by the package map when it is creating an actor on a client that was replicated from the server. */
+	uint16	bRemoteOwned:1;
+	
+public:
+
+	bool IsRemoteOwned() const { return bRemoteOwned; }
+
+	/* Determines whether spawning will not fail if certain conditions are not met. If true, spawning will not fail because the class being spawned is `bStatic=true` or because the class of the template Actor is not the same as the class of the Actor being spawned. */
+	uint16	bNoFail:1;
+
+	/* Determines whether the construction script will be run. If true, the construction script will not be run on the spawned Actor. Only applicable if the Actor is being spawned from a Blueprint. */
+	uint16	bDeferConstruction:1;
+	
+	/* Determines whether or not the actor may be spawned when running a construction script. If true spawning will fail if a construction script is being run. */
+	uint16	bAllowDuringConstructionScript:1;
+
+#if WITH_EDITOR
+	/** Determines whether the begin play cycle will run on the spawned actor when in the editor. */
+	uint16 bTemporaryEditorActor:1;
+#endif
+	
+	/* Flags used to describe the spawned actor/object instance. */
+	EObjectFlags ObjectFlags;		
+};
 
 template <typename KeyType, typename ValueType>
 class TMap {
@@ -170,8 +285,7 @@ struct UEnum : UField
 	FString CppType;
 
 	/** List of pairs of all enum names and values. */
-//	TArray<TPair<FName, int64>> Names;
-	TArray<void *> Names;
+	TArray<TPair<FName, int64>> Names;
 
 	/** How the enum was originally defined. */
 	ECppForm CppForm;
@@ -300,6 +414,14 @@ struct UStruct : UField // class.h // 512 bytes total
 
 	/** Array of object references embedded in script code. Mirrored for easy access by realtime garbage collection code */
 	TArray<UObject*> ScriptObjectReferences; // TArray<UObject*>
+};
+
+struct FImplementedInterface {
+	UClass* Class;
+	/** the pointer offset of the interface's vtable */
+	int32 PointerOffset;
+	/** whether or not this interface has been implemented via K2 */
+	bool bImplementedByK2;
 };
 
 struct UFunction;
@@ -527,12 +649,19 @@ struct FUObjectArray
 	TUObjectArray ObjObjects; //0x0010 	// 10h (16)
 
 };
-struct FWeakObjectPtr // #WeakObjectPtr.h - used when passing UObjects, at least sometimes.
-{
-	int32		ObjectIndex;
-	int32		ObjectSerialNumber;
-};
 
+struct FRotator
+{
+public:
+	/** Rotation around the right axis (around Y axis), Looking up and down (0=Straight Ahead, +Up, -Down) */
+	float Pitch; 
+
+	/** Rotation around the up axis (around Z axis), Running in circles 0=East, +North, -South. */
+	float Yaw; 
+
+	/** Rotation around the forward axis (around X axis), Tilting your head, 0=Straight, +Clockwise, -CCW. */
+	float Roll;
+};
 struct FCommonViewportClient {
 	mutable float CachedDPIScale;
 	mutable bool bShouldUpdateDPIScale;
@@ -622,127 +751,15 @@ public:
 	// virtual IConsoleVariable* RegisterConsoleVariableRef(const TCHAR* Name, bool& RefValue, const TCHAR* Help, uint32 Flags) override;
 	// virtual IConsoleVariable* RegisterConsoleVariableBitRef(const TCHAR* CVarName, const TCHAR* FlagName, uint32 BitNumber, uint8* Force0MaskPtr, uint8* Force1MaskPtr, const TCHAR* Help, uint32 Flags) override;
 	virtual void *a();
-	virtual void *b();
-	virtual void *c();
-	virtual void *d();
-	virtual void *e();
-	virtual void *f();
-	virtual void *g();
 	
-	// virtual void CallAllConsoleVariableSinks() override;
-	virtual void *h();
-
-	// virtual FConsoleVariableSinkHandle RegisterConsoleVariableSink_Handle(const FConsoleCommandDelegate& Command) override;
-	// virtual void UnregisterConsoleVariableSink_Handle(FConsoleVariableSinkHandle Handle) override;
-	virtual void *j();
-	virtual void *k();
-
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithArgsDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithWorldDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithWorldAndArgsDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithWorldArgsAndOutputDeviceDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, const FConsoleCommandWithOutputDeviceDelegate& Command, uint32 Flags) override;
-	// virtual IConsoleCommand* RegisterConsoleCommand(const TCHAR* Name, const TCHAR* Help, uint32 Flags) override;
-	virtual void *l();
-	virtual void *m();
-	virtual void *n();
-	virtual void *o();
-	virtual void *p();
-	virtual void *q();
-	virtual void *r();
-
-	// virtual IConsoleObject* FindConsoleObject(const TCHAR* Name) const override;
-	virtual void* FindConsoleObject(const TCHAR* Name);
-	// virtual IConsoleVariable* FindConsoleVariable(const TCHAR* Name) const override;
-	virtual void* FindConsoleVariable(const TCHAR* Name);
-	// virtual void ForEachConsoleObjectThatStartsWith(const FConsoleObjectVisitor& Visitor, const TCHAR* ThatStartsWith) const override;
-	// virtual void ForEachConsoleObjectThatContains(const FConsoleObjectVisitor& Visitor, const TCHAR* ThatContains) const override;
-	// virtual bool ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld) override;
-	// virtual void AddConsoleHistoryEntry(const TCHAR* Key, const TCHAR* Input) override;
-	// virtual void GetConsoleHistory(const TCHAR* Key, TArray<FString>& Out) override;
-	// virtual bool IsNameRegistered(const TCHAR* Name) const override;	
-	// virtual void RegisterThreadPropagation(uint32 ThreadId, IConsoleThreadPropagation* InCallback) override;
-	// virtual void UnregisterConsoleObject( IConsoleObject* Object, bool bKeepState) override;
 
 //private: // ----------------------------------------------------
 
 	// Poor man's implementation of TMap - in other words: No way am I implementing all of the TMap stuff.
 	// Actually TSet Pairs is the variable. TMap->Num() -> Pairs.Num() -> Elements->Num() -> return Data.Num() - NumFreeIndices;
 	TArray<ConsoleManagerObjectsMapElement> ConsoleObjects;
-	/** The index of an unallocated element in the array that currently contains the head of the linked list of free elements. */
-	int32 FirstFreeIndex;
 
-	/** The number of elements in the free list. */
-	int32 NumFreeIndices;
-	int32 NumFreeIndices2;
-	int32 NumFreeIndices3;
-	int32 NumFreeIndices4;
-	int32 NumFreeIndices5; // Might be it? Was 550
-	int32 NumFreeIndices6;
-	int32 NumFreeIndices7;
-	int32 NumFreeIndices8;
 
-	/** Map of console variables and commands, indexed by the name of that command or variable */
-	// [name] = pointer (pointer must not be 0)
-	//TMap<FString, IConsoleObject*> ConsoleObjects;
-
-	//bool bHistoryWasLoaded;
-	//TMap<FString, TArray<FString>>	HistoryEntriesMap;
-	//TArray<FConsoleCommandDelegate>	ConsoleVariableChangeSinks;
-
-	//IConsoleThreadPropagation* ThreadPropagationCallback;
-	//uint32 ThreadPropagationThreadId;
-
-	// if true the next call to CallAllConsoleVariableSinks() we will call all registered sinks
-	//bool bCallAllConsoleVariableSinks;
-
-	/** 
-		* Used to prevent concurrent access to ConsoleObjects.
-		* We don't aim to solve all concurrency problems (for example registering and unregistering a cvar on different threads, or reading a cvar from one thread while writing it from a different thread).
-		* Rather we just ensure that operations on a cvar from one thread will not conflict with operations on another cvar from another thread.
-	**/
-	//mutable FCriticalSection ConsoleObjectsSynchronizationObject;
-
-	// /** 
-	//  * @param Name must not be 0, must not be empty
-	//  * @param Obj must not be 0
-	//  * @return 0 if the name was already in use
-	//  */
-	// IConsoleObject* AddConsoleObject(const TCHAR* Name, IConsoleObject* Obj);
-
-	// /**
-	//  * @param Stream must not be 0
-	//  * @param Pattern must not be 0
-	//  */
-	// static bool MatchPartialName(const TCHAR* Stream, const TCHAR* Pattern);
-
-	// /** Returns true if Pattern is found in Stream, case insensitive. */
-	// static bool MatchSubstring(const TCHAR* Stream, const TCHAR* Pattern);
-
-	// /**
-	//  * Get string till whitespace, jump over whitespace
-	//  * inefficient but this code is not performance critical
-	//  */
-	// static FString GetTextSection(const TCHAR* &It);
-
-	// /** same as FindConsoleObject() but ECVF_CreatedFromIni are not filtered out (for internal use) */
-	// IConsoleObject* FindConsoleObjectUnfiltered(const TCHAR* Name) const;
-
-	// /**
-	//  * Unregisters a console variable or command, if that object was registered.  In the case of variables, this will actually only
-	//  * "deactivate" the variable, so if it becomes registered again the state may persist.
-	//  *
-	//  * @param	Name	Name of the console object to remove (not case sensitive)
-	//  * @param bool bKeepState if the current state is kept in memory until a cvar with the same name is registered
-	//  */
-	// void UnregisterConsoleObject(const TCHAR* Name, bool bKeepState);
-
-	// // reads HistoryEntriesMap from the .ini file (if not already loaded)
-	// void LoadHistoryIfNeeded();
-
-	// // writes HistoryEntriesMap to the .ini file
-	// void SaveHistory();
 };
 
 

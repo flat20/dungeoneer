@@ -6,12 +6,11 @@
 
 #define DUNGEONEER_VERSION "0.1"
 
-typedef std::string FunctionName;
 
-struct ProcessEventHandler {
-    char *filterName;
-    tProcessEvent fnHandler;
-};
+// struct ProcessEventHandler {
+//     char *filterName;
+//     tProcessEvent fnHandler;
+// };
 
 
 // ModInfo included in every mod dll. Fetched for info about a mod at runtime.
@@ -27,13 +26,13 @@ struct Module {
     std::string filename;
     ModuleInfo *info;
     
-    std::map<FunctionName,void *> functionHandlers;
+    std::map<UE4Reference,void *> functionHandlers;
 };
 
 
 struct Dungeoneer {
-    SpyData *spyData;
-    void (__stdcall *AddFunctionHandler)(Module *mod, FunctionName funcName, void *fnHandler);
+    spy::Data *spyData;
+    void (__stdcall *AddFunctionHandler)(Module *mod, UE4Reference funcName, void *fnHandler);
 };
 
 

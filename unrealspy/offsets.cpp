@@ -4,20 +4,21 @@
 #include <cstdio>
 #include <tlhelp32.h>
 #include <sstream>
-#include <vector>
-#include <map>
 #include "offsets.h"
-#include "unrealspy.h"
 
 namespace offsets {
 
     // Some defaults for us.
     std::map<UE4Reference, std::string> defaultAddressLookups = {
+        {"test", "48 83"},
         {RefFName_GetNames,                 "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? B9 08 08 00 00 48 89 5C 24 20"},
         {RefFRawObjectIterator_Ctor,        "84 D2 48 C7 41 10 00 00 00 00 B8 FF FF FF FF ?? ?? ?? ?? ?? ?? ?? 89 41 08 4C 8B D1 4C 89 01"},
+
+        // TODO These are UFunctions so we can just get them at runtime.
         {"AHUD_DrawRect",                   "48 8B C4 48 89 58 08 57 48 81 EC E0 00 00 00 0F 29 70 E8 48 8B FA 0F 29 78 D8 0F 28 F3 0F 28 FA 48 8B D9"},
         {"AHUD_DrawText",                   "40 55 56 57 48 81 EC 30 02 00 00 44 0F 29 84 24 00 02 00 00"},
         {"AHUD_GetTextSize",                "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 40 49 8B F9 49 8B F0 48 8B EA 48 8B D9 ?? ?? ?? ?? ?? 84 C0"},
+
         {RefStaticLoadObject,               "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 18 FE FF FF 48 81 EC E8 02 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 D0 01 00 00 48 8B 85 68 02 00 00"},
         {RefStaticLoadClass,                "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 08 FF FF FF 48 81 EC F8 01 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 E0 00 00 00 8B BD 60 01 00 00"},
         {RefLoadPackage,                    "48 8B C4 53 56 48 83 EC 68 48 89 68 08 48 8B EA 4C 89 60 18 33 D2 4C 89 68 E8 4C 8B E1 4C 89 70 E0 48 8D 48 C8 4C 89 78 D8 45 33 ED"},
@@ -25,16 +26,20 @@ namespace offsets {
         {RefAActor_ProcessEvent,            "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B 01 49 8B F0 ?? ?? ?? ?? ?? ?? ?? 48 8B EA 48 8B D9"},
         {RefAHUD_PostRender,                "40 55 56 48 8D 6C 24 B1 48 81 EC C8 00 00 00 48 8B 01 48 8B F1"},
         {RefStaticConstructObject_Internal, "40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 50 FF FF FF 48 81 EC B0 01 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 A8 00 00 00"},
-        {RefFConsoleManager_ForEachConsoleObjectThatContains, "48 8B C4 4C 89 40 18 48 89 50 10 55 53 48 8D 68 A1 48 81 EC A8 00 00 00 48 89 70 20 49 8B F0"},
+        {RefUConsole_ConsoleCommand,        "48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57 48 83 EC 30 48 8B F2 48 89 54 24 40 48 8B D9 48 8D 54 24 40 48 83 C1 68"},
         {RefFConsoleManager_ProcessUserConsoleInput, "48 8B C4 4C 89 48 20 4C 89 40 18 48 89 48 08 55 56 48 8D 68 A1 48 81 EC B8 00 00 00 33 F6"},
+        //{RefAddEmeralds,                    "40 55 56 57 48 81 EC 80 00 00 00 48 C7 44 24 30 FE FF FF FF 48 89 9C 24 B0 00 00 00 0F 29 74 24 70"},
+        {RefLoadLevel,                      "40 55 53 56 57 41 56 48 8D AC 24 70 FF FF FF 48 81 EC 90 01 00 00 48 C7 44 24 70 FE FF FF FF 0F 29 B4 24 80 01 00 00"},
+//        {RefFSoftObjectPtr_LoadSynchronous, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B F9 ?? ?? ?? ?? ?? 33 ED 48 8B F0 48 85 C0"},
+        //{RefStaticLoadObject,               "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 18 FE FF FF 48 81 EC E8 02 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 D0 01 00 00"},
+        {RefUWorld_SpawnActor,              "40 53 56 57 48 83 EC 70 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 44 24 60 ?? ?? ?? ?? ?? ?? ?? 0F 57 D2 48 8B B4 24 B0 00 00 00 0F 28 CB"},
     };
 
     // Lookup offsets using search strings and convert to runtime addresses.
     // lookups is a map like:
     // ["AHUD_DrawRect"] = "48 8B C4 48 89 ?? ?? 57 48 81 EC E0"
     // Returns a map keyed by the same string name and a uintptr_t which is the found address.
-    // TODO void* ?
-    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> lookups) {
+    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> opcodes) {
 
         std::map<UE4Reference,uintptr_t> results;
 
@@ -45,33 +50,81 @@ namespace offsets {
             return results;
         }
 
-        uintptr_t baseAddr = (uintptr_t)modEntry.modBaseAddr;
-        uintptr_t offset;
-        for (auto &it = std::begin(lookups); it != std::end(lookups); ++it) {
-            std::string name = it->first;
-            std::string opcodes = it->second;
-            offset = FindOffset(process, modEntry, opcodes);
-            uintptr_t addr = baseAddr + offset;
-            printf("%s: %llx = %llx\n", name.c_str(), (uint64)offset, (uint64)addr);
-            results[name] = addr;
-        }
-        return results;
+        return FindAddresses(process, modEntry, opcodes);
     }
 
+    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, MODULEENTRY32 modEntry, std::map<UE4Reference, std::string> opcodes) {
 
-    uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, std::string opcodes) {
-        
+        struct Pattern {
+            UE4Reference refName;
+            BYTE values[128];
+            char mask[128]; // Not null-terminated
+            size_t length;
+        };
+
+        std::vector<Pattern> patterns;
+        for (auto &it = std::begin(opcodes); it != std::end(opcodes); ++it) {
+            UE4Reference name = it->first;
+            std::string opcode = it->second;
+
+            Pattern pattern = {name};
+            pattern.length = parseHex(opcode, &pattern.values[0], &pattern.mask[0]);
+
+            patterns.push_back(pattern);
+        }
+
+        std::map<UE4Reference,uintptr_t> offsets;
+
         uintptr_t baseAddr = (uintptr_t)modEntry.modBaseAddr;
-        BYTE pattern[64]; // Could allocate correct size
-        std::stringstream mask;
-        int len = parseHex(opcodes, &pattern[0], &mask);
-        void *addr = PatternScanModule(process, modEntry, (char*)&pattern[0], mask.str().c_str());
-        return (uintptr_t)addr - baseAddr;
+        uintptr_t endAddr = baseAddr + modEntry.modBaseSize;
+        int numPatterns = patterns.size();
+
+        for (MemoryIterator it(process, baseAddr, endAddr); it; ++it) {
+
+            for(auto pit = std::begin(patterns); pit != std::end(patterns); ++pit) {
+
+            //for (int i=0; i<patterns.size(); i++) {
+                Pattern pattern = *pit;//patterns[i];
+
+                int index = PatternScan(*it, it.GetBytesRead(), &pattern.values[0], &pattern.mask[0], pattern.length);
+
+                if (index != -1) {
+                    uintptr_t addr = it.GetCurrentAddr() + index;
+                    offsets[pattern.refName] = addr;
+                    patterns.erase(pit);
+                    numPatterns--;
+                    break;
+                }
+            }
+            if (numPatterns == 0) {
+                break;
+            }
+        }
+
+        return offsets;
+    }
+
+    uintptr_t PatternScan(char* bytes, size_t size, const BYTE* pattern, const char* mask, size_t patternLength) {
+
+        //printf("size %zd patlen %zd\n", size, patternLength);
+        for (unsigned int i = 0; i <= size - patternLength; i++) {
+            bool found = true;
+            for (unsigned int j = 0; j < patternLength; j++) {
+                if (mask[j] != '?' && pattern[j] != (BYTE)*(bytes + i + j)) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found) {
+                return (uintptr_t)i;
+            }
+        }
+        return -1;
     }
 
     // Convert IDA Pro binary search strings into an array of bytes and a mask
     // "48 8B ?? C4 53" = 0x48 0x8b 0x0 0xC4 mask = xx?x
-    int parseHex(std::string hex, BYTE *bytes, std::stringstream *mask) {
+    size_t parseHex(std::string hex, BYTE *bytes, char *mask) {
 
         std::istringstream ss(hex);
         std::string text;
@@ -79,12 +132,13 @@ namespace offsets {
         while (std::getline(ss, text, ' ')) {
             BYTE value = 0;
             if (text.c_str()[0] == '?') {
-                *mask << "?"; 
+                mask[i] = '?'; 
             } else {
-                *mask << "x";
+                mask[i] = 'x';
                 value = strtol(text.c_str(), NULL, 16);
             }
             bytes[i] = value;
+
             i++;
         }
         return i;
@@ -92,64 +146,6 @@ namespace offsets {
     }
 
 
-
-    // Actual pattern scanning:
-    void* PatternScan(char* bytes, size_t size, const char* pattern, const char* mask) {
-        size_t patternLength = strlen(mask);
-        for (unsigned int i = 0; i < size - patternLength; i++) {
-            bool found = true;
-            for (unsigned int j = 0; j < patternLength; j++) {
-                if (mask[j] != '?' && pattern[j] != *(bytes + i + j)) {
-                    found = false;
-                    break;
-                }
-            }
-            if (found) {
-                return (void *)(bytes + i);
-            }
-        }
-        return nullptr;
-    }
-
-    // Wrapper:
-    void* PatternScanProcess(HANDLE hProc, uintptr_t begin, uintptr_t end, const char* pattern, const char* mask) {
-        uintptr_t currentChunk = begin;
-        SIZE_T bytesRead;
-
-        while (currentChunk < end) {
-            char buffer[4096];
-
-            DWORD oldProtect;
-            VirtualProtectEx(hProc, (void*)currentChunk, sizeof(buffer), PAGE_EXECUTE_READWRITE, &oldProtect);
-            ReadProcessMemory(hProc, (void *)currentChunk, &buffer, sizeof(buffer), &bytesRead);
-            VirtualProtectEx(hProc, (void *)currentChunk, sizeof(buffer), oldProtect, &oldProtect);
-
-            if (bytesRead == 0) { return nullptr; }
-
-            // Scan the current chunk of memory for the pattern we are looking for using PatternScan():
-            void *internalAddress = PatternScan((char *)&buffer, bytesRead, pattern, mask);
-
-            if (internalAddress != nullptr) {
-                uintptr_t offsetFromBuffer = (uintptr_t)internalAddress - (uintptr_t)&buffer;
-                return (void *)(currentChunk + offsetFromBuffer);
-            } else {
-                currentChunk = currentChunk + bytesRead;
-            }
-        }
-        return nullptr;
-    }
-
-    // Wrapper for scanning modules:
-    void* PatternScanModule(HANDLE hProc, MODULEENTRY32 modEntry, const char* pattern, const char* mask) {
-
-        if (!modEntry.th32ModuleID) {
-            return nullptr;
-        }
-
-        uintptr_t begin = (uintptr_t)modEntry.modBaseAddr;
-        uintptr_t end = begin + modEntry.modBaseSize;
-        return PatternScanProcess(hProc, begin, end, pattern, mask);
-    }
 
 
     // Get ModuleEntry from module name, using toolhelp32snapshot:
@@ -165,6 +161,7 @@ namespace offsets {
 
             if (Module32First(snapshot, &curr)) {
                 modEntry = curr;
+                printf("%s\n", curr.szModule);
                 // do {
                 //     if (strcmp((const char*)curr.szModule, modName) == 0) {
                 //         modEntry = curr;

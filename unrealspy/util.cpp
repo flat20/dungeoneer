@@ -336,7 +336,8 @@ namespace util {
     void IterateObjectArray(std::function<bool (UObject*)> fnDone) {
         TUObjectArray objObjects = GUObjectArray->ObjObjects;
         int index = 0;
-        for (index = 0; index < objObjects.NumElements; index++) {
+        const int32 numElements = objObjects.NumElements;
+        for (index = 0; index < numElements; index++) {
             int chunk = index / TUObjectArray::NumElementsPerChunk;
             int chunkOffset = index % TUObjectArray::NumElementsPerChunk;
             FUObjectItem item = objObjects.Objects[chunk][chunkOffset];
@@ -353,7 +354,6 @@ namespace util {
     UObject *FindObjectByName(char *objectName, char *className) {
         UObject *found = nullptr;
         IterateObjectArray([&](UObject *object) {
-
             // if objectName is requested but doesn't match, continue
             if (objectName != nullptr && strcmp(getName(object), objectName) != 0) {
                 return false;
@@ -744,18 +744,20 @@ void dumpObjectArray(FUObjectArray* oa) {
         //printf("%s (%s)\n", getName(item.Object), getName(item.Object->ClassPrivate));
         myfile << getName(item.Object) << " (" << getName(item.Object->ClassPrivate) << ")" << std::endl;
         //printFullObjectName(item.Object);
-        for (UProperty* p = item.Object->ClassPrivate->PropertyLink; p; p = p->PropertyLinkNext)
-        {
-            //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
-            myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
-        }
-        for (UField* p = item.Object->ClassPrivate->Children; p; p = p->Next)
-        {
-            //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
-            myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
-        }
+        // for (UProperty* p = item.Object->ClassPrivate->PropertyLink; p; p = p->PropertyLinkNext)
+        // {
+        //     //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
+        //     myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
+        // }
+        // for (UField* p = item.Object->ClassPrivate->Children; p; p = p->Next)
+        // {
+        //     //printf("  %s (%s)\n", getName(p), getName(p->ClassPrivate));
+        //     myfile << "  " << getName(p) << " (" << getName(p->ClassPrivate) << ")" << std::endl;
+        // }
 
     }
+    printf("done dumping\n");
+
     myfile.close();
 
 }
@@ -770,7 +772,7 @@ void dumpNameEntries() {
         if (entry == nullptr)
             continue;
         myfile << i << " NameIndex " << entry->Index << " " << entry->AnsiName << std::endl;
-        std::cout << i << " NameIndex " << entry->Index << " " << entry->AnsiName << std::endl;
+        //std::cout << i << " NameIndex " << entry->Index << " " << entry->AnsiName << std::endl;
     }
     myfile.close();
 }

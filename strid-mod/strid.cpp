@@ -276,8 +276,10 @@ void HandleDamageModCalculation(UObject* object, UFunction* func, void *params) 
 }
 
 Dungeoneer *dungeoneer;
-SpyData *spyData;
 
+tAHUD_DrawRect AHUD_DrawRect = nullptr;
+tAHUD_DrawText AHUD_DrawText = nullptr;
+tAHUD_GetTextSize AHUD_GetTextSize = nullptr;
 UFont *font = nullptr;
 
 std::wstring makeWide(std::string text) {
@@ -288,7 +290,7 @@ std::wstring makeWide(std::string text) {
 void makeFString(FString *str, std::wstring wide) {
     const wchar_t *wideChars = wide.c_str();                // get the wchar_t
 
-    str->Data.Data = (void*)wideChars;
+    str->Data.Data = (TCHAR*)wideChars;
     str->Data.ArrayNum = wcslen(wideChars)+2; // Not sure why +1
     str->Data.ArrayMax = str->Data.ArrayNum;
 }
@@ -298,7 +300,7 @@ void AHUD_PostRender(void *hud) {
 
     FLinearColor textColor {1.0, 1.0, 1.0, 1.0};
     FLinearColor bg {0.1, 0.1, 0.1, 0.6};
-    spyData->AHUD_DrawRect(hud, bg, 20.0, 20.0, 400.0, 160.0);
+    AHUD_DrawRect(hud, bg, 20.0, 20.0, 400.0, 160.0);
 
     float y = 30;
     for (auto &dv: meter.view.damages) {
@@ -306,7 +308,7 @@ void AHUD_PostRender(void *hud) {
         // Name - left aligned
         if (dv.nameW.length() > 0) {
             makeFString(&dv.name, dv.nameW);
-            spyData->AHUD_DrawText(hud, &dv.name, textColor, 30, y, font, 1.f, false);
+            AHUD_DrawText(hud, &dv.name, textColor, 30, y, font, 1.f, false);
         }
 
         // Amount - right aligned.
@@ -314,8 +316,8 @@ void AHUD_PostRender(void *hud) {
             makeFString(&dv.amount, dv.amountW);
             float width = 0.0;
             float height = 0.0;
-            spyData->AHUD_GetTextSize(hud, &dv.amount, &width, &height, font, 1.f);
-            spyData->AHUD_DrawText(hud, &dv.amount, textColor, 420 - 10 - width, y, font, 1.f, false); // right - margin - textWidth
+            AHUD_GetTextSize(hud, &dv.amount, &width, &height, font, 1.f);
+            AHUD_DrawText(hud, &dv.amount, textColor, 420 - 10 - width, y, font, 1.f, false); // right - margin - textWidth
         }
 
         y += 20; // Only if we actually printed something.
@@ -336,7 +338,12 @@ void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
 void ModMain(Dungeoneer *dng, Module *mod) {
 
     dungeoneer = dng;
-    spyData = dng->spyData;
+
+    // TODO These are UFunctions so we can just get them at runtime.
+    // and spyData shouldn't be used in mods.
+    AHUD_DrawRect = (tAHUD_DrawRect)dng->spyData->functionPtrs["AHUD_DrawRect"];
+    AHUD_DrawText = (tAHUD_DrawText)dng->spyData->functionPtrs["AHUD_DrawText"];
+    AHUD_GetTextSize = (tAHUD_GetTextSize)dng->spyData->functionPtrs["AHUD_GetTextSize"];
 
     //findObjectsByClassName(spyData->GUObjectArray, "Font");
 
