@@ -33,6 +33,8 @@ namespace offsets {
 //        {RefFSoftObjectPtr_LoadSynchronous, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B F9 ?? ?? ?? ?? ?? 33 ED 48 8B F0 48 85 C0"},
         //{RefStaticLoadObject,               "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 18 FE FF FF 48 81 EC E8 02 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 D0 01 00 00"},
         {RefUWorld_SpawnActor,              "40 53 56 57 48 83 EC 70 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 44 24 60 ?? ?? ?? ?? ?? ?? ?? 0F 57 D2 48 8B B4 24 B0 00 00 00 0F 28 CB"},
+        {RefUUserWidget_CreateWidget,       "48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 30 49 8B D8 48 8B FA 48 8B F1 48 85 C9 ?? ?? ?? ?? ?? ?? 48 89 6C 24 40 48 8B A9 60 01 00 00 48 85 ED"},
+        {RefUUserWidget_AddToViewport,      "48 8B 01 44 8B C2 33 D2 48 FF A0 C8 02 00 00"},
     };
 
     // Lookup offsets using search strings and convert to runtime addresses.

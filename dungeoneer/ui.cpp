@@ -25,7 +25,7 @@ struct MainWindow
     {
     }
 
-    void Draw(const char* title, bool* p_open)
+    void Draw(bool* p_open)
     {
         ImGui::SetNextWindowSize(ImVec2(420, 300), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("Dungeoneer"))
@@ -60,9 +60,66 @@ struct MainWindow
     }
 };
 
-
 MainWindow *mainWindow;
 static bool show_main_window = true;
+
+
+struct DebugWindow
+{
+    UIData *data; // Manually set. Constructor works?
+
+
+    DebugWindow(UIData *data)
+    {
+        this->data = data;
+    }
+    ~DebugWindow()
+    {
+    }
+
+    void Draw(bool* p_open)
+    {
+        ImGui::SetNextWindowSize(ImVec2(420, 300), ImGuiCond_FirstUseEver);
+        if (!ImGui::Begin("Debug"))
+        {
+            ImGui::End();
+            return;
+        }
+
+        static int item_current = 0;
+
+//        ImGui::Separator();
+        std::vector<const char *>modNames;
+        for (const auto& name: data->modNames) {
+            modNames.push_back(name.c_str());
+        }
+
+        static char findObjectNameText[256];
+        ImGui::InputText("Name", &findObjectNameText[0], sizeof(findObjectNameText));
+        ImGui::SameLine();
+        if (ImGui::Button("Search")) {
+            printf("find");
+//            this->data->onLoadPressed(modNames[item_current]);          
+        }
+
+        static char findObjectClassText[256];
+        ImGui::InputText("Class", &findObjectClassText[0], sizeof(findObjectClassText));
+
+
+        static int obj_current = 0;
+
+        ImGui::Separator();
+        std::vector<const char *>foundObjects = {"Something (Class)", "Another (Class)", "Third (Object)"};
+
+        ImGui::ListBox("", &obj_current, &foundObjects[0], foundObjects.size());//, 4);
+
+
+        ImGui::End();
+    }
+};
+
+DebugWindow *debugWindow;
+static bool show_debug_window = true;
 
 // Data
 static ID3D11Device*            g_pd3dDevice = NULL;
@@ -99,6 +156,7 @@ DWORD WINAPI UIThreadFunction(LPVOID lpParam) {
     UIData *data = (UIData*)lpParam;
 
     mainWindow = new MainWindow(data);
+    debugWindow = new DebugWindow(data);
 
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
@@ -158,9 +216,9 @@ DWORD WINAPI UIThreadFunction(LPVOID lpParam) {
         ImGui::NewFrame();
 
         {
-            mainWindow->Draw("Dungeoneer", &show_main_window);
+            mainWindow->Draw(&show_main_window);
+            debugWindow->Draw(&show_main_window);
         }
-
         // Rendering
         ImGui::Render();
         g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);

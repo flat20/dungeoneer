@@ -47,7 +47,7 @@ public:
 	TFieldIterator(const UStruct*                               InStruct,
 	               EFieldIteratorFlags::SuperClassFlags         InSuperClassFlags      = EFieldIteratorFlags::IncludeSuper,
 	               EFieldIteratorFlags::DeprecatedPropertyFlags InDeprecatedFieldFlags = EFieldIteratorFlags::IncludeDeprecated,
-	               EFieldIteratorFlags::InterfaceClassFlags     InInterfaceFieldFlags  = EFieldIteratorFlags::ExcludeInterfaces)
+	               EFieldIteratorFlags::InterfaceClassFlags     InInterfaceFieldFlags  = EFieldIteratorFlags::IncludeInterfaces)
 		: Struct            ( InStruct )
 		, Field             ( InStruct ? InStruct->Children : NULL )
 		, InterfaceIndex    ( -1 )
@@ -97,12 +97,11 @@ protected:
 	{
 		      UField*  CurrentField  = Field;
 		const UStruct* CurrentStruct = Struct;
-
 		while (CurrentStruct)
 		{
 			while (CurrentField)
 			{
-				UClass* FieldClass = CurrentField->ClassPrivate;
+				//UClass* FieldClass = CurrentField->ClassPrivate;
 
                 // If class of field is the class we're after or it's a property, return it.
                 // But we don't have a good set of flags to check for each class.
@@ -116,33 +115,36 @@ protected:
 					return;
 				//}
 
-				CurrentField = CurrentField->Next;
+				//CurrentField = CurrentField->Next;
 			}
 
-			if (bIncludeInterface)
-			{
-				// We shouldn't be able to get here for non-classes
-				UClass* CurrentClass = (UClass*)CurrentStruct;
-				++InterfaceIndex;
-				if (InterfaceIndex < CurrentClass->Interfaces.ArrayNum)
-				{
-					FImplementedInterface& Interface = CurrentClass->Interfaces.Data[InterfaceIndex];
-					CurrentField = Interface.Class ? Interface.Class->Children : nullptr;
-					continue;
-				}
-			}
-
-            // Requires a virtual function because it can be overriden by subclasses
-			// if (bIncludeSuper)
+			// We don't know if it's a class or not
+			// if (bIncludeInterface)
 			// {
-			// 	CurrentStruct = CurrentStruct->GetInheritanceSuper();
-			// 	if (CurrentStruct)
+			// 	// We shouldn't be able to get here for non-classes
+			// 	UClass* CurrentClass = (UClass*)CurrentStruct;
+			// 	++InterfaceIndex;
+			// 	if (InterfaceIndex < CurrentClass->Interfaces.ArrayNum)
 			// 	{
-			// 		CurrentField   = CurrentStruct->Children;
-			// 		InterfaceIndex = -1;
+			// 		FImplementedInterface& Interface = CurrentClass->Interfaces.Data[InterfaceIndex];
+			// 		CurrentField = Interface.Class ? Interface.Class->Children : nullptr;
 			// 		continue;
 			// 	}
 			// }
+
+            // Requires a virtual function because it can be overriden by subclasses
+			// So this code is not strictly correct if the object has a weird super
+			if (bIncludeSuper)
+			{
+			 	//CurrentStruct = CurrentStruct->GetInheritanceSuper();
+				CurrentStruct = CurrentStruct->SuperStruct;
+			 	if (CurrentStruct)
+			 	{
+			 		CurrentField   = CurrentStruct->Children;
+			 		InterfaceIndex = -1;
+			 		continue;
+			 	}
+			}
 
 			break;
 		}

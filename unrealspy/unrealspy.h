@@ -56,6 +56,9 @@ typedef void (__thiscall *tFConsoleManager_ProcessUserConsoleInput) (FConsoleMan
     // TODO UWorld* not UObject..
 typedef AActor* (__thiscall *tUWorld_SpawnActor)( UObject* thisUWorld, UClass* InClass, FVector const* Location, FRotator const* Rotation, const FActorSpawnParameters& SpawnParameters );
 
+// UUserWidget*
+typedef UObject* (__fastcall *tUUserWidget_CreateWidget)(UObject *gameInstance, UClass* cls, FName name);
+typedef UObject* (__thiscall *tUUserWidget_AddToViewport)(UObject *widget, int32 ZOrder);
 
 //  UObject* InOuter, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32 LoadFlags = LOAD_None, UPackageMap* Sandbox = nullptr, bool bAllowObjectReconciliation = true, FUObjectSerializeContext* InSerializeContext = nullptr );
 // struct UObject *__fastcall StaticLoadObject(struct UClass *a1, struct UObject *a2, const wchar_t *a3, const wchar_t *a4, unsigned int a5, struct UPackageMap *a6, bool a7, struct FUObjectSerializeContext *a8)
@@ -79,7 +82,8 @@ const UE4Reference RefAddEmeralds                   = "AddEmeralds";
 const UE4Reference RefLoadLevel                     = "LoadLevel";
 //const UE4Reference RefFSoftObjectPtr_LoadSynchronous= "RefFSoftObjectPtr::LoadSynchronous";
 const UE4Reference RefUWorld_SpawnActor             = "UWorld_SpawnActor";
-
+const UE4Reference RefUUserWidget_CreateWidget      = "RefUUserWidget::CreateWidget";
+const UE4Reference RefUUserWidget_AddToViewport     = "RefUUserWidget::AddToViewport";
 namespace spy {
 
     struct Hook {

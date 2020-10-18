@@ -93,9 +93,6 @@ void Init() {
     using json = nlohmann::json;
     std::string filename = "speedrun_defaults.json";
 
-    // char path[MAX_PATH];
-    // GetCurrentDirectoryA(MAX_PATH, (LPSTR)&path[0]);
-
     printf("Reading %s\\%s\n", dllPath.c_str(), filename.c_str());
     std::ifstream in(dllPath + "\\" + filename);
     if (in.is_open() == true) {
