@@ -6,17 +6,13 @@
 
 #define DUNGEONEER_VERSION "0.1"
 
-
-// struct ProcessEventHandler {
-//     char *filterName;
-//     tProcessEvent fnHandler;
-// };
-
+typedef void (*FuncConfigDraw)(void *ctx);
 
 // ModInfo included in every mod dll. Fetched for info about a mod at runtime.
 struct ModuleInfo {
     const char *DungeoneerVersion = DUNGEONEER_VERSION;
     const char *Name;
+    FuncConfigDraw ConfigDraw = nullptr; // Optional ImGui Draw() for settings
 };
 
 typedef ModuleInfo* (__stdcall *FuncModGetInfo)();

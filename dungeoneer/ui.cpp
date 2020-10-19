@@ -43,16 +43,18 @@ struct MainWindow
         }
 
         ImGui::ListBox("", &item_current, &modNames[0], modNames.size(), 4);
-        ImGui::SameLine();
-        if (ImGui::Button("Load")) {
-            printf("load");
-            this->data->onLoadPressed(modNames[item_current]);
-            
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Unload")) {
-            printf("unload");
-            this->data->onUnloadPressed(modNames[item_current]);
+        if (!this->data->modsDisabled) {
+            ImGui::SameLine();
+            if (ImGui::Button("Load")) {
+                printf("load");
+                this->data->onLoadPressed(modNames[item_current]);
+                
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Unload")) {
+                printf("unload");
+                this->data->onUnloadPressed(modNames[item_current]);
+            }            
         }
         
 
@@ -63,67 +65,6 @@ struct MainWindow
 MainWindow *mainWindow;
 static bool show_main_window = true;
 
-
-struct DebugWindow
-{
-    UIData *data; // Manually set. Constructor works?
-
-
-    DebugWindow(UIData *data)
-    {
-        this->data = data;
-    }
-    ~DebugWindow()
-    {
-    }
-
-    void Draw(bool* p_open)
-    {
-        ImGui::SetNextWindowSize(ImVec2(420, 300), ImGuiCond_FirstUseEver);
-        if (!ImGui::Begin("Debug"))
-        {
-            ImGui::End();
-            return;
-        }
-
-        static int item_current = 0;
-
-//        ImGui::Separator();
-        std::vector<const char *>modNames;
-        for (const auto& name: data->modNames) {
-            modNames.push_back(name.c_str());
-        }
-
-        static char findObjectNameText[256];
-        static char findObjectClassText[256];
-        static std::vector<char *>foundObjects;// = {"Something (Class)", "Another (Class)", "Third (Object)"};
-
-
-        ImGui::InputText("Name", &findObjectNameText[0], sizeof(findObjectNameText));
-        ImGui::SameLine();
-        if (ImGui::Button("Search")) { // Only if we have some data..
-            if (strlen(findObjectNameText) > 2 || strlen(findObjectClassText) > 2) {
-                printf("find %s %s", findObjectNameText, findObjectClassText);
-                foundObjects = this->data->onSearchPressed(findObjectNameText, findObjectClassText);
-            }
-        }
-
-        ImGui::InputText("Class", &findObjectClassText[0], sizeof(findObjectClassText));
-
-
-        static int obj_current = 0;
-
-        ImGui::Separator();
-
-        ImGui::ListBox("", &obj_current, &foundObjects[0], foundObjects.size());//, 4);
-
-
-        ImGui::End();
-    }
-};
-
-DebugWindow *debugWindow;
-static bool show_debug_window = true;
 
 // Data
 static ID3D11Device*            g_pd3dDevice = NULL;
@@ -160,7 +101,6 @@ DWORD WINAPI UIThreadFunction(LPVOID lpParam) {
     UIData *data = (UIData*)lpParam;
 
     mainWindow = new MainWindow(data);
-    debugWindow = new DebugWindow(data);
 
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
@@ -219,9 +159,13 @@ DWORD WINAPI UIThreadFunction(LPVOID lpParam) {
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
+        ImGuiContext *ctx = ImGui::GetCurrentContext();
         {
             mainWindow->Draw(&show_main_window);
-            debugWindow->Draw(&show_main_window);
+//            debugWindow->Draw(&show_main_window);
+            for (auto &it : data->modConfigDraws) {
+                it(ctx);
+            }
         }
         // Rendering
         ImGui::Render();

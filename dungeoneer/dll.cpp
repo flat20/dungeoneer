@@ -40,7 +40,6 @@ void ClearFunctionHandlers(Module *mod);
 
 void onLoadPressed(const char *);
 void onUnloadPressed(const char *);
-std::vector<char *> onSearchPressed(const char *objName, const char *clsName);
 void ClearPostRenderHandlers();
 void ClearProcessEventHandlers();
 std::vector<std::string> listMods(std::string directory);
@@ -110,7 +109,6 @@ void Init() {
     uiData.modNames = listMods(dllDirectory.c_str());
     uiData.onLoadPressed = &onLoadPressed;
     uiData.onUnloadPressed = &onUnloadPressed;
-    uiData.onSearchPressed = &onSearchPressed;
     uiData.modsDisabled = true; // Until Init is done.
     StartUI(&uiData);
 
@@ -195,6 +193,7 @@ HMODULE loadMod(LPCSTR filename) {
     ModuleInfo *modInfo = fnModGetInfo();
     printf("Mod Name %s\n", modInfo->Name);
     printf("ModDungeoneerVersion %s\n", modInfo->DungeoneerVersion);
+    printf("ConfigDraw: %llx\n", (uintptr_t)modInfo->ConfigDraw);
 
     FuncModInit fnModInit = (FuncModInit)GetProcAddress(handle, "ModInit");
     if (fnModInit == NULL) {
@@ -208,6 +207,8 @@ HMODULE loadMod(LPCSTR filename) {
 
     fnModInit(&dng, module);
 
+    uiData.modConfigDraws.push_back(modInfo->ConfigDraw);
+
     printf("%s initialized\n", filename);
 
     return handle;
@@ -216,6 +217,11 @@ HMODULE loadMod(LPCSTR filename) {
 bool unloadMod(LPCSTR filename) {
 
     Module *mod = loadedModules.at(filename);
+
+    // TODO Make map, and remove it
+    if (mod->info->ConfigDraw != nullptr) {
+        uiData.modConfigDraws.remove(mod->info->ConfigDraw);
+    }
 
     ClearFunctionHandlers(mod);
 
@@ -353,33 +359,6 @@ void onUnloadPressed(const char *modName) {
         unloadMod(fullname);
         temp = nullptr;
     }
-}
-std::vector<char *> onSearchPressed(const char *objName, const char *clsName) {
-    printf("onSearchPressed %s %s\n", objName, clsName);
-    if (strlen(objName) == 0) {
-        objName = nullptr;
-    }
-    if (strlen(clsName) == 0) {
-        clsName = nullptr;
-    }
-    std::vector<char *> found;
-    util::IterateObjectArray([&](UObject *object) {
-        // if objectName is requested but doesn't match, continue
-        if (objName != nullptr && strstr(getName(object), objName) == nullptr) {
-            return false;
-        }
-
-        // if className is requested but doesn't match, continue
-        if (clsName != nullptr && strstr(getName(object->ClassPrivate), clsName) == nullptr) {
-            return false;
-        }
-
-        printf("  %s (%s) %llx\n", getName(object), getName(object->ClassPrivate), (uintptr_t)object);
-        found.push_back(getName(object));
-
-        return false; // continue anyway
-    });
-    return found;
 }
 
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params) {
