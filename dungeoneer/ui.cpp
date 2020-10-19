@@ -95,21 +95,25 @@ struct DebugWindow
         }
 
         static char findObjectNameText[256];
+        static char findObjectClassText[256];
+        static std::vector<char *>foundObjects;// = {"Something (Class)", "Another (Class)", "Third (Object)"};
+
+
         ImGui::InputText("Name", &findObjectNameText[0], sizeof(findObjectNameText));
         ImGui::SameLine();
-        if (ImGui::Button("Search")) {
-            printf("find");
-//            this->data->onLoadPressed(modNames[item_current]);          
+        if (ImGui::Button("Search")) { // Only if we have some data..
+            if (strlen(findObjectNameText) > 2 || strlen(findObjectClassText) > 2) {
+                printf("find %s %s", findObjectNameText, findObjectClassText);
+                foundObjects = this->data->onSearchPressed(findObjectNameText, findObjectClassText);
+            }
         }
 
-        static char findObjectClassText[256];
         ImGui::InputText("Class", &findObjectClassText[0], sizeof(findObjectClassText));
 
 
         static int obj_current = 0;
 
         ImGui::Separator();
-        std::vector<const char *>foundObjects = {"Something (Class)", "Another (Class)", "Third (Object)"};
 
         ImGui::ListBox("", &obj_current, &foundObjects[0], foundObjects.size());//, 4);
 

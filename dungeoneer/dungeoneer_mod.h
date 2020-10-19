@@ -21,6 +21,8 @@ DLL_EXPORT void ModInit(Dungeoneer *dng, Module *mod) {
     ModMain(dng, mod);
 }
 
+// Add a ConfigDraw()
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     if (dwReason == DLL_PROCESS_ATTACH) {
     }

@@ -3,6 +3,7 @@
 #include <list>
 #include <map>
 #include <thread>
+#include <mutex>
 
 #include <unrealspy.h>
 #include <offsets.h>
@@ -27,6 +28,7 @@ std::string dllDirectory;
 
 // Global function handlers for all mods.
 std::map<UE4Reference,std::list<void *>> functionHandlers;
+std::mutex functionHandlersMutex;
 
 // Lookup for loaded modules.
 std::map<std::string,Module*> loadedModules;
@@ -38,6 +40,7 @@ void ClearFunctionHandlers(Module *mod);
 
 void onLoadPressed(const char *);
 void onUnloadPressed(const char *);
+std::vector<char *> onSearchPressed(const char *objName, const char *clsName);
 void ClearPostRenderHandlers();
 void ClearProcessEventHandlers();
 std::vector<std::string> listMods(std::string directory);
@@ -107,6 +110,7 @@ void Init() {
     uiData.modNames = listMods(dllDirectory.c_str());
     uiData.onLoadPressed = &onLoadPressed;
     uiData.onUnloadPressed = &onUnloadPressed;
+    uiData.onSearchPressed = &onSearchPressed;
     uiData.modsDisabled = true; // Until Init is done.
     StartUI(&uiData);
 
@@ -138,6 +142,8 @@ void Init() {
 }
 
 void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
+    std::lock_guard<std::mutex> guard(functionHandlersMutex);
+
     mod->functionHandlers[funcName] = fnHandler;
 
     functionHandlers[funcName].push_back(fnHandler);
@@ -145,12 +151,15 @@ void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHa
 }
 
 void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
+    std::lock_guard<std::mutex> guard(functionHandlersMutex);
+
     mod->functionHandlers.erase(funcName);
     
     functionHandlers[funcName].remove(fnHandler);
 }
 
 void ClearFunctionHandlers(Module *mod) {
+    std::lock_guard<std::mutex> guard(functionHandlersMutex);
 
     for (auto &it = mod->functionHandlers.begin(); it !=  mod->functionHandlers.end(); it++) {
         UE4Reference funcName = it->first;
@@ -345,6 +354,33 @@ void onUnloadPressed(const char *modName) {
         temp = nullptr;
     }
 }
+std::vector<char *> onSearchPressed(const char *objName, const char *clsName) {
+    printf("onSearchPressed %s %s\n", objName, clsName);
+    if (strlen(objName) == 0) {
+        objName = nullptr;
+    }
+    if (strlen(clsName) == 0) {
+        clsName = nullptr;
+    }
+    std::vector<char *> found;
+    util::IterateObjectArray([&](UObject *object) {
+        // if objectName is requested but doesn't match, continue
+        if (objName != nullptr && strstr(getName(object), objName) == nullptr) {
+            return false;
+        }
+
+        // if className is requested but doesn't match, continue
+        if (clsName != nullptr && strstr(getName(object->ClassPrivate), clsName) == nullptr) {
+            return false;
+        }
+
+        printf("  %s (%s) %llx\n", getName(object), getName(object->ClassPrivate), (uintptr_t)object);
+        found.push_back(getName(object));
+
+        return false; // continue anyway
+    });
+    return found;
+}
 
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params) {
 
@@ -352,13 +388,16 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
 
     // Call all handlers
     {
-        // const std::lock_guard<std::mutex> lock(processEventHandlersMutex);
+        std::unique_lock<std::mutex> guard(functionHandlersMutex);
 
         auto it = functionHandlers.find(RefUObject_ProcessEvent);
         if (it == functionHandlers.end()) {
             return result;
         }
         std::list<void *>handlers = it->second;
+
+        // Unlock?
+        guard.unlock();
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
             tUObject_ProcessEvent fnHandler = (tUObject_ProcessEvent)*it;
@@ -376,13 +415,15 @@ signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, voi
     
     // Call all handlers
     {
-        // const std::lock_guard<std::mutex> lock(processEventHandlersMutex);
+        std::unique_lock<std::mutex> guard(functionHandlersMutex);
 
         auto it = functionHandlers.find(RefAActor_ProcessEvent);
         if (it == functionHandlers.end()) {
             return result;
         }
         std::list<void *>handlers = it->second;
+
+        guard.unlock();
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
             auto fnHandler = (tAActor_ProcessEvent)*it;
@@ -399,12 +440,15 @@ void __stdcall AHUD_PostRender(void* hud) {
 
     {
 
+        std::unique_lock<std::mutex> guard(functionHandlersMutex);
         auto it = functionHandlers.find(RefAHUD_PostRender);
         if (it == functionHandlers.end()) {
             return;
         }
         std::list<void *>handlers = it->second;
 
+        guard.unlock();
+    
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
             auto fnHandler = (tAHUD_PostRender)*it;
             fnHandler(hud);
