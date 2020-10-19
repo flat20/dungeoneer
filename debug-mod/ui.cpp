@@ -60,11 +60,21 @@ void Draw(void *ctx) {
     static int obj_current = 0;
 
     ImGui::Separator();
+    static std::vector<char*> props;
 
-    if (ImGui::ListBox("", &obj_current, &itemsGetter, &foundObjects, foundObjects.size())) {
+    if (ImGui::ListBox("##Objects", &obj_current, &itemsGetter, &foundObjects, foundObjects.size())) {
         printf("item selected %d\n", obj_current);
+        props = debug::ListProperties(foundObjects[obj_current]);
+        for (auto &p : props) {
+            printf("%s\n", p);
+        }
     }
 
+    ImGui::Separator();
+
+    static int props_current = 0;
+    if (ImGui::ListBox("##Properties", &props_current, &props[0], props.size(), -1)) {
+    }
 
     ImGui::End();
 }

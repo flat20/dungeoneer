@@ -75,3 +75,14 @@ std::vector<UObject*> debug::Search(const char *obj, const char *cls) {
     return found;
 
 }
+
+std::vector<char*> debug::ListProperties(UObject *object) {
+
+    std::vector<char *> found;
+    for (TFieldIterator<UObject> it(object->ClassPrivate); it; ++it) {
+        UObject *p = *it;
+        found.push_back(util::getName(p));
+    }
+    return found;
+
+}
