@@ -67,21 +67,23 @@ std::vector<UObject*> debug::Search(const char *obj, const char *cls) {
             return false;
         }
 
-//        printf("  %s (%s) %llx\n", util::getName(object), util::getName(object->ClassPrivate), (uintptr_t)object);
+        printf("  %s (%s) %llx\n", util::getName(object), util::getName(object->ClassPrivate), (uintptr_t)object);
         found.push_back(object);
 
         return false; // continue anyway
     });
+    printf("done\n");
     return found;
 
 }
 
-std::vector<char*> debug::ListProperties(UObject *object) {
+std::vector<UObjectData> debug::ListProperties(UObject *object) {
 
-    std::vector<char *> found;
+    std::vector<UObjectData> found;
     for (TFieldIterator<UObject> it(object->ClassPrivate); it; ++it) {
-        UObject *p = *it;
-        found.push_back(util::getName(p));
+        UObject *f = *it;
+        std::string clsName = (f != nullptr) ? util::getName(f->ClassPrivate) : nullptr;
+        found.push_back(UObjectData{f, nullptr, util::getName(f), clsName});
     }
     return found;
 
