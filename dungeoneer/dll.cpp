@@ -13,7 +13,6 @@
 #include "dungeoneer.h"
 #include "ui.h"
 
-
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
 signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params);
 void __stdcall AHUD_PostRender(void* hud);
@@ -178,7 +177,7 @@ HMODULE loadMod(LPCSTR filename) {
 
     HMODULE handle = LoadLibraryA(filename);
     if (handle == NULL) {
-        printf("Failed to load dll %s\n", filename);
+        printf("Failed to load dll %s (%d)\n", filename, GetLastError());
         return nullptr;
     }
     printf("%s loaded\n", filename);
@@ -237,12 +236,12 @@ bool unloadMod(LPCSTR filename) {
     return true;
 }
 
+
 // TODO Return ModuleInfo?
 HMODULE loadModLibrary(LPCSTR filename) {
-    
     HMODULE handle = LoadLibraryA(filename);
     if (handle == NULL) {
-        printf("Failed to load dll %s\n", filename);
+        printf("Failed to load dll %s %d\n", filename, GetLastError());
         return nullptr;
     }
     printf("Mod %s\n", filename);

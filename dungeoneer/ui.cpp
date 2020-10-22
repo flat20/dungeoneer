@@ -164,7 +164,9 @@ DWORD WINAPI UIThreadFunction(LPVOID lpParam) {
             mainWindow->Draw(&show_main_window);
 //            debugWindow->Draw(&show_main_window);
             for (auto &it : data->modConfigDraws) {
-                it(ctx);
+                if (it != nullptr) {
+                    it(ctx);
+                }
             }
         }
         // Rendering
