@@ -103,6 +103,18 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
 
     HANDLE process = GetCurrentProcess();
     data.functionPtrs = offsets::FindAddresses(process, functionPatterns); // offsets::defaultAddressLookups
+    for(auto &it : data.functionPtrs) {
+        printf("%s = %llx\n", it.first.c_str(), it.second);
+    }
+
+    if (data.functionPtrs[RefFName_GetNames] == 0) {
+        printf("No FName::GetNames()\n");
+        return nullptr;
+    }
+
+    if (data.functionPtrs[RefFRawObjectIterator_Ctor] == 0) {
+        printf("No RawObjectIterator()\n");
+    }
 
     // Attempt to find the vars for 60 seconds before giving up
     for (int i=0; i<30; i++) {
@@ -126,7 +138,7 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
 
         // Check for GEngine and also make sure there's a GameViewport assigned
         // so console works.
-        if (data.GEngine == nullptr) {
+        if (data.GEngine == nullptr && util::GNames != nullptr && util::GUObjectArray != nullptr) {
             UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
 
             UObject *GameViewport = util::GetPropertyValueByPath<UObject>(engine, engine, "GameViewport");
@@ -136,7 +148,6 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
         }
 
         if (data.GNames != nullptr && data.GUObjectArray != nullptr && data.GEngine != nullptr) {
-
 
             // Hook functions
             if (MH_Initialize() != MH_OK) {

@@ -63,11 +63,28 @@ typedef UObject* (__thiscall *tUUserWidget_AddToViewport)(UObject *widget, int32
 //  UObject* InOuter, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32 LoadFlags = LOAD_None, UPackageMap* Sandbox = nullptr, bool bAllowObjectReconciliation = true, FUObjectSerializeContext* InSerializeContext = nullptr );
 // struct UObject *__fastcall StaticLoadObject(struct UClass *a1, struct UObject *a2, const wchar_t *a3, const wchar_t *a4, unsigned int a5, struct UPackageMap *a6, bool a7, struct FUObjectSerializeContext *a8)
 //typedef UObject* (__fastcall *tStaticLoadObject)(UClass *Class, UObject *InOuter, const TCHAR *Name, const TCHAR* Filename, uint32 LoadFlags, void *Sandbox, bool bAllowObjectReconciliation, void *InSerializeContext);
+// IModuleInterface* LoadModule( const FName InModuleName );
+// __int64 __fastcall FModuleManager::LoadModule(__int64 a1, __int64 a2)
+typedef void* (__thiscall *tFModuleManager_LoadModule)(void *thisModuleManager, FName InModuleName);
+
+//__int64 __fastcall FModuleManager::LoadModuleWithFailureReason(__int64 a1, __int64 a2, _DWORD *a3)
+// IModuleInterface* FModuleManager::LoadModuleWithFailureReason(const FName InModuleName, EModuleLoadResult& OutFailureReason)
+typedef void* (__thiscall *tFModuleManager_LoadModuleWithFailureReason)(void *thisModuleManager, const FName InModuleName, uint32 &OutFailureReason);
+
+// FModuleManager *FModuleManager::Get(void)
+typedef void* (__fastcall *tFModuleManager_Get)();
+
+// void FName::Init(const WIDECHAR* InName, int32 InNumber, EFindName FindType, bool bSplitName, int32 HardcodeIndex)
+//void __stdcall __high FName::Init(const wchar_t *, int, enum EFindName, bool, int) // findType = 1, bSplitName = true, -1
+//void __fastcall FName::Init(__int64 a1, wchar_t *a2, unsigned int a3, unsigned int a4, char a5, int a6)
+typedef FName* (__stdcall *tFName_Init)(FName *thisFName, const wchar_t *InName, int32 InNumber, uint32 FindType, bool bSplitName, int32 HardcodeIndex);
+
 
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
 typedef std::string UE4Reference;
 const UE4Reference RefFName_GetNames                = "FName_GetNames";
+const UE4Reference RefFName_Init                    = "FName::Init";
 const UE4Reference RefFRawObjectIterator_Ctor       = "FRawObjectIterator_Ctor";
 const UE4Reference RefUObject_ProcessEvent          = "UObject_ProcessEvent";
 const UE4Reference RefAActor_ProcessEvent           = "AActor_ProcessEvent";
@@ -82,8 +99,12 @@ const UE4Reference RefAddEmeralds                   = "AddEmeralds";
 const UE4Reference RefLoadLevel                     = "LoadLevel";
 //const UE4Reference RefFSoftObjectPtr_LoadSynchronous= "RefFSoftObjectPtr::LoadSynchronous";
 const UE4Reference RefUWorld_SpawnActor             = "UWorld_SpawnActor";
-const UE4Reference RefUUserWidget_CreateWidget      = "RefUUserWidget::CreateWidget";
-const UE4Reference RefUUserWidget_AddToViewport     = "RefUUserWidget::AddToViewport";
+const UE4Reference RefUUserWidget_CreateWidget      = "UUserWidget::CreateWidget";
+const UE4Reference RefUUserWidget_AddToViewport     = "UUserWidget::AddToViewport";
+const UE4Reference RefFModuleManager_LoadModule     = "FModuleManager::LoadModule";
+const UE4Reference RefFModuleManager_LoadModuleWithFailureReason = "FModuleManager::LoadModuleWithFailureReason";
+const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
+
 namespace spy {
 
     struct Hook {

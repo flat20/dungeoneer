@@ -82,13 +82,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         AllocConsole();
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 
-        char dllFilename[MAX_PATH];
-        DWORD len = GetModuleFileNameA(hinst, (LPSTR)&dllFilename, sizeof(dllFilename));
-        if (len == 0) {
-            printf("No dll filename?\n");
-        }
-        printf("Dll filename %s\n", dllFilename);
-        
         // Init in separate thread.
         // Works in a dll as long as we don't wait for thread to join
         std::thread t(Init);
@@ -114,6 +107,10 @@ void Init() {
     // Can block for up to 60s until it finds all vars.
     // We run in a thread for that reason
     spyData = spy::Init(offsets::defaultAddressLookups);
+    if (spyData == nullptr) {
+        printf("Failed to initialize unrealspy\n");
+        return;
+    }
 
     spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
     spy::HookFunctionRef(RefAActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
@@ -134,7 +131,6 @@ void Init() {
     if (result == false) {
         printf("No console\n");
     }
-
 
 }
 
@@ -360,9 +356,35 @@ void onUnloadPressed(const char *modName) {
     }
 }
 
+bool firstTime = true;
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params) {
 
     int result = origUObject_ProcessEvent(object, func, params);
+
+//     if (firstTime) {
+//         firstTime = false;
+
+//         FName modName;
+//         auto FName_Init = (tFName_Init)spyData->functionPtrs[RefFName_Init];
+//         FName_Init(&modName, (const wchar_t*)L"UE4Editormod", 0, 1, true, -1);
+//         printf("FName %d %d\n", modName.Index, modName.Number);
+
+//         printf("Getting mgr\n");
+//         auto mgrGet = (tFModuleManager_Get)spyData->functionPtrs[RefFModuleManager_Get];
+//         void *moduleMgr = mgrGet();
+//         printf("mod mgr %llx\n", (uintptr_t)mgrGet);
+// //        auto LoadModule = (tFModuleManager_LoadModuleWithFailureReason)spyData->functionPtrs[RefFModuleManager_LoadModuleWithFailureReason];
+//         auto LoadModule = (tFModuleManager_LoadModule)spyData->functionPtrs[RefFModuleManager_LoadModule];
+//         // Code checks something about GetCurrentThreadId() - Might need to call this in the right place.
+//         // FModuleManager is not thread-safe
+//         // ensure(IsInGameThread());
+//         // TODO Maybe try LoadModuleWithReason in case this doesn't work first time.
+//         // Try old LoadModule and see where it exits. Might be the Game Thread.
+//         uint32 failure = 0;
+//         void *mod = LoadModule(moduleMgr, modName);
+//         printf("should be null %llx %d\n", (uintptr_t)mod, failure);
+//     }
+
 
     // Call all handlers
     {

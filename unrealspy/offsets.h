@@ -27,6 +27,8 @@ namespace offsets {
     class MemoryIterator {
 
     private:
+        // 128 bytes so we can match across CHUNKS
+        static const int PATTERN_SIZE = 128;
         static const int CHUNK_SIZE = 4096;
         HANDLE hProc;
         char buffer[CHUNK_SIZE];
@@ -84,9 +86,9 @@ namespace offsets {
             }
 
             DWORD oldProtect;
-            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE, PAGE_EXECUTE_READWRITE, &oldProtect);
-            ReadProcessMemory(hProc, (void*)current, &buffer, CHUNK_SIZE, &bytesRead);
-            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE, oldProtect, &oldProtect);
+            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE-PATTERN_SIZE, PAGE_EXECUTE_READWRITE, &oldProtect);
+            ReadProcessMemory(hProc, (void*)current, &buffer, CHUNK_SIZE-PATTERN_SIZE, &bytesRead);
+            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE-PATTERN_SIZE, oldProtect, &oldProtect);
 
             if (bytesRead == 0) {
                 hProc = NULL;

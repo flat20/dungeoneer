@@ -51,7 +51,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
             printf("No dll filename?\n");
             return FALSE;
         }
-        printf("Dll filename %s\n", dllFilename);
         std::string filename = dllFilename;
         size_t pos = filename.find_last_of("/\\");
         dllPath = filename.substr(0,pos);

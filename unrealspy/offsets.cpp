@@ -10,8 +10,9 @@ namespace offsets {
 
     // Some defaults for us.
     std::map<UE4Reference, std::string> defaultAddressLookups = {
-        {"test", "48 83"},
         {RefFName_GetNames,                 "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? B9 08 08 00 00 48 89 5C 24 20"},
+        // Sort of Ctor for FNames. Does the main work
+        {RefFName_Init,                     "48 89 5C 24 18 55 56 57 48 81 EC 60 08 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 84 24 50 08 00 00 0F B7 02"},
         {RefFRawObjectIterator_Ctor,        "84 D2 48 C7 41 10 00 00 00 00 B8 FF FF FF FF ?? ?? ?? ?? ?? ?? ?? 89 41 08 4C 8B D1 4C 89 01"},
 
         // TODO These are UFunctions so we can just get them at runtime.
@@ -35,6 +36,9 @@ namespace offsets {
         {RefUWorld_SpawnActor,              "40 53 56 57 48 83 EC 70 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 44 24 60 ?? ?? ?? ?? ?? ?? ?? 0F 57 D2 48 8B B4 24 B0 00 00 00 0F 28 CB"},
         {RefUUserWidget_CreateWidget,       "48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 30 49 8B D8 48 8B FA 48 8B F1 48 85 C9 ?? ?? ?? ?? ?? ?? 48 89 6C 24 40 48 8B A9 60 01 00 00 48 85 ED"},
         {RefUUserWidget_AddToViewport,      "48 8B 01 44 8B C2 33 D2 48 FF A0 C8 02 00 00"},
+        {RefFModuleManager_LoadModule,      "48 89 5C 24 08 57 48 83 EC 20 ?? ?? ?? ?? ?? ?? ?? 48 8B DA 48 8B F9 ?? ?? ?? ?? ?? ?? ?? ?? 4C 8D 44 24 40 48 8B D3 48 8B CF"},
+        {RefFModuleManager_LoadModuleWithFailureReason,   "48 89 54 24 10 55 53 56 57 41 54 41 55 41 56 48 8D 6C 24 D9 48 81 EC B0 00 00 00"},
+        {RefFModuleManager_Get,             "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? ?? ?? ?? ?? 65 48 8B 04 25 58 00 00 00 8B 0D ?? ?? ?? ?? 41 B8 ?? ?? ?? ?? 48 8B 14 C8 41 8B 04 10 39 05 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 8D"},
     };
 
     // Lookup offsets using search strings and convert to runtime addresses.
@@ -62,6 +66,7 @@ namespace offsets {
             BYTE values[128];
             char mask[128]; // Not null-terminated
             size_t length;
+            bool found = false;
         };
 
         std::vector<Pattern> patterns;
@@ -76,6 +81,9 @@ namespace offsets {
         }
 
         std::map<UE4Reference,uintptr_t> offsets;
+        for (auto &it : patterns) {
+            offsets[it.refName] = 0;
+        }
 
         uintptr_t baseAddr = (uintptr_t)modEntry.modBaseAddr;
         uintptr_t endAddr = baseAddr + modEntry.modBaseSize;
@@ -85,20 +93,22 @@ namespace offsets {
 
             for(auto pit = std::begin(patterns); pit != std::end(patterns); ++pit) {
 
-            //for (int i=0; i<patterns.size(); i++) {
-                Pattern pattern = *pit;//patterns[i];
+                Pattern pattern = *pit;
+                if (pattern.found) {
+                    continue;
+                }
 
                 int index = PatternScan(*it, it.GetBytesRead(), &pattern.values[0], &pattern.mask[0], pattern.length);
 
                 if (index != -1) {
                     uintptr_t addr = it.GetCurrentAddr() + index;
                     offsets[pattern.refName] = addr;
-                    patterns.erase(pit);
+                    pattern.found = true; // erase pattern instead?
                     numPatterns--;
-                    break;
                 }
             }
             if (numPatterns == 0) {
+                printf("all found\n");
                 break;
             }
         }
