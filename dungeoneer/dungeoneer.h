@@ -4,7 +4,7 @@
 #include <list>
 #include <map>
 
-#define DUNGEONEER_VERSION "0.1"
+#define DUNGEONEER_VERSION "0.1.1"
 
 typedef void (*FuncConfigDraw)(void *ctx);
 
