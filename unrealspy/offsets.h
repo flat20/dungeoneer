@@ -23,15 +23,18 @@ namespace offsets {
 
     // Actual pattern scanning:
     uintptr_t PatternScan(char* bytes, size_t size, const BYTE* pattern, const char* mask, size_t patternLen);
-        
+    
+    // TODO This MemoryIterator is very specific to our pattern matching.
+    // Not clear from the outside that it does some magic shuffling of the 128 bytes.
     class MemoryIterator {
 
     private:
         // 128 bytes so we can match across CHUNKS
-        static const int PATTERN_SIZE = 128;
+        static const int PATTERN_MAX_SIZE = 128; // 128 crashes! But didn't use to. Maybe just double buffer size
+
         static const int CHUNK_SIZE = 4096;
         HANDLE hProc;
-        char buffer[CHUNK_SIZE];
+        char buffer[CHUNK_SIZE+PATTERN_MAX_SIZE];
         SIZE_T bytesRead = 0;
 
         uintptr_t current;
@@ -74,7 +77,7 @@ namespace offsets {
         }
 
         inline uintptr_t GetCurrentAddr() {
-            return current;
+            return current - PATTERN_MAX_SIZE;
         }
 
     protected:
@@ -85,10 +88,14 @@ namespace offsets {
                 return;
             }
 
+            // Copy last iteration's last 128 bytes to start of buffer to find patterns crossing 4096 border
+            memcpy(&buffer[0], &buffer[CHUNK_SIZE], PATTERN_MAX_SIZE);
+
             DWORD oldProtect;
-            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE-PATTERN_SIZE, PAGE_EXECUTE_READWRITE, &oldProtect);
-            ReadProcessMemory(hProc, (void*)current, &buffer, CHUNK_SIZE-PATTERN_SIZE, &bytesRead);
-            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE-PATTERN_SIZE, oldProtect, &oldProtect);
+            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE, PAGE_EXECUTE_READWRITE, &oldProtect);
+            // Write to &buffer[128]
+            ReadProcessMemory(hProc, (void*)current, &buffer[PATTERN_MAX_SIZE], CHUNK_SIZE, &bytesRead);
+            VirtualProtectEx(hProc, (void*)current, CHUNK_SIZE, oldProtect, &oldProtect);
 
             if (bytesRead == 0) {
                 hProc = NULL;

@@ -165,7 +165,8 @@ bool LaunchWinstoreGame() {
 
 // Attempt to find the running .exe PID
 DWORD GetDungeonsProcessID() {
-    const std::vector<std::string> exeFiles = {"Dungeons.exe", "Dungeons-Win64-Shipping.exe"};
+    // Find them in this order. Standalone version has a Dungeons.exe running but it's the launcher exe.
+    const std::vector<std::string> exeFiles = {"Dungeons-Win64-Shipping.exe", "Dungeons.exe"};
     for(const auto& exeFile: exeFiles) {
         DWORD pid = GetProcessID(exeFile.c_str());
         if (pid != 0) {

@@ -96,7 +96,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
 void Init() {
 
-    // Some ui vars
+    // // Some ui vars
     dllDirectory = getDllDirectory();
     uiData.modNames = listMods(dllDirectory.c_str());
     uiData.onLoadPressed = &onLoadPressed;
@@ -111,6 +111,8 @@ void Init() {
         printf("Failed to initialize unrealspy\n");
         return;
     }
+
+    // https://docs.unrealengine.com/en-US/Programming/BuildTools/UnrealBuildTool/ThirdPartyLibraries/index.html
 
     spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
     spy::HookFunctionRef(RefAActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
