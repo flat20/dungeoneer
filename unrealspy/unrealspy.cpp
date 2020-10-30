@@ -10,36 +10,62 @@
 
 #include <MinHook.h>
 
+// From UnrealMath.cpp
+// TODO This is diet-ue stuff
+CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);
+
 namespace spy {
     Data data = {};
 }
 
 
-// __int64 __fastcall subAddEmeraldsDelegateListener(__int64 a1, __int64 a2)
-// typedef void* (__thiscall *tAddEmeralds) (void *a1, void *a2);
-// void* AddEmeralds(void *, void *);
+	bool GetName(UObject *obj, ANSICHAR (&OutName)[1024]) {
+		FName name = obj->GetFName();
+		TNameEntryArray& Names = *spy::data.GNames;
 
-// a1 should be this. and a2 should be a TArray of arguments? or something. Suppose it depends
-// on what function type was added as a listener.
-// void* AddEmeralds(void *a1, void *a2) {
+		// Code from the ue source.
+		const NAME_INDEX Index = name.GetDisplayIndex();
+		const FNameEntry* const NameEntry = Names[Index];
 
-//     // a1 is a TArray, Num matches number of arguments.
-//     auto args = (TArray<void *>*)a1;
-//     printf("args %d\n", args->ArrayNum);
-//     for (int i=0; i<args->ArrayNum; i++) {
-//         hexDump(args->Data, 64);
-//     }
+		// GetComparisonIndex() seems to be the same thing as display index?
 
-//     printf("a1 %llx\n", (uintptr_t)a1);
-//     hexDump(a1, 32);
-//     printf("at a1's first pointer\n");
-//     hexDump(*(void**)a1, 32);
-//     printf("a2 %llx\n", (uintptr_t)a2);
-//     hexDump(a2, 32);
-//     void *result = ((tAddEmeralds)spy::spyData->hooks[RefAddEmeralds]->original)(a1, a2);
+		NameEntry->GetAnsiName(OutName);
+        return true;
+	}
 
-//     return result;
-// }
+	ANSICHAR *GetName(UObject *obj) {
+		FName name = obj->GetFName();
+		TNameEntryArray& Names = *spy::data.GNames;
+
+		// Code from the ue source.
+		const NAME_INDEX Index = name.GetDisplayIndex();
+
+        diet::FNameEntry *ne = (diet::FNameEntry*)Names[Index];
+        return (ANSICHAR*)ne->GetPtr();
+		// GetComparisonIndex() seems to be the same thing as display index?
+
+	}
+
+	UObject *FindObjectByName(char *ObjectName, char *ClassName) {
+        for (diet::FRawObjectIterator It(*spy::data.GUObjectArray); It; ++It) {
+
+            FUObjectItem *item = *It;
+            UObject *obj = (UObject*)item->Object;
+
+            // if objectName is requested but doesn't match, continue
+            if (ObjectName != nullptr && strcmp(GetName(obj), ObjectName) != 0) {
+                continue;
+            }
+
+            // if className is requested but doesn't match, continue
+            if (ClassName != nullptr && strcmp(GetName(obj->GetClass()), ClassName) != 0) {
+                continue;
+            }
+
+            return obj;
+        }
+        return nullptr;
+	}
 
 // We shouldn't force a user into our basic API. Leaving some options
 bool SetHook(LPVOID target, const void *detour, LPVOID *original);
@@ -201,30 +227,8 @@ bool spy::initVars() {
         auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
         void **ref = (void**)objectIteratorCtor(&bla[0], false);
 
-        FRawObjectIterator *objIt = (FRawObjectIterator*)&bla[0];
-        int i = 0;
-        for (; *objIt; ++*objIt) {
-            i++;
-            FUObjectItem *item = **objIt;
-            printf("cluster index %d\n", item->GetClusterIndex());
-            if (i == 10) {
-                break;
-            }
-        }
-
         data.GUObjectArray = (FUObjectArray*)*ref;
 
-        FUObjectArray *objarr = data.GUObjectArray;
-        FUObjectItem *item = objarr->IndexToObject(1, true);
-        FName name = item->Object->GetFName();
-        NAME_INDEX ni = name.GetDisplayIndex();
-        printf("NAME_INDEX: %d\n", ni);
-        TNameEntryArray& names = *data.GNames;
-        auto e = names[ni];
-
-        ANSICHAR OutName[1024];
-        e->GetAnsiName(OutName);
-        printf("ok? %d %s\n", e->GetIndex(), OutName);
 //        printf("global set? %s\n", GUObjectArray.IsOpenForDisregardForGC() ? "true" : "false");
         
 //        auto e = data.GNames[name.GetIndex()];
@@ -232,44 +236,20 @@ bool spy::initVars() {
 //        util::GUObjectArray = data.GUObjectArray;
     }
 
-     if (data.GEngine == nullptr && data.GUObjectArray != nullptr && data.GNames != nullptr) {
-         int i = 0;
-         // Need to inherit in order to call GetObject()
-         for (FUObjectArray::TIterator It(*data.GUObjectArray); It; ++It) {
-            
-             printf("hej %d %d\n", i,  It.GetIndex());
-             i++;
-             if (i == 10) {
-                 break;
-             }
-         }
+    if (data.GEngine == nullptr && data.GUObjectArray != nullptr && data.GNames != nullptr) {
 
-        i = 0;
-        for (diet::FRawObjectIterator It(*data.GUObjectArray); It; ++It) {
+        // TNameEntryArray& Names = *data.GNames;
+        // Names[EName::NAME_Engine];
 
-            FUObjectItem *item = *It;
-            UObject *obj = (UObject*)item->Object;
-            printf("bla  %d %d %d\n", i, It.GetIndex(), item->GetOwnerIndex());
-            FName name = obj->GetFName();
-            printf("name %d\n", name.GetDisplayIndex());
-            TNameEntryArray& names = *data.GNames;
-
-            auto e = names[name.GetDisplayIndex()];
-            ANSICHAR OutName[1024];
-            e->GetAnsiName(OutName);
-            printf("ok? %s\n", OutName);
-            i++;
-            if (i == 10) {
-                break;
-            }
+        UObject *engine = FindObjectByName("GameEngine", "GameEngine");
+        if (engine != nullptr) {
+            data.GEngine = (UEngine*)engine;
+            printf("GEngine found.\n");
         }
-
-
 //         FUObjectArray::TIterator *it = new FUObjectArray::TIterator(*data.GUObjectArray);
 //         UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
 //         data.GEngine = (UEngine*)engine;
-//         printf("GEngine found.\n");
-     }
+    }
 
     // Still haven't got all variables
     if (data.GNames == nullptr || data.GUObjectArray == nullptr) {// || data.GEngine == nullptr) {

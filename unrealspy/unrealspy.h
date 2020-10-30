@@ -77,7 +77,7 @@ typedef void* (__fastcall *tFModuleManager_Get)();
 // void FName::Init(const WIDECHAR* InName, int32 InNumber, EFindName FindType, bool bSplitName, int32 HardcodeIndex)
 //void __stdcall __high FName::Init(const wchar_t *, int, enum EFindName, bool, int) // findType = 1, bSplitName = true, -1
 //void __fastcall FName::Init(__int64 a1, wchar_t *a2, unsigned int a3, unsigned int a4, char a5, int a6)
-typedef FName* (__stdcall *tFName_Init)(FName *thisFName, const wchar_t *InName, int32 InNumber, uint32 FindType, bool bSplitName, int32 HardcodeIndex);
+typedef FName* (__stdcall *tFName_Init)(FName *thisFName, const wchar_t *InName, int32 InNumber, EFindName FindType, bool bSplitName, int32 HardcodeIndex);
 
 // void *__fastcall FWindowsPlatformProcess::GetDllHandle(const wchar_t *)
 // __int64 __fastcall FWindowsPlatformProcess::GetDllHandle(const wchar_t *a1)
