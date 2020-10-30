@@ -3,7 +3,9 @@
 #include <imgui.h>
 #include <string>
 #include <vector>
-#include "dungeoneer.h"
+#include <list>
+#include "ui_config.h"
+//#include "dungeoneer.h"
 
 typedef void (*OnLoadPressed)(const char *modName);
 typedef void (*OnUnloadPressed)(const char *modName);

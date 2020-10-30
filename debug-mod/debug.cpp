@@ -22,13 +22,41 @@ void UObject_ProcessEvent(UObject* object, UFunction* func, void *params);
 tUObject_ProcessEvent origUObject_ProcessEvent;
 std::queue<debug::CommandExecutor> commandQueue;
 std::mutex commandQueueMtx;
-
+typedef IModuleInterface* ( *FInitializeModuleFunctionPtr )( void );
 // Called when Mod gets loaded
 void ModMain(Dungeoneer *dng, Module *mod) {
 
-    origUObject_ProcessEvent = (tUObject_ProcessEvent)dng->spyData->functionPtrs[RefUObject_ProcessEvent];
+    // origUObject_ProcessEvent = (tUObject_ProcessEvent)dng->spyData->functionPtrs[RefUObject_ProcessEvent];
+    // dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
 
-    dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
+    printf("trying to load\n");
+
+    auto GetDllHandle = (tFWindowsPlatformProcess_GetDllHandle)dng->spyData->functionPtrs[RefFWindowsPlatformProcess_GetDllHandle];
+    void* handle = GetDllHandle((TCHAR*)L"UE4Editor-MyMod.dll");
+    printf("tried loading %llx\n", (uintptr_t)handle);
+    if (handle == nullptr) {
+        return;
+    }
+
+    FInitializeModuleFunctionPtr initFuncPtr = (FInitializeModuleFunctionPtr)GetProcAddress((HMODULE)handle, "InitializeModule");
+    printf("func ptr %llx\n", (uintptr_t)initFuncPtr);
+    if (initFuncPtr == nullptr) {
+        return;
+    }
+
+    IModuleInterface *module = initFuncPtr();
+    printf("init module %llx\n", (uintptr_t)module);
+    module->StartupModule();
+    printf("startup called\n");
+    printf("isgameModule %s\n", module->IsGameModule() ? "true" : "false");
+    
+
+    // FInitializeModuleFunctionPtr InitializeModuleFunctionPtr =
+    //     (FInitializeModuleFunctionPtr)FPlatformProcess::GetDllExport(ModuleInfo->Handle, TEXT("InitializeModule"));
+    //     // Initialize the module!
+	// 					ModuleInfo->Module = TUniquePtr<IModuleInterface>(InitializeModuleFunctionPtr());
+    //             ModuleInfo->Module->StartupModule();
+    //             ModulesChangedEvent.Broadcast(InModuleName, EModuleChangeReason::ModuleLoaded);
 
 }
 

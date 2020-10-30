@@ -1,10 +1,10 @@
 
-#include <Windows.h>
-
 #include <cstdio>
-#include <tlhelp32.h>
 #include <sstream>
 #include "offsets.h"
+#include <Windows.h>
+#include <tlhelp32.h>
+
 
 namespace offsets {
 
@@ -39,6 +39,7 @@ namespace offsets {
         {RefFModuleManager_LoadModule,      "48 89 5C 24 08 57 48 83 EC 20 ?? ?? ?? ?? ?? ?? ?? 48 8B DA 48 8B F9 ?? ?? ?? ?? ?? ?? ?? ?? 4C 8D 44 24 40 48 8B D3 48 8B CF"},
         {RefFModuleManager_LoadModuleWithFailureReason,   "48 89 54 24 10 55 53 56 57 41 54 41 55 41 56 48 8D 6C 24 D9 48 81 EC B0 00 00 00"},
         {RefFModuleManager_Get,             "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? ?? ?? ?? ?? 65 48 8B 04 25 58 00 00 00 8B 0D ?? ?? ?? ?? 41 B8 ?? ?? ?? ?? 48 8B 14 C8 41 8B 04 10 39 05 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 8D"},
+        {RefFWindowsPlatformProcess_GetDllHandle, "40 55 53 56 48 8B EC 48 83 EC 40 33 F6 48 89 7C 24 68 4C 89 7C 24 78 4C 8B F9 48 8D 4D F0"},
     };
 
     // Lookup offsets using search strings and convert to runtime addresses.
@@ -52,7 +53,7 @@ namespace offsets {
         DWORD pid = GetProcessId(process);
         MODULEENTRY32 modEntry = GetModule(pid);
         if (modEntry.th32ModuleID == 0) {
-            printf("Unable to find module. %d\n", GetLastError());
+            printf("Unable to find module. %ld\n", GetLastError());
             return results;
         }
 
@@ -70,7 +71,7 @@ namespace offsets {
         };
 
         std::vector<Pattern> patterns;
-        for (auto &it = std::begin(opcodes); it != std::end(opcodes); ++it) {
+        for (auto it = std::begin(opcodes); it != std::end(opcodes); ++it) {
             UE4Reference name = it->first;
             std::string opcode = it->second;
 
@@ -173,7 +174,7 @@ namespace offsets {
 
             if (Module32First(snapshot, &curr)) {
                 modEntry = curr;
-                printf("%s\n", curr.szModule);
+//                printf("%ws\n", curr.szModule);
                 // do {
                 //     if (strcmp((const char*)curr.szModule, modName) == 0) {
                 //         modEntry = curr;

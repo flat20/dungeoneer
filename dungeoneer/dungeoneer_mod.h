@@ -1,7 +1,9 @@
 #pragma once
-#include <windows.h>
 #include <dungeoneer.h>
-#include <util.h>
+// All this just for HMODULE
+#include <Windows/AllowWindowsPlatformTypes.h>
+	#include <windows.h>
+#include <Windows/HideWindowsPlatformTypes.h>
 
 #define DLL_EXPORT extern "C" __declspec(dllexport)
 
@@ -16,8 +18,8 @@ DLL_EXPORT ModuleInfo* ModGetInfo() {
 
 // Need to setup util:: with the global GNames.
 DLL_EXPORT void ModInit(Dungeoneer *dng, Module *mod) {
-    util::GNames = dng->spyData->GNames;
-    util::GUObjectArray = dng->spyData->GUObjectArray;
+    // util::GNames = dng->spyData->GNames;
+    // util::GUObjectArray = dng->spyData->GUObjectArray;
     ModMain(dng, mod);
 }
 
@@ -28,5 +30,5 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     }
     else if (dwReason == DLL_PROCESS_DETACH) {
     }
-    return TRUE;
+    return 1;
 }

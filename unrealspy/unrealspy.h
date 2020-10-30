@@ -1,13 +1,13 @@
 #pragma once
 #include <map>
+#include <string>
 #include <functional>
-#include "unreal.h"
-
+#include <diet-ue.h>
 
 typedef signed int (__thiscall *tUObject_ProcessEvent) (UObject* thisObject, UFunction* func, void *params);
 typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
 typedef void (__thiscall *tAHUD_PostRender) (void *hud);
-typedef TNameEntryArray* (__stdcall *tFName_GetNames) ();
+typedef TNameEntryArray& (__stdcall *tFName_GetNames) ();
 //typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
 typedef void* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
 
@@ -36,7 +36,7 @@ typedef UPackage* (__fastcall *tLoadPackage)( UPackage* InOuter, const TCHAR* In
 typedef UObject* (__fastcall *tStaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
 //typedef UObject* (__fastcall *StaticConstructObject_Internal)(__int64 a1,    int a2,           __int64 a3, int a4,                int a5,                                __int64 a6,        char a7,                               __int64 a8,          char a9);
 
-typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const struct FString *);
+typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const FString *Command);
 
 // bool FConsoleManager::ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld)
 // __int64 __fastcall FConsoleManager::ProcessUserConsoleInput(FConsoleManager *this, const wchar_t *a2, struct FOutputDevice *a3, struct UWorld *a4)
@@ -79,6 +79,10 @@ typedef void* (__fastcall *tFModuleManager_Get)();
 //void __fastcall FName::Init(__int64 a1, wchar_t *a2, unsigned int a3, unsigned int a4, char a5, int a6)
 typedef FName* (__stdcall *tFName_Init)(FName *thisFName, const wchar_t *InName, int32 InNumber, uint32 FindType, bool bSplitName, int32 HardcodeIndex);
 
+// void *__fastcall FWindowsPlatformProcess::GetDllHandle(const wchar_t *)
+// __int64 __fastcall FWindowsPlatformProcess::GetDllHandle(const wchar_t *a1)
+// void* FWindowsPlatformProcess::GetDllHandle( const TCHAR* FileName )
+typedef void* (__fastcall *tFWindowsPlatformProcess_GetDllHandle)(const TCHAR *FileName);
 
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
@@ -104,13 +108,14 @@ const UE4Reference RefUUserWidget_AddToViewport     = "UUserWidget::AddToViewpor
 const UE4Reference RefFModuleManager_LoadModule     = "FModuleManager::LoadModule";
 const UE4Reference RefFModuleManager_LoadModuleWithFailureReason = "FModuleManager::LoadModuleWithFailureReason";
 const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
+const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
 
 namespace spy {
 
     struct Hook {
         uintptr_t address;
         const void *detour;       // Function to call
-        LPVOID original;    // original implementation
+        void *original;    // original implementation
     };
 
     struct Data {
@@ -119,7 +124,7 @@ namespace spy {
         std::map<UE4Reference, Hook*> hooks;            // enabled hooks
 
         FUObjectArray *GUObjectArray;
-        TNameEntryArray* GNames;
+        TNameEntryArray *GNames;
         UEngine* GEngine; // Just get from GUObjectArray?
 
     };

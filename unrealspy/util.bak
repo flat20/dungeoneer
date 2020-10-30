@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include <bitset>
-#include "unreal.h"
+#include <diet-ue.h>
 #include "util.h"
 
 // These function won't work without the global GNames.

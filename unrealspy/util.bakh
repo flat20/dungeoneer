@@ -1,11 +1,7 @@
 #pragma once
 #include <functional>
 
-#include "unreal.h"
-
-// Anything in this namespace I'm fairly happy with, anything outside it
-// is work-in-progress or stuff I needed when testing
-// TODO Casing to match UE4 sdk
+// TODO Replace all with UE4 code.
 namespace util {
 
     extern TNameEntryArray* GNames;

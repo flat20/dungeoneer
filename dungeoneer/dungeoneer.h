@@ -3,10 +3,9 @@
 #include <unrealspy.h>
 #include <list>
 #include <map>
+#include "ui_config.h"
 
 #define DUNGEONEER_VERSION "0.1.1"
-
-typedef void (*FuncConfigDraw)(void *ctx);
 
 // ModInfo included in every mod dll. Fetched for info about a mod at runtime.
 struct ModuleInfo {
@@ -18,7 +17,7 @@ struct ModuleInfo {
 typedef ModuleInfo* (__stdcall *FuncModGetInfo)();
 
 struct Module {
-    HMODULE handle;
+    void* handle;   // HMODULE actually
     std::string filename;
     ModuleInfo *info;
     
