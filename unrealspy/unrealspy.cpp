@@ -10,8 +10,6 @@
 
 #include <MinHook.h>
 
-
-
 namespace spy {
     Data data = {};
 }
@@ -182,34 +180,65 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
 bool spy::initVars() {
 //     // We can get GNames by calling FName::GetNames()
 //     //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
-     if (data.GNames == nullptr) {
-         //data.GNames = GetFunction<tFName_GetNames>(RefFName_GetNames)();
 
-         TNameEntryArray& names = GetFunction<tFName_GetNames>(RefFName_GetNames)();
-         auto e = names[0];
-         
-         ANSICHAR OutName[1024];
-         e->GetAnsiName(OutName);
-         printf("ok? %d %s\n", e->GetIndex(), OutName);
+    if (data.GNames == nullptr) {
+        TNameEntryArray& names = GetFunction<tFName_GetNames>(RefFName_GetNames)();
+        data.GNames = &names;
+
+        auto e = names[1];
+
+        ANSICHAR OutName[1024];
+        e->GetAnsiName(OutName);
+        printf("ok? %d %s\n", e->GetIndex(), OutName);
 
 //         util::GNames = data.GNames;
-     }
+    }
 
 //     // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
-//     // holds a reference to GUObjectArray.
+//     // holds a reference to GUObjectArray as its first member
     if (data.GUObjectArray == nullptr) {
         char bla[256];
         auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
         void **ref = (void**)objectIteratorCtor(&bla[0], false);
+
         data.GUObjectArray = (FUObjectArray*)*ref;
+
+        FUObjectArray *objarr = data.GUObjectArray;
+        FUObjectItem *item = objarr->IndexToObject(1, true);
+        FName name = item->Object->GetFName();
+        NAME_INDEX ni = name.GetDisplayIndex();
+        printf("NAME_INDEX: %d\n", ni);
+        TNameEntryArray& names = *data.GNames;
+        auto e = names[ni];
+
+        ANSICHAR OutName[1024];
+        e->GetAnsiName(OutName);
+        printf("ok? %d %s\n", e->GetIndex(), OutName);
+//        printf("global set? %s\n", GUObjectArray.IsOpenForDisregardForGC() ? "true" : "false");
+        
+//        auto e = data.GNames[name.GetIndex()];
+
 //        util::GUObjectArray = data.GUObjectArray;
     }
 
-//     if (data.GEngine == nullptr) {
+     if (data.GEngine == nullptr && data.GUObjectArray != nullptr && data.GNames != nullptr) {
+         int i = 0;
+         // Need to inherit in order to call GetObject()
+         for (FUObjectArray::TIterator It(*data.GUObjectArray); It; ++It) {
+            
+             printf("hej %d %d\n", i,  It.GetIndex());
+             i++;
+             if (i == 10) {
+                 break;
+             }
+         }
+
+
+//         FUObjectArray::TIterator *it = new FUObjectArray::TIterator(*data.GUObjectArray);
 //         UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
 //         data.GEngine = (UEngine*)engine;
 //         printf("GEngine found.\n");
-//     }
+     }
 
     // Still haven't got all variables
     if (data.GNames == nullptr || data.GUObjectArray == nullptr) {// || data.GEngine == nullptr) {

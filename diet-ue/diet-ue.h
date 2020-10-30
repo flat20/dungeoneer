@@ -2,6 +2,8 @@
 #include <UObject\Object.h>
 #include <UObject\Class.h>
 #include <HAL\ConsoleManager.h>
+#include <UObject\UObjectArray.h>
+
 //#include <Engine\World.h>
 // Try just this one?
 //D:\UnrealEngine-4.22\Engine\Source\Runtime\Core\Public\CoreMinimal.h
