@@ -245,15 +245,24 @@ bool spy::initVars() {
          }
 
         i = 0;
-         for (diet::FRawObjectIterator It(*data.GUObjectArray); It; ++It) {
+        for (diet::FRawObjectIterator It(*data.GUObjectArray); It; ++It) {
 
             FUObjectItem *item = *It;
-             printf("bla  %d %d %d\n", i, It.GetIndex(), item->GetOwnerIndex());
-             i++;
-             if (i == 10) {
-                 break;
-             }
-         }
+            UObject *obj = (UObject*)item->Object;
+            printf("bla  %d %d %d\n", i, It.GetIndex(), item->GetOwnerIndex());
+            FName name = obj->GetFName();
+            printf("name %d\n", name.GetDisplayIndex());
+            TNameEntryArray& names = *data.GNames;
+
+            auto e = names[name.GetDisplayIndex()];
+            ANSICHAR OutName[1024];
+            e->GetAnsiName(OutName);
+            printf("ok? %s\n", OutName);
+            i++;
+            if (i == 10) {
+                break;
+            }
+        }
 
 
 //         FUObjectArray::TIterator *it = new FUObjectArray::TIterator(*data.GUObjectArray);

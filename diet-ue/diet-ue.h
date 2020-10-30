@@ -1,9 +1,15 @@
+#pragma once
+
+// Only included so my IDE stops complaining. /FI included at compile time anyway
+#include "defines.h"
 
 #include <UObject\Object.h>
 #include <UObject\Class.h>
 #include <HAL\ConsoleManager.h>
 #include <UObject\UObjectArray.h>
 #include <UObject\UObjectIterator.h>
+//#include <HAL\UnrealMemory.h>
+
 
 //#include <Engine\World.h>
 // Try just this one?
