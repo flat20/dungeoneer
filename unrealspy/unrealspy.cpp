@@ -3,12 +3,12 @@
 #include "unrealspy.h"
 //#include "util.h"
 #include "offsets.h"
+#include "hook.h"
 #include "console.h"
 
 #include <windows.h>
 #include <Psapi.h>
 
-#include <MinHook.h>
 
 // From UnrealMath.cpp
 // TODO This is diet-ue stuff
@@ -67,55 +67,6 @@ namespace spy {
         return nullptr;
 	}
 
-// We shouldn't force a user into our basic API. Leaving some options
-bool SetHook(LPVOID target, const void *detour, LPVOID *original);
-// Address to target and address to our hook
-bool SetHook(spy::Hook *hook);
-bool EnableHook(uintptr_t address);
-bool RemoveHook(spy::Hook *hook);
-
-// Address to target and address to our hook
-bool SetHook(LPVOID target, const void* detour, LPVOID* original) {
-
-    MH_STATUS err;
-
-    err = MH_CreateHook(target, (LPVOID)detour, original);
-    if (err != MH_OK) {
-        printf("MH_CreateHook failed: %d\n", err);
-        return false;
-    }
-
-    return true;
-}
-
-
-// Address to target and address to our hook
-bool SetHook(spy::Hook *hook) {
-
-    LPVOID target = (LPVOID)(hook->address);
-
-    return SetHook(target, hook->detour, &hook->original);
-}
-
-bool RemoveHook(spy::Hook *hook) {
-    if (hook->address == 0) {
-        return false;
-    }
-    if (MH_DisableHook((LPVOID)hook->address) != MH_OK) {
-        return false;
-    }
-    return true;
-}
-
-bool EnableHook(uintptr_t address) {
-    LPVOID target = (LPVOID)(address);
-    MH_STATUS err = MH_EnableHook(target);
-    if (err != MH_OK) {
-        printf("MH_EnableHook failed: %d\n", err);
-        return false;
-    }
-    return true;
-}
 
 // Can block for up to 60 seconds while getting the needed variables.
 // Run in a separate thread if that's a problem.
@@ -142,6 +93,9 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
         return nullptr;
     }
 
+    // Should be optional
+    InitHook();
+
     // // Attempt to find the vars for 60 seconds before giving up
     for (int i=0; i<30; i++) {
 
@@ -151,54 +105,6 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
         }
         std::this_thread::sleep_for(std::chrono::seconds(2));
     }
-        // We can get GNames by calling FName::GetNames()
-        //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
-        // if (data.GNames == nullptr) {
-        //     data.GNames = GetFunction<tFName_GetNames>(RefFName_GetNames)();
-            
-        //     util::GNames = data.GNames;
-        // }
-    // }
-    //     // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
-    //     // holds a reference to GUObjectArray.
-    //     if (data.GUObjectArray == nullptr) {
-    //         char bla[256];
-    //         auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
-    //         void **ref = (void**)objectIteratorCtor(&bla[0], false);
-    //         data.GUObjectArray = (FUObjectArray*)*ref;
-    //         util::GUObjectArray = data.GUObjectArray;
-    //     }
-
-    //     // Check for GEngine and also make sure there's a GameViewport assigned
-    //     // so console works.
-    //     if (data.GEngine == nullptr && util::GNames != nullptr && util::GUObjectArray != nullptr) {
-    //         UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
-
-    //         UObject *GameViewport = util::GetPropertyValueByPath<UObject>(engine, engine, "GameViewport");
-    //         if (GameViewport != nullptr) {
-    //             data.GEngine = (UEngine*)engine;
-    //         }
-    //     }
-
-    //     if (data.GNames != nullptr && data.GUObjectArray != nullptr && data.GEngine != nullptr) {
-
-    //         // Hook functions
-    //         if (MH_Initialize() != MH_OK) {
-    //             printf("MH_Initialize failed. No hooking will work\n");
-    //             return nullptr;
-    //         }
-
-    //         return &data;
-    //     }
-
-    //     std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    // }
-
-    // printf("Failed to find the UE4 variables after 60 seconds :(\n");
-    // printf("GNames: %llx\n", (uintptr_t)data.GNames);
-    // printf("GUObjectArray: %llx\n", (uintptr_t)data.GUObjectArray);
-    // printf("GEngine: %llx\n", (uintptr_t)data.GEngine);
 
     return nullptr;
 }

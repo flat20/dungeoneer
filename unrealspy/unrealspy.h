@@ -4,6 +4,10 @@
 #include <functional>
 #include <diet-ue.h>
 
+// Would be nice if all hook stuff was declared here.
+// TODO JUst move hooks array?
+#include "hook.h"
+
 typedef signed int (__thiscall *tUObject_ProcessEvent) (UObject* thisObject, UFunction* func, void *params);
 typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
 typedef void (__thiscall *tAHUD_PostRender) (void *hud);
@@ -111,12 +115,6 @@ const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
 const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
 
 namespace spy {
-
-    struct Hook {
-        uintptr_t address;
-        const void *detour;       // Function to call
-        void *original;    // original implementation
-    };
 
     struct Data {
         uintptr_t baseAddress;                          // Base address of process, never used but let's leave for now.
