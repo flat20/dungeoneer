@@ -201,6 +201,17 @@ bool spy::initVars() {
         auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
         void **ref = (void**)objectIteratorCtor(&bla[0], false);
 
+        FRawObjectIterator *objIt = (FRawObjectIterator*)&bla[0];
+        int i = 0;
+        for (; *objIt; ++*objIt) {
+            i++;
+            FUObjectItem *item = **objIt;
+            printf("cluster index %d\n", item->GetClusterIndex());
+            if (i == 10) {
+                break;
+            }
+        }
+
         data.GUObjectArray = (FUObjectArray*)*ref;
 
         FUObjectArray *objarr = data.GUObjectArray;
@@ -227,6 +238,17 @@ bool spy::initVars() {
          for (FUObjectArray::TIterator It(*data.GUObjectArray); It; ++It) {
             
              printf("hej %d %d\n", i,  It.GetIndex());
+             i++;
+             if (i == 10) {
+                 break;
+             }
+         }
+
+        i = 0;
+         for (diet::FRawObjectIterator It(*data.GUObjectArray); It; ++It) {
+
+            FUObjectItem *item = *It;
+             printf("bla  %d %d %d\n", i, It.GetIndex(), item->GetOwnerIndex());
              i++;
              if (i == 10) {
                  break;

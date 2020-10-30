@@ -3,6 +3,7 @@
 #include <UObject\Class.h>
 #include <HAL\ConsoleManager.h>
 #include <UObject\UObjectArray.h>
+#include <UObject\UObjectIterator.h>
 
 //#include <Engine\World.h>
 // Try just this one?
@@ -98,3 +99,31 @@ struct UEngine : UObject {
 	class UGameViewportClient* GameViewport;	// At 0x750
 
 };
+
+namespace diet {
+	class FRawObjectIterator : public FUObjectArray::TIterator
+	{
+	public:
+		FRawObjectIterator( const FUObjectArray& InArray, bool bOnlyGCedObjects = false ) : FUObjectArray::TIterator(InArray, bOnlyGCedObjects)
+		{
+		}
+
+		/**
+		 * Iterator dereference
+		 * @return	the object pointer pointed at by the iterator
+		 */
+		FORCEINLINE FUObjectItem* operator*() const
+		{
+			// casting UObjectBase to UObject for clients
+			return GetObject();
+		}
+		/**
+		 * Iterator dereference
+		 * @return	the object pointer pointed at by the iterator
+		 */
+		FORCEINLINE FUObjectItem* operator->() const
+		{
+			return GetObject();
+		}
+	};
+}

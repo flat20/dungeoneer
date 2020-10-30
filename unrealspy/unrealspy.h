@@ -9,7 +9,7 @@ typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunct
 typedef void (__thiscall *tAHUD_PostRender) (void *hud);
 typedef TNameEntryArray& (__stdcall *tFName_GetNames) ();
 //typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
-typedef void* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
+typedef FRawObjectIterator* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
 
 // void __stdcall __high AHUD::DrawRect(struct FLinearColor, float, float, float, float)
 typedef void (__thiscall *tAHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
