@@ -9,6 +9,8 @@
 #include <HAL\ConsoleManager.h>
 #include <UObject\UObjectArray.h>
 #include <UObject\UObjectIterator.h>
+#include <Engine/Console.h>
+
 //#include <HAL\UnrealMemory.h>
 
 // Not core
@@ -27,8 +29,8 @@ class UFont : UObject {
 
 };
 
-class UConsole : UObject {
-};
+// class UConsole : UObject {
+// };
 
 
 
