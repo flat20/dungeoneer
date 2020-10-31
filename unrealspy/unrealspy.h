@@ -6,7 +6,6 @@
 
 // Would be nice if all hook stuff was declared here.
 // TODO JUst move hooks array?
-#include "hook.h"
 
 typedef signed int (__thiscall *tUObject_ProcessEvent) (UObject* thisObject, UFunction* func, void *params);
 typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
@@ -119,7 +118,6 @@ namespace spy {
     struct Data {
         uintptr_t baseAddress;                          // Base address of process, never used but let's leave for now.
         std::map<UE4Reference, uintptr_t> functionPtrs;  // Looked up addresses
-        std::map<UE4Reference, Hook*> hooks;            // enabled hooks
 
         FUObjectArray *GUObjectArray;
         TNameEntryArray *GNames;
@@ -141,8 +139,7 @@ namespace spy {
         return (T)data.functionPtrs[refName];
     }
 
-    bool HookFunctionRef(UE4Reference refName, const void *detour, void **original);
-    bool UnhookFunctionRef(UE4Reference refName);
+    // Move to console?
     bool EnableConsole(std::function<void (bool result)> fnResult);
 
 }

@@ -472,6 +472,6 @@ void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, 
     printf("seed: %I64d\n", params->seed);
 //    params->seed = 91081;
 
-    ((tLoadLevel)spy::data.hooks[RefLoadLevel]->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
+    ((tLoadLevel)spy::GetHook(RefLoadLevel)->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
     return;
 }

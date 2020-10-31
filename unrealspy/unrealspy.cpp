@@ -3,8 +3,8 @@
 #include "unrealspy.h"
 //#include "util.h"
 #include "offsets.h"
-#include "hook.h"
 #include "console.h"
+#include "uhook.h"
 
 #include <windows.h>
 #include <Psapi.h>
@@ -34,19 +34,31 @@ namespace spy {
 	}
 
 	ANSICHAR *GetName(UObject *obj) {
+        // Give us direct access to the name char*
+        class QuickName : public ::FNameEntry {
+        public:
+            FORCEINLINE const void *GetPtr()
+            {
+                //if (IsWide()) {
+                //	return &WideName[0];
+                //} else {
+                    return &AnsiName[0];
+                //} 
+            }
+        };
+
 		FName name = obj->GetFName();
 		TNameEntryArray& Names = *spy::data.GNames;
 
 		// Code from the ue source.
 		const NAME_INDEX Index = name.GetDisplayIndex();
 
-        diet::FNameEntry *ne = (diet::FNameEntry*)Names[Index];
-        return (ANSICHAR*)ne->GetPtr();
-		// GetComparisonIndex() seems to be the same thing as display index?
-
+        auto NameEntry = (QuickName*)Names[Index];
+        return (ANSICHAR*)NameEntry->GetPtr();
 	}
 
 	UObject *FindObjectByName(char *ObjectName, char *ClassName) {
+
         for (diet::FRawObjectIterator It(*spy::data.GUObjectArray); It; ++It) {
 
             FUObjectItem *item = *It;
@@ -186,55 +198,6 @@ uintptr_t spy::GetFunctionRef(UE4Reference refName) {
     return data.functionPtrs[refName];
 }
 
-
-// We need the original set immediately or our detour
-// could get called without having an original function to call
-bool spy::HookFunctionRef(UE4Reference refName, const void *detour, void **original) {
-    
-    // Already have it
-    if (data.hooks.count(refName) > 0) {
-        return false;
-    }
-
-    Hook *hook = new Hook{GetFunctionRef(refName), detour};
-    bool result = SetHook(hook);
-    if (result == false) {
-        return false;
-    }
-
-    // Update original if it's wanted.
-    // Can still be found in data.hooks[]->original
-    if (original != nullptr) {
-        *original = hook->original;
-    }
-
-    result = EnableHook(hook->address);
-    if (result == false) {
-        delete hook;
-        return false;
-    }
-
-    data.hooks[refName] = hook;
-
-    return true;
-}
-
-bool spy::UnhookFunctionRef(UE4Reference refName) {
-    
-    // Don't have it
-    if (data.hooks.count(refName) == 0) {
-        return false;
-    }
-
-    Hook *hook = data.hooks[refName];
-    bool result = RemoveHook(hook);
-
-    // Delete regardless of removal result. Maybe?
-    delete hook;
-    data.hooks.erase(refName);
-
-    return result;
-}
 
 // bool DeInitSpy(SpyData *data) {
 

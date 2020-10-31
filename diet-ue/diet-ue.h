@@ -34,6 +34,8 @@ class UConsole : UObject {
 
 
 namespace diet {
+	// If we move this to spy:: where we have GUObjectArray we could make it work
+	// exactly like the original FRawObjectIterator
 	class FRawObjectIterator : public FUObjectArray::TIterator
 	{
 	public:
@@ -60,17 +62,4 @@ namespace diet {
 		}
 	};
 
-	// Rename or make inner somewhere. Just to speed things up
-	// when finding names.
-	class FNameEntry : public ::FNameEntry {
-	public:
-		void *GetPtr()
-		{
-			//if (IsWide()) {
-			//	return &WideName[0];
-			//} else {
-				return &AnsiName[0];
-			//} 
-		}
-	};
 }
