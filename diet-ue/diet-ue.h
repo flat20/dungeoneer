@@ -9,12 +9,14 @@
 #include <HAL\ConsoleManager.h>
 #include <UObject\UObjectArray.h>
 #include <UObject\UObjectIterator.h>
-#include <Engine/Console.h>
 
 //#include <HAL\UnrealMemory.h>
 
 // Not core
+#include <Engine\Engine.h>
+#include <Engine\Console.h>
 #include <Engine\World.h>
+#include <Engine\GameViewportClient.h>
 
 //#include <Engine\World.h>
 // Try just this one?

@@ -16,9 +16,12 @@ cl /nologo /EHsc ^
      /I "D:\UE_4.22\Engine\Source\Runtime\InputCore\Classes" ^
      /I "D:\UE_4.22\Engine\Source\Runtime\RHI\Public" ^
      /I "D:\UE_4.22\Engine\Source\Runtime\RenderCore\Public" ^
+     /I "D:\UE_4.22\Engine\Source\Runtime\SlateCore\Public" ^
+     /I "D:\UE_4.22\Engine\Source\Runtime\ApplicationCore\Public" ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\Engine" ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\InputCore" ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\EngineSettings" ^
+     /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\SlateCore" ^
      dungeoneer\*.cpp ^
      unrealspy\*.cpp ^
      minhook-master\src\hook.c^

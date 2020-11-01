@@ -1,17 +1,57 @@
 //#include "unrealspy.h"
 //#include "util.h"
 #include "console.h"
+#include "helpers.h"
 //#include <windows.h>
 
 std::function<void (bool success)> fnEnableConsoleResult = 0;
 tFConsoleManager_ProcessUserConsoleInput origProcessConsoleInput = nullptr;
 
+// template<class TClass>
+// class Bla : public TSubclassOf<TClass> {
+// public:
+//     void *MyGet() {
+//         return (void*)Class;
+//     }
+// };
+// struct Test {
+
+// };
+
 // TODO Enabling all commands should be a second function call
 bool spy::EnableConsole(std::function<void (bool result)> fnResult) {
 
-    return false;
+    UGameViewportClient *GameViewport = data.GEngine->GameViewport;
+    if (GameViewport == nullptr) {
+        printf("no GameViewport\n");
+        return false;
+    }
 
     // // Have we already got a console?
+    if (GameViewport->ViewportConsole != nullptr) {
+        printf("no viewportconsole\n");
+        return false;
+    }
+
+    // Hack to avoid triggering ::StaticClass()
+
+    UClass *ConsoleClass = *(UClass**)&data.GEngine->ConsoleClass;
+
+    printf("Did we get a console class? %llx\n", (uintptr_t)ConsoleClass);
+    printf("Did we get a console class? %llx %s\n", (uintptr_t)ConsoleClass, GetName(ConsoleClass));
+    
+    FName NameNone;
+    auto ConstructObject = GetFunction<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
+    UConsole *console = (UConsole*)ConstructObject(ConsoleClass, GameViewport, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
+    if (console == nullptr) {
+        printf("Unable to instantiate console class?\n");
+        return false;
+    }
+
+    GameViewport->ViewportConsole = console;
+    
+    return true;
+
     // UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(data.GEngine, data.GEngine, "GameViewport/ViewportConsole");
     // if (ViewportConsole != nullptr) {
     //     return false;

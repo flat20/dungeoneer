@@ -2,6 +2,7 @@
 #include <thread>
 #include "unrealspy.h"
 //#include "util.h"
+#include "helpers.h"
 #include "offsets.h"
 #include "console.h"
 #include "uhook.h"
@@ -18,66 +19,6 @@ namespace spy {
     Data data = {};
 }
 
-
-	bool GetName(UObject *obj, ANSICHAR (&OutName)[1024]) {
-		FName name = obj->GetFName();
-		TNameEntryArray& Names = *spy::data.GNames;
-
-		// Code from the ue source.
-		const NAME_INDEX Index = name.GetDisplayIndex();
-		const FNameEntry* const NameEntry = Names[Index];
-
-		// GetComparisonIndex() seems to be the same thing as display index?
-
-		NameEntry->GetAnsiName(OutName);
-        return true;
-	}
-
-	ANSICHAR *GetName(UObject *obj) {
-        // Give us direct access to the name char*
-        class QuickName : public ::FNameEntry {
-        public:
-            FORCEINLINE const void *GetPtr()
-            {
-                //if (IsWide()) {
-                //	return &WideName[0];
-                //} else {
-                    return &AnsiName[0];
-                //} 
-            }
-        };
-
-		FName name = obj->GetFName();
-		TNameEntryArray& Names = *spy::data.GNames;
-
-		// Code from the ue source.
-		const NAME_INDEX Index = name.GetDisplayIndex();
-
-        auto NameEntry = (QuickName*)Names[Index];
-        return (ANSICHAR*)NameEntry->GetPtr();
-	}
-
-	UObject *FindObjectByName(char *ObjectName, char *ClassName) {
-
-        for (diet::FRawObjectIterator It(*spy::data.GUObjectArray); It; ++It) {
-
-            FUObjectItem *item = *It;
-            UObject *obj = (UObject*)item->Object;
-
-            // if objectName is requested but doesn't match, continue
-            if (ObjectName != nullptr && strcmp(GetName(obj), ObjectName) != 0) {
-                continue;
-            }
-
-            // if className is requested but doesn't match, continue
-            if (ClassName != nullptr && strcmp(GetName(obj->GetClass()), ClassName) != 0) {
-                continue;
-            }
-
-            return obj;
-        }
-        return nullptr;
-	}
 
 
 // Can block for up to 60 seconds while getting the needed variables.
