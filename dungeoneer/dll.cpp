@@ -131,11 +131,17 @@ void Init() {
 
     printf("Dungeoneer ready\n");
 
-    bool result = spy::EnableConsole([](bool result) {
-        printf("Console enabled with all commands\n");
+    if (spy::InitConsole() == false) {
+        printf("Unable to init console");
+        return;
+    }
+
+    printf("Console enabled\n");
+    bool result = spy::InitCheatCommands([](bool result) {
+        printf("Cheat commands enabled\n");
     });
     if (result == false) {
-        printf("No console\n");
+        printf("No cheat commands\n");
     }
 
 }

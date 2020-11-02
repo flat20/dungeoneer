@@ -139,7 +139,4 @@ namespace spy {
         return (T)data.functionPtrs[refName];
     }
 
-    // Move to console?
-    bool EnableConsole(std::function<void (bool result)> fnResult);
-
 }

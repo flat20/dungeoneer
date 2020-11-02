@@ -70,12 +70,6 @@ bool spy::initVars() {
         TNameEntryArray& names = GetFunction<tFName_GetNames>(RefFName_GetNames)();
         data.GNames = &names;
 
-        auto e = names[1];
-
-        ANSICHAR OutName[1024];
-        e->GetAnsiName(OutName);
-        printf("ok? %d %s\n", e->GetIndex(), OutName);
-
 //         util::GNames = data.GNames;
     }
 
@@ -103,11 +97,8 @@ bool spy::initVars() {
         UObject *engine = FindObjectByName("GameEngine", "GameEngine");
         if (engine != nullptr) {
             data.GEngine = (UEngine*)engine;
-            printf("GEngine found.\n");
         }
-//         FUObjectArray::TIterator *it = new FUObjectArray::TIterator(*data.GUObjectArray);
-//         UObject *engine = util::FindObjectByName("GameEngine", "GameEngine");
-//         data.GEngine = (UEngine*)engine;
+
     }
 
     // Still haven't got all variables
