@@ -87,6 +87,9 @@ typedef FName* (__stdcall *tFName_Init)(FName *thisFName, const wchar_t *InName,
 // void* FWindowsPlatformProcess::GetDllHandle( const TCHAR* FileName )
 typedef void* (__fastcall *tFWindowsPlatformProcess_GetDllHandle)(const TCHAR *FileName);
 
+// bool UObject::CallFunctionByNameWithArguments(const TCHAR* Str, FOutputDevice& Ar, UObject* Executor, bool bForceCallWithNonExec/*=false*/)
+
+typedef bool (__fastcall *tUobject_CallFunctionByNameWithArguments)(UObject *thisUObject, const TCHAR* Str, FOutputDevice& Ar, UObject* Executor, bool bForceCallWithNonExec);
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
 typedef std::string UE4Reference;
@@ -112,6 +115,7 @@ const UE4Reference RefFModuleManager_LoadModule     = "FModuleManager::LoadModul
 const UE4Reference RefFModuleManager_LoadModuleWithFailureReason = "FModuleManager::LoadModuleWithFailureReason";
 const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
 const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
+const UE4Reference RefUObject_CallFunctionByNameWithArguments = "UObject::CallFunctionByNameWithArguments";
 
 namespace spy {
 

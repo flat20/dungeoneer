@@ -11,10 +11,6 @@
 #include <Psapi.h>
 
 
-// From UnrealMath.cpp
-// TODO This is diet-ue stuff
-CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);
-
 namespace spy {
     Data data = {};
 }

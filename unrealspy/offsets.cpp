@@ -40,6 +40,7 @@ namespace offsets {
         {RefFModuleManager_LoadModuleWithFailureReason,   "48 89 54 24 10 55 53 56 57 41 54 41 55 41 56 48 8D 6C 24 D9 48 81 EC B0 00 00 00"},
         {RefFModuleManager_Get,             "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? ?? ?? ?? ?? 65 48 8B 04 25 58 00 00 00 8B 0D ?? ?? ?? ?? 41 B8 ?? ?? ?? ?? 48 8B 14 C8 41 8B 04 10 39 05 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 8D"},
         {RefFWindowsPlatformProcess_GetDllHandle, "40 55 53 56 48 8B EC 48 83 EC 40 33 F6 48 89 7C 24 68 4C 89 7C 24 78 4C 8B F9 48 8D 4D F0"},
+        {RefUObject_CallFunctionByNameWithArguments, "40 55 53 56 57 41 54 41 55 41 56 41 57 48 81 EC F8 02 00 00 48 8D 6C 24 30"}
     };
 
     // Lookup offsets using search strings and convert to runtime addresses.

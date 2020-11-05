@@ -1,7 +1,8 @@
 
 #include <stdio.h>
 #include <dungeoneer_mod.h>
-//#include <iterator.h>
+#include <helpers.h>
+#include <Misc/OutputDeviceNull.h>
 
 ModuleInfo modInfo = {
     DUNGEONEER_VERSION,
@@ -14,7 +15,7 @@ void AActor_ProcessEvent(AActor* thisActor, UFunction* func, void *params);
 
 tUObject_ProcessEvent origUObject_ProcessEvent;
 // tStaticLoadObject StaticLoadObject;
-// tStaticLoadClass StaticLoadClass;
+//tStaticLoadClass XStaticLoadClass;
 // tStaticConstructObject_Internal ConstructObject;
 // tUWorld_SpawnActor SpawnActor;
 // tUUserWidget_CreateWidget CreateWidget;
@@ -30,7 +31,7 @@ void ModMain(Dungeoneer *dng, Module *mod) {
     origUObject_ProcessEvent = (tUObject_ProcessEvent)dng->spyData->functionPtrs[RefUObject_ProcessEvent];
 
     // StaticLoadObject = (tStaticLoadObject)dng->spyData->functionPtrs[RefStaticLoadObject];
-    // StaticLoadClass = (tStaticLoadClass)dng->spyData->functionPtrs[RefStaticLoadClass];
+    //XStaticLoadClass = (tStaticLoadClass)dng->spyData->functionPtrs[RefStaticLoadClass];
     // ConstructObject = (tStaticConstructObject_Internal)dng->spyData->functionPtrs[RefStaticConstructObject_Internal];
     // SpawnActor = (tUWorld_SpawnActor)dng->spyData->functionPtrs[RefUWorld_SpawnActor];
     // CreateWidget = (tUUserWidget_CreateWidget)dng->spyData->functionPtrs[RefUUserWidget_CreateWidget];
@@ -44,7 +45,7 @@ void ModMain(Dungeoneer *dng, Module *mod) {
 }
 
 void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
-    //testing();
+    testing();
     // // Print out the name of the function and the object it belongs to.
     // if (strstr(util::getName(func), "My") == nullptr) {
     //     return;
@@ -93,14 +94,42 @@ void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
 //     printf("\n");
 // }
 
-// bool firstTime = true;
-// void testing() {
-//     using namespace util;
+bool firstTime = true;
+void testing() {
+    using namespace spy;
     
-//     if (!firstTime) {
-//         return;
-//     }
-//     firstTime = false;
+    if (!firstTime) {
+        return;
+    }
+    firstTime = false;
+
+    printf("testing?\n");
+/*
+
+    //  _snprintf(funcCallBuf, sizeof(funcCallBuf), "%s %f", *funcName, f);
+    UClass *actorClass = (UClass*)FindObjectByName("Actor", "Class");
+    printf("actor %llx\n", (uintptr_t)actorClass);
+
+     UClass* cls;
+//     // THIS works.
+    cls = XStaticLoadClass(actorClass, nullptr, (TCHAR*)L"/Game/Decor/Prefabs/ModMapTable/BP_ModMapTable.BP_ModMapTable_C", nullptr, 0, nullptr);
+//    cls = StaticLoadClass(actorClass, nullptr, (TCHAR*)L"/Game/UI/ModLevelSelection/MyTestBlueprint.MyTestBlueprint_C", nullptr, 0, nullptr);
+
+
+    printf("loaded cls %llx %s\n", (uintptr_t)cls, GetName(cls));
+    if (cls == nullptr) {
+        return;
+    }
+    printf(" %s\n", GetName(cls->GetClass()));
+    // FName NameNone{0,0};
+*/
+    // FOutputDeviceNull ar;
+    // auto CallFunc = GetFunction<tUobject_CallFunctionByNameWithArguments>(RefUObject_CallFunctionByNameWithArguments);
+    // UObject *Object;
+    // CallFunc(Object, ANSI_TO_TCHAR("Name value"), ar, NULL, true);
+
+
+    // AActor *mapTable = (AActor*)ConstructObject(cls, nullptr, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
 
 //     // UEnum *levelNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
 //     // printf("%s (%s)\n", getName(levelNames), getName(levelNames->ClassPrivate));
@@ -251,4 +280,4 @@ void UObject_ProcessEvent(UObject* object, UFunction* func, void *params) {
 //     // dumpNameEntries();
 //     // printf("done\n");
 
-// }
+}

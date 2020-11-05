@@ -1,5 +1,6 @@
 
 cl /nologo /EHsc ^
+     /DSPY_API=__declspec(dllexport) ^
      /I minhook-master/include/ /I unrealspy/ ^
      /I imgui-1.78/  ^
      /I "%WindowsSdkDir%Include\um" /I "%WindowsSdkDir%Include\shared"  ^

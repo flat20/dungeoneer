@@ -1,7 +1,6 @@
 
 #include <stdio.h>
 #include <dungeoneer_mod.h>
-#include <iterator.h>
 #include <queue>
 #include <functional>
 #include <mutex>

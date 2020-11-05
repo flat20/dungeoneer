@@ -3,7 +3,7 @@
 #include <vector>
 #include <list>
 #include <map>
-#include <unreal.h>
+#include <diet-ue.h>
 
 struct UObjectData {
     UObject *object;
