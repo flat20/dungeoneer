@@ -15,13 +15,14 @@ void AActor_ProcessEvent(AActor* thisActor, UFunction* func, void *params);
 
 tUObject_ProcessEvent origUObject_ProcessEvent;
 // tStaticLoadObject StaticLoadObject;
-//tStaticLoadClass XStaticLoadClass;
-// tStaticConstructObject_Internal ConstructObject;
-// tUWorld_SpawnActor SpawnActor;
+tStaticLoadClass _LoadClass;
+tStaticConstructObject_Internal _ConstructObject;
+tUWorld_SpawnActor _SpawnActor;
 // tUUserWidget_CreateWidget CreateWidget;
 // tUUserWidget_AddToViewport AddToViewport;
 
 UEngine *GEngine;
+FUObjectArray *_GUObjectArray;
 void testing();
 
 // Called when Mod gets loaded
@@ -31,12 +32,13 @@ void ModMain(Dungeoneer *dng, Module *mod) {
     origUObject_ProcessEvent = (tUObject_ProcessEvent)dng->spyData->functionPtrs[RefUObject_ProcessEvent];
 
     // StaticLoadObject = (tStaticLoadObject)dng->spyData->functionPtrs[RefStaticLoadObject];
-    //XStaticLoadClass = (tStaticLoadClass)dng->spyData->functionPtrs[RefStaticLoadClass];
-    // ConstructObject = (tStaticConstructObject_Internal)dng->spyData->functionPtrs[RefStaticConstructObject_Internal];
-    // SpawnActor = (tUWorld_SpawnActor)dng->spyData->functionPtrs[RefUWorld_SpawnActor];
+    _LoadClass = (tStaticLoadClass)dng->spyData->functionPtrs[RefStaticLoadClass];
+    _ConstructObject = (tStaticConstructObject_Internal)dng->spyData->functionPtrs[RefStaticConstructObject_Internal];
+    _SpawnActor = (tUWorld_SpawnActor)dng->spyData->functionPtrs[RefUWorld_SpawnActor];
     // CreateWidget = (tUUserWidget_CreateWidget)dng->spyData->functionPtrs[RefUUserWidget_CreateWidget];
     // AddToViewport = (tUUserWidget_AddToViewport)dng->spyData->functionPtrs[RefUUserWidget_AddToViewport];
     GEngine = dng->spyData->GEngine;
+    _GUObjectArray = dng->spyData->GUObjectArray;
 
     //printf("%x %x\n", UProperty::StaticClassCastFlags)
     // Listen for UObject_ProcessEvent (UFunctions being called basically)
@@ -104,15 +106,29 @@ void testing() {
     firstTime = false;
 
     printf("testing?\n");
-/*
 
+    
+    for (diet::FRawObjectIterator It(*_GUObjectArray); It; ++It) {
+
+        FUObjectItem *item = *It;
+        UObject *obj = (UObject*)item->Object;
+
+        // if objectName is requested but doesn't match, continue
+        if (strstr(GetName(obj), "ConsoleSettings") != nullptr) {
+            printf("%s %s\n", GetName(obj), GetName(obj->GetClass()));
+            continue;
+        }
+    }
+
+    return;
     //  _snprintf(funcCallBuf, sizeof(funcCallBuf), "%s %f", *funcName, f);
     UClass *actorClass = (UClass*)FindObjectByName("Actor", "Class");
     printf("actor %llx\n", (uintptr_t)actorClass);
+    printf("%s\n", GetName(actorClass));
 
      UClass* cls;
 //     // THIS works.
-    cls = XStaticLoadClass(actorClass, nullptr, (TCHAR*)L"/Game/Decor/Prefabs/ModMapTable/BP_ModMapTable.BP_ModMapTable_C", nullptr, 0, nullptr);
+    cls = _LoadClass(actorClass, nullptr, (TCHAR*)L"/Game/Decor/Prefabs/ModMapTable/BP_ModMapTable.BP_ModMapTable_C", nullptr, 0, nullptr);
 //    cls = StaticLoadClass(actorClass, nullptr, (TCHAR*)L"/Game/UI/ModLevelSelection/MyTestBlueprint.MyTestBlueprint_C", nullptr, 0, nullptr);
 
 
@@ -120,16 +136,16 @@ void testing() {
     if (cls == nullptr) {
         return;
     }
-    printf(" %s\n", GetName(cls->GetClass()));
-    // FName NameNone{0,0};
-*/
+//    printf(" %s\n", GetName(cls->GetClass()));
+    FName NameNone;
+
     // FOutputDeviceNull ar;
     // auto CallFunc = GetFunction<tUobject_CallFunctionByNameWithArguments>(RefUObject_CallFunctionByNameWithArguments);
     // UObject *Object;
     // CallFunc(Object, ANSI_TO_TCHAR("Name value"), ar, NULL, true);
 
 
-    // AActor *mapTable = (AActor*)ConstructObject(cls, nullptr, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
+    //AActor *mapTable = (AActor*)_ConstructObject(cls, nullptr, NameNone, RF_NoFlags, EInternalObjectFlags::None, nullptr, false, nullptr, false);
 
 //     // UEnum *levelNames = (UEnum*)FindObjectByName("ELevelNames", nullptr);
 //     // printf("%s (%s)\n", getName(levelNames), getName(levelNames->ClassPrivate));
@@ -242,27 +258,26 @@ void testing() {
 // //	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category="User Interface|Viewport", meta=( AdvancedDisplay = "ZOrder" ))
 // //	void AddToViewport(int32 ZOrder = 0);
 
-// //     FVector location;
-// //     location.X = 18227.0;
-// //     location.Y = 8303.0;
-// //     location.Z = 11700.0;
-// //     FRotator rotation;
+    FVector location;
+    location.X = 18227.0;
+    location.Y = 8303.0;
+    location.Z = 11700.0;
+    FRotator rotation;
 
-// //     FActorSpawnParameters spawnParameters{};
-// //     spawnParameters.bNoFail = true;
-// //     spawnParameters.bDeferConstruction = false;
-// //     spawnParameters.Owner = nullptr;
-// //     spawnParameters.Instigator = nullptr;
-// //     spawnParameters.Template = nullptr;
-// //     spawnParameters.Name.Index = 0;
-// //     spawnParameters.Name.Number = 0;
-// //     spawnParameters.OverrideLevel = nullptr;
-// //     spawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    FActorSpawnParameters spawnParameters{};
+    spawnParameters.bNoFail = true;
+    spawnParameters.bDeferConstruction = false;
+    spawnParameters.Owner = nullptr;
+    spawnParameters.Instigator = nullptr;
+    spawnParameters.Template = nullptr;
+    // spawnParameters.Name.Index = 0;
+    // spawnParameters.Name.Number = 0;
+    spawnParameters.OverrideLevel = nullptr;
+    spawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-// // // // ShowDebug !!!!
-
-// //      AActor *actorTable = SpawnActor(world, cls, &location, &rotation, spawnParameters);
-// //      printf("actor %llx\n", (uintptr_t)actorTable);
+    UObject *world = GEngine->GameViewport->GetWorld();
+     AActor *actorTable = _SpawnActor(world, cls, &location, &rotation, spawnParameters);
+     printf("actor %llx\n", (uintptr_t)actorTable);
 
 
 

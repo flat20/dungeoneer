@@ -2,7 +2,6 @@
 #include "unrealspy.h"
 
 namespace spy {
-    
     bool InitConsole();
     bool InitCheatCommands(std::function<void (bool result)> fnResult);
 }

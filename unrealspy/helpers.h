@@ -1,10 +1,10 @@
 #pragma once
 
-#include <diet-ue.h>
+#include "unrealspy.h"
 
 namespace spy {
-	bool GetName(UObject *obj, ANSICHAR (&OutName)[1024]);
-	ANSICHAR *GetName(UObject *obj);
-	UObject *FindObjectByName(char *ObjectName, char *ClassName);
+	SPYAPI bool GetName(UObject *obj, ANSICHAR (&OutName)[1024]);
+	SPYAPI ANSICHAR *GetName(UObject *obj);
+	SPYAPI UObject *FindObjectByName(char *ObjectName, char *ClassName);
 
 }

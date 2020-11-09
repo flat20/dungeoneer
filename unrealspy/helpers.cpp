@@ -18,6 +18,10 @@ namespace spy {
 	}
 
 	ANSICHAR *GetName(UObject *obj) {
+        if (obj == nullptr) {
+            return nullptr;
+        }
+
         // Give us direct access to the name char*
         class QuickName : public ::FNameEntry {
         public:

@@ -5,6 +5,7 @@
 #include "uhook.h"
 //#include <windows.h>
 #include <stdlib.h>
+#include "console_autocomplete.h"
 
 bool spy::InitConsole() {
 
@@ -56,11 +57,13 @@ bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
 
     fnEnableConsoleResult = fnResult;
 
+    // Send random console command so we can get access to FConsoleManager.
     UConsole *console = data.GEngine->GameViewport->ViewportConsole;
     auto consoleCommand = GetFunction<tUConsole_ConsoleCommand>(RefUConsole_ConsoleCommand);
     FString str((TCHAR*)L"flat20");
 
     consoleCommand(console, &str);
+
     return true;
 }
 
@@ -92,6 +95,10 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
         FConsoleObjectVisitor::CreateStatic(&OnConsoleVariable),
         (TCHAR*)L""
     );
+
+    UConsole *console = spy::data.GEngine->GameViewport->ViewportConsole;
+    autocomplete::BuildAutocomplete(thisConsoleManager, console);
+
     fnEnableConsoleResult(true);
 
 }

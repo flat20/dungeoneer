@@ -4,6 +4,14 @@
 #include <functional>
 #include <diet-ue.h>
 
+
+
+#ifdef SPYAPI_IMPORT
+//    #define SPYAPI __declspec(dllimport)
+#else
+    #define SPYAPI __declspec(dllexport)
+#endif
+
 // Would be nice if all hook stuff was declared here.
 // TODO JUst move hooks array?
 
