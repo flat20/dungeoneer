@@ -130,11 +130,6 @@ namespace spy {
     struct Data {
         uintptr_t baseAddress;                          // Base address of process, never used but let's leave for now.
         std::map<UE4Reference, uintptr_t> functionPtrs;  // Looked up addresses
-
-        FUObjectArray *GUObjectArray;
-        TNameEntryArray *GNames;
-        UEngine* GEngine; // Just get from GUObjectArray?
-
     };
 
     // For internal use, but I guess I'll work that out later..

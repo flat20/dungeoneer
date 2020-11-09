@@ -103,8 +103,8 @@ public:
         printf("building\n");
 
     // 	// iterate through script exec functions and append to the list
-    // 	for (TObjectIterator<UFunction> It; It; ++It)
-    // 	{
+     	// for (TObjectIterator<UFunction> It; It; ++It)
+    	// {
     // 		UFunction *Func = *It;
 
     // 		// Determine whether or not this is a level script event that we can call (must be defined in the level script actor and not in parent, and has no return value)
@@ -153,7 +153,7 @@ public:
     // 			}
     // 			AutoCompleteList[NewIdx].Desc = Desc + AutoCompleteList[NewIdx].Desc;
     // 		}
-    // 	}
+    	// }
 
         // // enumerate maps
         // {

@@ -1,7 +1,7 @@
 #include <map>
 #include <thread>
 #include "unrealspy.h"
-//#include "util.h"
+#include "unreal_impl.h"
 #include "helpers.h"
 #include "offsets.h"
 #include "console.h"
@@ -62,43 +62,32 @@ bool spy::initVars() {
 //     // We can get GNames by calling FName::GetNames()
 //     //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
 
-    if (data.GNames == nullptr) {
+    if (GNames == nullptr) {
         TNameEntryArray& names = GetFunction<tFName_GetNames>(RefFName_GetNames)();
-        data.GNames = &names;
-
-//         util::GNames = data.GNames;
+        spy::GNames = &names;
     }
 
 //     // We can get GUObjectArray by instantiating FRawObjectIterator. It just so happens that it
 //     // holds a reference to GUObjectArray as its first member
-    if (data.GUObjectArray == nullptr) {
+    if (spy::GUObjectArray == nullptr) {
         char bla[256];
         auto objectIteratorCtor = (tFRawObjectIterator_Ctor)data.functionPtrs[RefFRawObjectIterator_Ctor];
         void **ref = (void**)objectIteratorCtor(&bla[0], false);
-
-        data.GUObjectArray = (FUObjectArray*)*ref;
-
-//        printf("global set? %s\n", GUObjectArray.IsOpenForDisregardForGC() ? "true" : "false");
-        
-//        auto e = data.GNames[name.GetIndex()];
-
-//        util::GUObjectArray = data.GUObjectArray;
+        spy::GUObjectArray = (FUObjectArray*)*ref;
     }
 
-    if (data.GEngine == nullptr && data.GUObjectArray != nullptr && data.GNames != nullptr) {
-
-        // TNameEntryArray& Names = *data.GNames;
-        // Names[EName::NAME_Engine];
+    // When we have names and objects, get uengine
+    if (spy::GEngine == nullptr && spy::GUObjectArray != nullptr && spy::GNames != nullptr) {
 
         UObject *engine = FindObjectByName("GameEngine", "GameEngine");
         if (engine != nullptr) {
-            data.GEngine = (UEngine*)engine;
+            spy::GEngine = (UEngine*)engine;
         }
 
     }
 
     // Still haven't got all variables
-    if (data.GNames == nullptr || data.GUObjectArray == nullptr) {// || data.GEngine == nullptr) {
+    if (spy::GNames == nullptr || spy::GUObjectArray == nullptr || spy::GEngine == nullptr) {
         return false;
     }
     return true;

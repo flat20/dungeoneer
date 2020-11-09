@@ -9,7 +9,7 @@
 
 bool spy::InitConsole() {
 
-    UGameViewportClient *GameViewport = data.GEngine->GameViewport;
+    UGameViewportClient *GameViewport = GEngine->GameViewport;
     if (GameViewport == nullptr) {
         printf("no GameViewport\n");
         return false;
@@ -23,7 +23,7 @@ bool spy::InitConsole() {
 
     // Hack to avoid triggering ::StaticClass() inside TSubclassOf.
     // TSubclassOf happens to have only one member, which is a pointer to the UClass.
-    UClass *ConsoleClass = *(UClass**)&data.GEngine->ConsoleClass;
+    UClass *ConsoleClass = *(UClass**)&GEngine->ConsoleClass;
     
     FName NameNone;
     auto ConstructObject = GetFunction<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
@@ -44,7 +44,7 @@ tFConsoleManager_ProcessUserConsoleInput origProcessConsoleInput = nullptr;
 
 bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
 
-    if (data.GEngine->GameViewport == nullptr || data.GEngine->GameViewport->ViewportConsole == nullptr) {
+    if (GEngine->GameViewport == nullptr || GEngine->GameViewport->ViewportConsole == nullptr) {
         return false;
     }
 
@@ -58,7 +58,7 @@ bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
     fnEnableConsoleResult = fnResult;
 
     // Send random console command so we can get access to FConsoleManager.
-    UConsole *console = data.GEngine->GameViewport->ViewportConsole;
+    UConsole *console = GEngine->GameViewport->ViewportConsole;
     auto consoleCommand = GetFunction<tUConsole_ConsoleCommand>(RefUConsole_ConsoleCommand);
     FString str((TCHAR*)L"flat20");
 
@@ -96,7 +96,7 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
         (TCHAR*)L""
     );
 
-    UConsole *console = spy::data.GEngine->GameViewport->ViewportConsole;
+    UConsole *console = GEngine->GameViewport->ViewportConsole;
     autocomplete::BuildAutocomplete(thisConsoleManager, console);
 
     fnEnableConsoleResult(true);

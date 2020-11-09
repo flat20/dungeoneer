@@ -92,8 +92,8 @@ void FString::ToLowerInline()
 //     return malloc((size_t)Count);
 // }
 
-#pragma comment(linker, "/export:?ZeroVector@FVector@@2U1@B")
-CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);
+// #pragma comment(linker, "/export:?ZeroVector@FVector@@2U1@B")
+// CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);
 
 #pragma comment(linker, "/export:??0FActorSpawnParameters@@QEAA@XZ")
 FActorSpawnParameters::FActorSpawnParameters()

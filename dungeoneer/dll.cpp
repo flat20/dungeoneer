@@ -129,8 +129,6 @@ void Init() {
 
     uiData.modsDisabled = false;
 
-    printf("Dungeoneer ready\n");
-
     if (spy::InitConsole() == false) {
         printf("Unable to init console");
         return;
@@ -144,6 +142,7 @@ void Init() {
         printf("No cheat commands\n");
     }
 
+    printf("Dungeoneer ready\n");
 }
 
 void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {

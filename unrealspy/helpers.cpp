@@ -1,11 +1,12 @@
 #include "helpers.h"
 #include "unrealspy.h"
+#include "unreal_impl.h"
 
 namespace spy {
 
 	bool GetName(UObject *obj, ANSICHAR (&OutName)[1024]) {
 		FName name = obj->GetFName();
-		TNameEntryArray& Names = *spy::data.GNames;
+		TNameEntryArray& Names = *GNames;
 
 		// Code from the ue source.
 		const NAME_INDEX Index = name.GetDisplayIndex();
@@ -36,7 +37,7 @@ namespace spy {
         };
 
 		FName name = obj->GetFName();
-		TNameEntryArray& Names = *spy::data.GNames;
+		TNameEntryArray& Names = *GNames;
 
 		// Code from the ue source.
 		const NAME_INDEX Index = name.GetDisplayIndex();
@@ -47,7 +48,7 @@ namespace spy {
 
 	UObject *FindObjectByName(char *ObjectName, char *ClassName) {
 
-        for (diet::FRawObjectIterator It(*spy::data.GUObjectArray); It; ++It) {
+        for (FRawObjectIterator It(false); It; ++It) {
 
             FUObjectItem *item = *It;
             UObject *obj = (UObject*)item->Object;

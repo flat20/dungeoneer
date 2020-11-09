@@ -112,3 +112,11 @@
 #define ANIMATIONCORE_API 
 
 #define _TCHAR_DEFINED
+
+//         Could try to override UCLASS define and create a 
+//         FindByClassName in there + a static variable for it.
+//         GetPrivateStaticClass()
+// #define UCLASS(...)
+// #else
+// #define UCLASS(...) BODY_MACRO_COMBINE(CURRENT_FILE_ID,_,__LINE__,_PROLOG)
+// #endif
