@@ -47,5 +47,3 @@ cl /nologo /EHsc ^
       d3d11.lib d3dcompiler.lib ^
       -DLL /subsystem:console /DEBUG -OUT:dungeoneer.dll
 
-REM      diet-ue\*.cpp ^
-REM      D:\UnrealEngine-4.22\Engine\Source\Runtime\Core\Private\Delegates\DelegateHandle.cpp ^

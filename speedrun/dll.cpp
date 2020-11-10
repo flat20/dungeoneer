@@ -1,10 +1,10 @@
-#include <Windows.h>
+//#include <Windows.h>
 #include <stdio.h>
 #include <thread>
 
 #include <unrealspy.h>
+#include <uhook.h>
 #include <offsets.h>
-#include <util.h>
 #include <console.h>
 #include <fstream>
 #include <utility>
@@ -22,8 +22,8 @@ void Init();
 
 // Testing: Params passed to LoadLevel. Not completed, but has what we need for now.
 struct LoadLevelParams {
-    byte difficulty;        //0 +8
-    byte threatLevel;
+    uint8 difficulty;        //0 +8
+    uint8 threatLevel;
     TArray<TCHAR> loadType; //8 +16 "lobby", "ingame"
     uint64 something;       //20 +8 0x17, 
     TArray<TCHAR> levelName; //28 +16 "Lobby", "soggyswamp"
@@ -33,11 +33,8 @@ struct LoadLevelParams {
 };
 
 // __int64 __fastcall subLevelLoad(__int64 a1, __int64 a2, char a3)
-typedef void (__fastcall *tLoadLevel)(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
-void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
-
-
-using namespace util;
+typedef void (__fastcall *tLoadLevel)(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat);
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat);
 
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
@@ -49,7 +46,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
         DWORD len = GetModuleFileNameA(hinst, (LPSTR)&dllFilename, sizeof(dllFilename));
         if (len == 0) {
             printf("No dll filename?\n");
-            return FALSE;
+            return 0;
         }
         std::string filename = dllFilename;
         size_t pos = filename.find_last_of("/\\");
@@ -70,7 +67,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
         // printf("detach %s\n", result ? "successful" : "failed");
     }
-    return TRUE;
+    return 1;
 }
 
 // Initializing in a separate thread
@@ -124,22 +121,20 @@ void Init() {
     spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
 
 
-    bool result = spy::EnableConsole([](bool result) {
-        printf("Console enabled with all commands\n");
-    });
-    if (result == false) {
-        printf("No console\n");
+    if (spy::InitConsole() == false) {
+        printf("Unable to init console");
+        return;
     }
 
 }
 
-void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat) {
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat) {
     printf("LevelLoad\n");
-    printf("  Name: %ws\n", (wchar_t*)params->levelName.Data);
+    printf("  Name: %ws\n", (wchar_t*)params->levelName.GetData());
     printf("  Seed: %I32d\n", params->seed);
 
     // Lazy convert from wchar to char
-    wchar_t* ln = (wchar_t*) params->levelName.Data;
+    wchar_t* ln = (wchar_t*) params->levelName.GetData();
     std::wstring ws( ln );
 
     // Not sure how to cast the iterators so just disabled the warnings..
@@ -152,7 +147,6 @@ void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, d
         printf("  New Seed: %I32d\n", params->seed);
     }
 
-
-    ((tLoadLevel)spy::data.hooks[RefLoadLevel]->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
+    ((tLoadLevel)spy::GetHook(RefLoadLevel)->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
     return;
 }

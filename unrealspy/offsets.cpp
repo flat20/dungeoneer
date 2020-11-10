@@ -5,7 +5,6 @@
 #include <Windows.h>
 #include <tlhelp32.h>
 
-
 namespace offsets {
 
     // Some defaults for us.

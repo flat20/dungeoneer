@@ -372,31 +372,6 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
 
     int result = origUObject_ProcessEvent(object, func, params);
 
-//     if (firstTime) {
-//         firstTime = false;
-
-//         FName modName;
-//         auto FName_Init = (tFName_Init)spyData->functionPtrs[RefFName_Init];
-//         FName_Init(&modName, (const wchar_t*)L"UE4Editormod", 0, 1, true, -1);
-//         printf("FName %d %d\n", modName.Index, modName.Number);
-
-//         printf("Getting mgr\n");
-//         auto mgrGet = (tFModuleManager_Get)spyData->functionPtrs[RefFModuleManager_Get];
-//         void *moduleMgr = mgrGet();
-//         printf("mod mgr %llx\n", (uintptr_t)mgrGet);
-// //        auto LoadModule = (tFModuleManager_LoadModuleWithFailureReason)spyData->functionPtrs[RefFModuleManager_LoadModuleWithFailureReason];
-//         auto LoadModule = (tFModuleManager_LoadModule)spyData->functionPtrs[RefFModuleManager_LoadModule];
-//         // Code checks something about GetCurrentThreadId() - Might need to call this in the right place.
-//         // FModuleManager is not thread-safe
-//         // ensure(IsInGameThread());
-//         // TODO Maybe try LoadModuleWithReason in case this doesn't work first time.
-//         // Try old LoadModule and see where it exits. Might be the Game Thread.
-//         uint32 failure = 0;
-//         void *mod = LoadModule(moduleMgr, modName);
-//         printf("should be null %llx %d\n", (uintptr_t)mod, failure);
-//     }
-
-
     // Call all handlers
     {
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
