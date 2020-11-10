@@ -25,8 +25,13 @@ struct Module {
     std::map<UE4Reference,void *> functionHandlers;
 };
 
-
+// Init struct for mods.
 struct Dungeoneer {
+
+    FUObjectArray *GUObjectArray;
+    TNameEntryArray *GNames;
+    UEngine* GEngine;
+
     spy::Data *spyData;
     void (__stdcall *AddFunctionHandler)(Module *mod, UE4Reference funcName, void *fnHandler);
 };

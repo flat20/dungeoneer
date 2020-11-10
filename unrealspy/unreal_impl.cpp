@@ -8,5 +8,5 @@ namespace spy {
     UEngine* GEngine = nullptr;
 }
 
-#pragma comment(linker, "/export:?ZeroVector@FVector@@2U1@B")
+//#pragma comment(linker, "/export:?ZeroVector@FVector@@2U1@B")
 CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);

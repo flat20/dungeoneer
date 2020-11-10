@@ -3,6 +3,7 @@
 #include "console.h"
 #include "helpers.h"
 #include "uhook.h"
+#include "unreal_impl.h"
 //#include <windows.h>
 #include <stdlib.h>
 #include "console_autocomplete.h"
@@ -96,7 +97,7 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
         (TCHAR*)L""
     );
 
-    UConsole *console = GEngine->GameViewport->ViewportConsole;
+    UConsole *console = spy::GEngine->GameViewport->ViewportConsole;
     autocomplete::BuildAutocomplete(thisConsoleManager, console);
 
     fnEnableConsoleResult(true);

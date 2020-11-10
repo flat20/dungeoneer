@@ -13,10 +13,10 @@
 
 #include <offsets.h>
 
+
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
 signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params);
 void __stdcall AHUD_PostRender(void* hud);
-//void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 void* __stdcall GetNames();
 
 HMODULE loadMod(LPCSTR filename);
@@ -112,10 +112,6 @@ void Init() {
         return;
     }
 
-    printf("names num %d\n", spyData->GNames->Num());
-    
-    
-
     // https://docs.unrealengine.com/en-US/Programming/BuildTools/UnrealBuildTool/ThirdPartyLibraries/index.html
 
     spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
@@ -123,6 +119,10 @@ void Init() {
     spy::HookFunctionRef(RefAHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
     // Testing
     spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
+
+    dng.GUObjectArray = spy::GUObjectArray;
+    dng.GNames = spy::GNames;
+    dng.GEngine = spy::GEngine;
 
     dng.spyData = spyData;
     dng.AddFunctionHandler = &AddFunctionHandler;

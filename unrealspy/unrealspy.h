@@ -3,7 +3,7 @@
 #include <string>
 #include <functional>
 #include <diet-ue.h>
-
+#include "unreal_impl.h"
 
 
 #ifdef SPYAPI_IMPORT
@@ -104,9 +104,9 @@ typedef std::string UE4Reference;
 const UE4Reference RefFName_GetNames                = "FName_GetNames";
 const UE4Reference RefFName_Init                    = "FName::Init";
 const UE4Reference RefFRawObjectIterator_Ctor       = "FRawObjectIterator_Ctor";
-const UE4Reference RefUObject_ProcessEvent          = "UObject_ProcessEvent";
-const UE4Reference RefAActor_ProcessEvent           = "AActor_ProcessEvent";
-const UE4Reference RefAHUD_PostRender               = "AHUD_PostRender";
+const UE4Reference RefUObject_ProcessEvent          = "UObject::ProcessEvent";
+const UE4Reference RefAActor_ProcessEvent           = "AActor::ProcessEvent";
+const UE4Reference RefAHUD_PostRender               = "AHUD::PostRender";
 const UE4Reference RefStaticLoadObject              = "StaticLoadObject";
 const UE4Reference RefStaticLoadClass               = "StaticLoadClass";
 const UE4Reference RefLoadPackage                   = "LoadPackage";

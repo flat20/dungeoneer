@@ -21,8 +21,8 @@ tUWorld_SpawnActor _SpawnActor;
 // tUUserWidget_CreateWidget CreateWidget;
 // tUUserWidget_AddToViewport AddToViewport;
 
-UEngine *GEngine;
-FUObjectArray *_GUObjectArray;
+//UEngine *GEngine;
+//FUObjectArray *_GUObjectArray;
 void testing();
 
 // Called when Mod gets loaded
@@ -37,8 +37,8 @@ void ModMain(Dungeoneer *dng, Module *mod) {
     _SpawnActor = (tUWorld_SpawnActor)dng->spyData->functionPtrs[RefUWorld_SpawnActor];
     // CreateWidget = (tUUserWidget_CreateWidget)dng->spyData->functionPtrs[RefUUserWidget_CreateWidget];
     // AddToViewport = (tUUserWidget_AddToViewport)dng->spyData->functionPtrs[RefUUserWidget_AddToViewport];
-    GEngine = dng->spyData->GEngine;
-    _GUObjectArray = dng->spyData->GUObjectArray;
+    //GEngine = dng->spyData->GEngine;
+    //_GUObjectArray = dng->spyData->GUObjectArray;
 
     //printf("%x %x\n", UProperty::StaticClassCastFlags)
     // Listen for UObject_ProcessEvent (UFunctions being called basically)
@@ -108,7 +108,7 @@ void testing() {
     printf("testing?\n");
 
     
-    for (diet::FRawObjectIterator It(*_GUObjectArray); It; ++It) {
+    for (spy::FRawObjectIterator It(false); It; ++It) {
 
         FUObjectItem *item = *It;
         UObject *obj = (UObject*)item->Object;
@@ -275,7 +275,7 @@ void testing() {
     spawnParameters.OverrideLevel = nullptr;
     spawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    UObject *world = GEngine->GameViewport->GetWorld();
+    UObject *world = spy::GEngine->GameViewport->GetWorld();
      AActor *actorTable = _SpawnActor(world, cls, &location, &rotation, spawnParameters);
      printf("actor %llx\n", (uintptr_t)actorTable);
 

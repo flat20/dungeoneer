@@ -1,6 +1,5 @@
 
 cl /nologo /EHsc ^
-     dungeoneer.lib ^
      /I dungeoneer/ /I unrealspy/ ^
      /FI C:\Users\andreas\code\dungeoneer\diet-ue\defines.h ^
      /I diet-ue/ ^
@@ -20,5 +19,11 @@ cl /nologo /EHsc ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\EngineSettings" ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\SlateCore" ^
      simple-mod/*.cpp ^
+     diet-ue/impl.cpp ^
+     unrealspy/unreal_impl.cpp ^
+     unrealspy/helpers.cpp ^
      -link ^
-      -DLL /subsystem:console /DEBUG -OUT:simple-mod.dll
+     -DLL /subsystem:console /DEBUG -OUT:simple-mod.dll
+
+
+REM      dungeoneer.lib ^
