@@ -1,10 +1,13 @@
 #pragma once
-#include <Windows.h>
-#include <TlHelp32.h>
+
 #include <string>
 #include <vector>
 #include <map>
 #include <unrealspy.h>
+#include <Windows/AllowWindowsPlatformTypes.h>
+	#include <windows.h>
+    #include <TlHelp32.h>
+#include <Windows/HideWindowsPlatformTypes.h>
 
 namespace offsets {
 

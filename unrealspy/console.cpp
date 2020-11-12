@@ -1,89 +1,78 @@
-#include <windows.h>
-#include "unreal.h"
-#include "unrealspy.h"
-#include "util.h"
+//#include "unrealspy.h"
+//#include "util.h"
 #include "console.h"
+#include "helpers.h"
+#include "uhook.h"
+#include "unreal_impl.h"
+//#include <windows.h>
+#include <stdlib.h>
+#include "console_autocomplete.h"
 
-std::function<void (bool success)> fnEnableConsoleResult = 0;
-tFConsoleManager_ProcessUserConsoleInput origProcessConsoleInput = nullptr;
+bool spy::InitConsole() {
 
-// TODO Enabling all commands should be a second function call
-bool spy::EnableConsole(std::function<void (bool result)> fnResult) {
-
-    // Have we already got a console?
-    UObject *ViewportConsole = util::GetPropertyValueByPath<UObject>(data.GEngine, data.GEngine, "GameViewport/ViewportConsole");
-    if (ViewportConsole != nullptr) {
-        return false;
-    }
-
-    UObject *GameViewport = util::GetPropertyValueByPath<UObject>(data.GEngine, data.GEngine, "GameViewport");
+    UGameViewportClient *GameViewport = GEngine->GameViewport;
     if (GameViewport == nullptr) {
-        printf("No gameviewport\n");
+        printf("no GameViewport\n");
         return false;
     }
 
-    void** ConsoleClassPtr = (void**)util::GetPropertyValueByPath<uint64>(data.GEngine, data.GEngine, "ConsoleClass");
-    if (ConsoleClassPtr == nullptr) {
-        printf("No console class\n");
+    // // Have we already got a console?
+    if (GameViewport->ViewportConsole != nullptr) {
+        printf("no viewportconsole\n");
         return false;
     }
-    UClass *ConsoleClass = (UClass*)*ConsoleClassPtr;
- 
-    // printf("New Console properties:\n");
-    // util::IterateProperties<UClass>(RealClass, [](UProperty *p) {
-    //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
-    //     return false;
-    // });
 
-    // printf("New Console fields:\n");
-    // util::IterateFields(RealClass, [](UField *p) {
-    //     printf("  %s %s", getName(p), getName(p->ClassPrivate));
-    //     return false;
-    // });
-
-    //UClassProperty *p = (UClassProperty*)util::FindObjectByName("ConsoleClass", nullptr);
-
-    FName NameNone{0,0};
+    // Hack to avoid triggering ::StaticClass() inside TSubclassOf.
+    // TSubclassOf happens to have only one member, which is a pointer to the UClass.
+    UClass *ConsoleClass = *(UClass**)&GEngine->ConsoleClass;
+    
+    FName NameNone;
     auto ConstructObject = GetFunction<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
-    UConsole *console = (UConsole*)ConstructObject(ConsoleClass, GameViewport, NameNone, RF_NoFlags, (EInternalObjectFlags)0, nullptr, false, nullptr, false);
+    UConsole *console = (UConsole*)ConstructObject(ConsoleClass, GameViewport, NameNone, RF_NoFlags, EInternalObjectFlags::None, nullptr, false, nullptr, false);
     if (console == nullptr) {
         printf("Unable to instantiate console class?\n");
         return false;
     }
 
-    // TODO Clean this up.
-    util::IterateProperties(GameViewport, [&](UProperty *p) {
-        if (strcmp(util::getName(p), "ViewportConsole") == 0) {
-            *(UObject**)((uint64)GameViewport + p->Offset_Internal) = console;
-            return true;
-        }
-        return false;
-    });
+    GameViewport->ViewportConsole = console;
 
-    UObject *vc = util::GetPropertyValueByPath<UObject>(data.GEngine, data.GEngine, "GameViewport/ViewportConsole");
-    if (vc == nullptr) {
-        printf("console not set!\n");
+    return true;
+}
+
+
+std::function<void (bool success)> fnEnableConsoleResult = 0;
+tFConsoleManager_ProcessUserConsoleInput origProcessConsoleInput = nullptr;
+
+bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
+
+    if (GEngine->GameViewport == nullptr || GEngine->GameViewport->ViewportConsole == nullptr) {
         return false;
     }
-    printf("Console enabled\n");
+
 
     bool result = spy::HookFunctionRef(RefFConsoleManager_ProcessUserConsoleInput, &FConsoleManager_ProcessUserConsoleInput, (void**)&origProcessConsoleInput);
     if (result == false) {
+        printf("no console hook\n");
         return false;
     }
 
     fnEnableConsoleResult = fnResult;
 
+    // Send random console command so we can get access to FConsoleManager.
+    UConsole *console = GEngine->GameViewport->ViewportConsole;
     auto consoleCommand = GetFunction<tUConsole_ConsoleCommand>(RefUConsole_ConsoleCommand);
+    FString str((TCHAR*)L"flat20");
 
-    FString str;
-    wchar_t *text = L"flat20";
-    str.Data.Data = (TCHAR*)text;
-    str.Data.ArrayNum = 7;
-    str.Data.ArrayMax = 7;
     consoleCommand(console, &str);
 
     return true;
+}
+
+// Set the CVar flags to default to enable them.
+static void OnConsoleVariable(const TCHAR *Name, IConsoleObject* CVar)
+{
+    //printf("%ws\n", Name);
+    CVar->SetFlags(ECVF_Default);
 }
 
 void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld) {
@@ -92,30 +81,25 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
     origProcessConsoleInput(thisConsoleManager, InInput, Ar, InWorld);
 
     // Unhook immediately? Or only after we've received the cheat command?
-
     if (wcscmp((const wchar_t*)InInput, L"flat20") != 0) { // TEXT("flat20")
         return;
     }
+
 
     bool result = spy::UnhookFunctionRef(RefFConsoleManager_ProcessUserConsoleInput);
     if (result == true) {
         origProcessConsoleInput = nullptr;
     }
 
-    // Might be useful to save FConsoleManager somewhere, considering how hard it was to get it.
+    // Visit each console var to enable them.
+    thisConsoleManager->ForEachConsoleObjectThatStartsWith(
+        FConsoleObjectVisitor::CreateStatic(&OnConsoleVariable),
+        (TCHAR*)L""
+    );
 
-    // Disable all cheat flags
-    FConsoleManager *cm = (FConsoleManager*)thisConsoleManager;
-    for (int i=0; i<cm->ConsoleObjects.ArrayNum; i++) {
-        ConsoleManagerObjectsMapElement el = cm->ConsoleObjects.Data[i];
-        if (el.IConsoleObject == nullptr) {
-            printf("null console object!\n");
-            continue;
-        }
-//        printf("%ws\n", (wchar_t*)el.Name.Data);
-        el.IConsoleObject->Flags = ECVF_Default;
-//        printf("  %ws\n", (wchar_t*)el.IConsoleObject->Help.Data.Data);
-    }
+    UConsole *console = spy::GEngine->GameViewport->ViewportConsole;
+    autocomplete::BuildAutocomplete(thisConsoleManager, console);
 
     fnEnableConsoleResult(true);
+
 }

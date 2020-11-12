@@ -1,15 +1,26 @@
 #pragma once
 #include <map>
+#include <string>
 #include <functional>
-#include "unreal.h"
+#include <diet-ue.h>
+#include "unreal_impl.h"
 
+
+#ifdef SPYAPI_IMPORT
+//    #define SPYAPI __declspec(dllimport)
+#else
+    #define SPYAPI __declspec(dllexport)
+#endif
+
+// Would be nice if all hook stuff was declared here.
+// TODO JUst move hooks array?
 
 typedef signed int (__thiscall *tUObject_ProcessEvent) (UObject* thisObject, UFunction* func, void *params);
 typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
 typedef void (__thiscall *tAHUD_PostRender) (void *hud);
-typedef TNameEntryArray* (__stdcall *tFName_GetNames) ();
+typedef TNameEntryArray& (__stdcall *tFName_GetNames) ();
 //typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
-typedef void* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
+typedef FRawObjectIterator* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
 
 // void __stdcall __high AHUD::DrawRect(struct FLinearColor, float, float, float, float)
 typedef void (__thiscall *tAHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
@@ -36,7 +47,7 @@ typedef UPackage* (__fastcall *tLoadPackage)( UPackage* InOuter, const TCHAR* In
 typedef UObject* (__fastcall *tStaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
 //typedef UObject* (__fastcall *StaticConstructObject_Internal)(__int64 a1,    int a2,           __int64 a3, int a4,                int a5,                                __int64 a6,        char a7,                               __int64 a8,          char a9);
 
-typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const struct FString *);
+typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const FString *Command);
 
 // bool FConsoleManager::ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld)
 // __int64 __fastcall FConsoleManager::ProcessUserConsoleInput(FConsoleManager *this, const wchar_t *a2, struct FOutputDevice *a3, struct UWorld *a4)
@@ -77,18 +88,25 @@ typedef void* (__fastcall *tFModuleManager_Get)();
 // void FName::Init(const WIDECHAR* InName, int32 InNumber, EFindName FindType, bool bSplitName, int32 HardcodeIndex)
 //void __stdcall __high FName::Init(const wchar_t *, int, enum EFindName, bool, int) // findType = 1, bSplitName = true, -1
 //void __fastcall FName::Init(__int64 a1, wchar_t *a2, unsigned int a3, unsigned int a4, char a5, int a6)
-typedef FName* (__stdcall *tFName_Init)(FName *thisFName, const wchar_t *InName, int32 InNumber, uint32 FindType, bool bSplitName, int32 HardcodeIndex);
+typedef FName* (__stdcall *tFName_Init)(FName *thisFName, const wchar_t *InName, int32 InNumber, EFindName FindType, bool bSplitName, int32 HardcodeIndex);
 
+// void *__fastcall FWindowsPlatformProcess::GetDllHandle(const wchar_t *)
+// __int64 __fastcall FWindowsPlatformProcess::GetDllHandle(const wchar_t *a1)
+// void* FWindowsPlatformProcess::GetDllHandle( const TCHAR* FileName )
+typedef void* (__fastcall *tFWindowsPlatformProcess_GetDllHandle)(const TCHAR *FileName);
 
+// bool UObject::CallFunctionByNameWithArguments(const TCHAR* Str, FOutputDevice& Ar, UObject* Executor, bool bForceCallWithNonExec/*=false*/)
+
+typedef bool (__fastcall *tUobject_CallFunctionByNameWithArguments)(UObject *thisUObject, const TCHAR* Str, FOutputDevice& Ar, UObject* Executor, bool bForceCallWithNonExec);
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
 typedef std::string UE4Reference;
 const UE4Reference RefFName_GetNames                = "FName_GetNames";
 const UE4Reference RefFName_Init                    = "FName::Init";
 const UE4Reference RefFRawObjectIterator_Ctor       = "FRawObjectIterator_Ctor";
-const UE4Reference RefUObject_ProcessEvent          = "UObject_ProcessEvent";
-const UE4Reference RefAActor_ProcessEvent           = "AActor_ProcessEvent";
-const UE4Reference RefAHUD_PostRender               = "AHUD_PostRender";
+const UE4Reference RefUObject_ProcessEvent          = "UObject::ProcessEvent";
+const UE4Reference RefAActor_ProcessEvent           = "AActor::ProcessEvent";
+const UE4Reference RefAHUD_PostRender               = "AHUD::PostRender";
 const UE4Reference RefStaticLoadObject              = "StaticLoadObject";
 const UE4Reference RefStaticLoadClass               = "StaticLoadClass";
 const UE4Reference RefLoadPackage                   = "LoadPackage";
@@ -104,24 +122,14 @@ const UE4Reference RefUUserWidget_AddToViewport     = "UUserWidget::AddToViewpor
 const UE4Reference RefFModuleManager_LoadModule     = "FModuleManager::LoadModule";
 const UE4Reference RefFModuleManager_LoadModuleWithFailureReason = "FModuleManager::LoadModuleWithFailureReason";
 const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
+const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
+const UE4Reference RefUObject_CallFunctionByNameWithArguments = "UObject::CallFunctionByNameWithArguments";
 
 namespace spy {
-
-    struct Hook {
-        uintptr_t address;
-        const void *detour;       // Function to call
-        LPVOID original;    // original implementation
-    };
 
     struct Data {
         uintptr_t baseAddress;                          // Base address of process, never used but let's leave for now.
         std::map<UE4Reference, uintptr_t> functionPtrs;  // Looked up addresses
-        std::map<UE4Reference, Hook*> hooks;            // enabled hooks
-
-        FUObjectArray *GUObjectArray;
-        TNameEntryArray* GNames;
-        UEngine* GEngine; // Just get from GUObjectArray?
-
     };
 
     // For internal use, but I guess I'll work that out later..
@@ -137,9 +145,5 @@ namespace spy {
     T GetFunction(const UE4Reference refName) {
         return (T)data.functionPtrs[refName];
     }
-
-    bool HookFunctionRef(UE4Reference refName, const void *detour, void **original);
-    bool UnhookFunctionRef(UE4Reference refName);
-    bool EnableConsole(std::function<void (bool result)> fnResult);
 
 }

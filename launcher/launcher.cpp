@@ -8,6 +8,11 @@ int Launch(std::string dll) {
     DWORD len = GetCurrentDirectory(MAX_PATH, &dir[0]);
     sprintf(dllPath, "%s\\%s", dir, dll.c_str());
 
+    //sprintf(dllPath, "%s\\UE4Editor-MyMod.dll", dir);
+    // void *a = LoadLibrary(dllPath);
+    // printf("%llx\n", (uintptr_t)a);
+    // return 0;
+
     // Find the running .exe
     DWORD pid = GetDungeonsProcessID();
     if (pid == 0) {

@@ -1,22 +1,22 @@
-#include <Windows.h>
-#include <stdio.h>
+//#include <Windows.h>
+//#include <stdio.h>
 #include <list>
 #include <map>
 #include <thread>
 #include <mutex>
 
-#include <unrealspy.h>
-#include <offsets.h>
-#include <util.h>
+//#include <util.h>
 #include <console.h>
 
 #include "dungeoneer.h"
 #include "ui.h"
 
+#include <offsets.h>
+
+
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
 signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, void* params);
 void __stdcall AHUD_PostRender(void* hud);
-//void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 void* __stdcall GetNames();
 
 HMODULE loadMod(LPCSTR filename);
@@ -57,8 +57,8 @@ tAHUD_PostRender origAHUD_PostRender = NULL;
 
 // Testing: Params passed to LoadLevel. Not completed, but has what we need for now.
 struct LoadLevelParams {
-    byte difficulty;
-    byte threatLevel;
+    uint8 difficulty;
+    uint8 threatLevel;
     TArray<TCHAR> loadType; // "lobby", "ingame"
     uint64 something;   // 0x17, 
     TArray<TCHAR> levelName; // "Lobby", "soggyswamp"
@@ -68,11 +68,11 @@ struct LoadLevelParams {
 };
 
 // __int64 __fastcall subLevelLoad(__int64 a1, __int64 a2, char a3)
-typedef void (__fastcall *tLoadLevel)(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
-void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat);
+typedef void (__fastcall *tLoadLevel)(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat);
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat);
 
 
-using namespace util;
+//using namespace util;
 
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
@@ -91,7 +91,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     else if (dwReason == DLL_PROCESS_DETACH) {
 
     }
-    return TRUE;
+    return 1;
 }
 
 void Init() {
@@ -120,20 +120,29 @@ void Init() {
     // Testing
     spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
 
+    dng.GUObjectArray = spy::GUObjectArray;
+    dng.GNames = spy::GNames;
+    dng.GEngine = spy::GEngine;
+
     dng.spyData = spyData;
     dng.AddFunctionHandler = &AddFunctionHandler;
 
     uiData.modsDisabled = false;
 
-    printf("Dungeoneer ready\n");
-
-    bool result = spy::EnableConsole([](bool result) {
-        printf("Console enabled with all commands\n");
-    });
-    if (result == false) {
-        printf("No console\n");
+    if (spy::InitConsole() == false) {
+        printf("Unable to init console");
+        return;
     }
 
+    printf("Console enabled\n");
+    bool result = spy::InitCheatCommands([](bool result) {
+        printf("Cheat commands enabled\n");
+    });
+    if (result == false) {
+        printf("No cheat commands\n");
+    }
+
+    printf("Dungeoneer ready\n");
 }
 
 void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
@@ -156,7 +165,7 @@ void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) 
 void ClearFunctionHandlers(Module *mod) {
     std::lock_guard<std::mutex> guard(functionHandlersMutex);
 
-    for (auto &it = mod->functionHandlers.begin(); it !=  mod->functionHandlers.end(); it++) {
+    for (auto it = mod->functionHandlers.begin(); it !=  mod->functionHandlers.end(); it++) {
         UE4Reference funcName = it->first;
         void *fnHandler = it->second;
         functionHandlers[funcName].remove(fnHandler);
@@ -175,7 +184,7 @@ HMODULE loadMod(LPCSTR filename) {
 
     HMODULE handle = LoadLibraryA(filename);
     if (handle == NULL) {
-        printf("Failed to load dll %s (%d)\n", filename, GetLastError());
+        printf("Failed to load dll %s (%ld)\n", filename, GetLastError());
         return nullptr;
     }
     printf("%s loaded\n", filename);
@@ -225,8 +234,8 @@ bool unloadMod(LPCSTR filename) {
     loadedModules.erase(filename);
     delete mod;
 
-    HMODULE handle = mod->handle;
-    if (FreeLibrary(handle) == FALSE) {
+    HMODULE handle = (HMODULE)mod->handle;
+    if (FreeLibrary(handle) == 0) {
         printf("Unable to free library\n");
         return false;
     }
@@ -239,7 +248,7 @@ bool unloadMod(LPCSTR filename) {
 HMODULE loadModLibrary(LPCSTR filename) {
     HMODULE handle = LoadLibraryA(filename);
     if (handle == NULL) {
-        printf("Failed to load dll %s %d\n", filename, GetLastError());
+        printf("Failed to load dll %s %ld\n", filename, GetLastError());
         return nullptr;
     }
     printf("Mod %s\n", filename);
@@ -260,7 +269,7 @@ HMODULE loadModLibrary(LPCSTR filename) {
 
 bool unloadModLibrary(HMODULE handle) {
 
-    if (FreeLibrary(handle) == FALSE) {
+    if (FreeLibrary(handle) == 0) {
         printf("Unable to free library\n");
         return false;
     }
@@ -363,31 +372,6 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
 
     int result = origUObject_ProcessEvent(object, func, params);
 
-//     if (firstTime) {
-//         firstTime = false;
-
-//         FName modName;
-//         auto FName_Init = (tFName_Init)spyData->functionPtrs[RefFName_Init];
-//         FName_Init(&modName, (const wchar_t*)L"UE4Editormod", 0, 1, true, -1);
-//         printf("FName %d %d\n", modName.Index, modName.Number);
-
-//         printf("Getting mgr\n");
-//         auto mgrGet = (tFModuleManager_Get)spyData->functionPtrs[RefFModuleManager_Get];
-//         void *moduleMgr = mgrGet();
-//         printf("mod mgr %llx\n", (uintptr_t)mgrGet);
-// //        auto LoadModule = (tFModuleManager_LoadModuleWithFailureReason)spyData->functionPtrs[RefFModuleManager_LoadModuleWithFailureReason];
-//         auto LoadModule = (tFModuleManager_LoadModule)spyData->functionPtrs[RefFModuleManager_LoadModule];
-//         // Code checks something about GetCurrentThreadId() - Might need to call this in the right place.
-//         // FModuleManager is not thread-safe
-//         // ensure(IsInGameThread());
-//         // TODO Maybe try LoadModuleWithReason in case this doesn't work first time.
-//         // Try old LoadModule and see where it exits. Might be the Game Thread.
-//         uint32 failure = 0;
-//         void *mod = LoadModule(moduleMgr, modName);
-//         printf("should be null %llx %d\n", (uintptr_t)mod, failure);
-//     }
-
-
     // Call all handlers
     {
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
@@ -460,13 +444,14 @@ void __stdcall AHUD_PostRender(void* hud) {
 
 // Just for testing LoadLevel
 
-void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, byte r8b, double xmm3, DWORD64 stackFloat) {
-    printf("level loaded? %s\n", util::getName(thisBpGameInstance));
-    printf("levelName: %ws\n", (wchar_t*)params->levelName.Data);
-    printf("loadType: %ws\n", (wchar_t*)params->loadType.Data);
+void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat) {
+    // printf("level loaded? %s\n", util::getName(thisBpGameInstance));
+    printf("I have no idea if this code will work!?!? GetData() is inline so can we use it?\n");
+    printf("levelName: %ws\n", (wchar_t*)params->levelName.GetData());
+    printf("loadType: %ws\n", (wchar_t*)params->loadType.GetData());
     printf("seed: %I64d\n", params->seed);
 //    params->seed = 91081;
 
-    ((tLoadLevel)spy::data.hooks[RefLoadLevel]->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
+    ((tLoadLevel)spy::GetHook(RefLoadLevel)->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
     return;
 }
