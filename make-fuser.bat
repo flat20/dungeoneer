@@ -33,6 +33,7 @@ cl /nologo /EHsc ^
      /I "D:\UE_4.24\Engine\Source\Runtime\PacketHandlers\PacketHandler\Public" ^
      /I "D:\UE_4.24\Engine\Source\Runtime\NetworkReplayStreaming\NetworkReplayStreaming\Public" ^
      /I "D:\UE_4.24\Engine\Source\Runtime\Json\Public" ^
+     /I "D:\UE_4.24\Engine\Source\Runtime\PhysicsCore\Public" ^
      /I "D:\UE_4.24\Engine\Intermediate\Build\Win64\UE4\Inc\Engine" ^
      /I "D:\UE_4.24\Engine\Intermediate\Build\Win64\UE4\Inc\InputCore" ^
      /I "D:\UE_4.24\Engine\Intermediate\Build\Win64\UE4\Inc\EngineSettings" ^
@@ -44,6 +45,7 @@ cl /nologo /EHsc ^
      unrealspy\*.cpp ^
      unrealspy\4.24\console.cpp ^
      unrealspy\4.24\unreal_impl.cpp ^
+     unrealspy\4.24\helpers.cpp ^
      minhook-master\src\hook.c^
      minhook-master\src\buffer.c^
      minhook-master\src\trampoline.c^

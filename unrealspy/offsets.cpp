@@ -42,6 +42,8 @@ namespace offsets {
         {RefUObject_CallFunctionByNameWithArguments, "40 55 53 56 57 41 54 41 55 41 56 41 57 48 81 EC F8 02 00 00 48 8D 6C 24 30"},
 
         {RefFObjectIterator_Ctor,           "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 44 8B 54 24 50"},
+        {RefFName_GetEntry,                 "40 53 48 83 EC 20 8B D9 0F B7 C1 C1 EB 10 ?? ?? ?? ?? ?? ?? ?? 89 5C 24 38 89 44 24 3C"},
+        {RefFName_ToString,                 "48 89 5C 24 18 48 89 74 24 20 57 48 83 EC 50 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 44 24 48 8B 01 48 8B F2"},
     };
 
     // Lookup offsets using search strings and convert to runtime addresses.

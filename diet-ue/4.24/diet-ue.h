@@ -10,10 +10,10 @@
 #include <UObject\UObjectArray.h>
 #include <UObject\UObjectIterator.h>
 
-// #include <Engine\Engine.h>
+#include <Engine\Engine.h>
 // #include <Engine\Console.h>
-// #include <Engine\World.h>
-// #include <Engine\GameViewportClient.h>
+#include <Engine\World.h>
+#include <Engine\GameViewportClient.h>
 
 class UFont : UObject {
 
