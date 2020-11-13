@@ -3,7 +3,7 @@
 #include <string>
 #include <functional>
 #include <diet-ue.h>
-#include "unreal_impl.h"
+#include <unreal_impl.h>
 
 
 #ifdef SPYAPI_IMPORT
@@ -18,15 +18,10 @@
 typedef signed int (__thiscall *tUObject_ProcessEvent) (UObject* thisObject, UFunction* func, void *params);
 typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
 typedef void (__thiscall *tAHUD_PostRender) (void *hud);
-typedef TNameEntryArray& (__stdcall *tFName_GetNames) ();
-//typedef FRawObjectIterator *__fastcall FRawObjectIteratorCtor(FRawObjectIterator *this, bool bOnlyGCedObjects);
-typedef FRawObjectIterator* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
 
 // void __stdcall __high AHUD::DrawRect(struct FLinearColor, float, float, float, float)
 typedef void (__thiscall *tAHUD_DrawRect)(void *hud, FLinearColor RectColor, float ScreenX, float ScreenY, float ScreenW, float ScreenH);
 
-// void __stdcall __high AHUD::DrawText(const struct FString *, struct FLinearColor, float, float, struct UFont *, float, bool)
-// 	void DrawText(const FString& Text, FLinearColor TextColor, float ScreenX, float ScreenY, UFont* Font=NULL, float Scale=1.f, bool bScalePosition=false);
 typedef void (__thiscall *tAHUD_DrawText)(void *hud, const FString* Text, FLinearColor TextColor, float ScreenX, float ScreenY, UFont* Font, float Scale, bool bScalePosition);
 
 // Sadly does not take linebreaks in to account so no good for multiline, if we care about that.
@@ -47,12 +42,6 @@ typedef UPackage* (__fastcall *tLoadPackage)( UPackage* InOuter, const TCHAR* In
 typedef UObject* (__fastcall *tStaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
 //typedef UObject* (__fastcall *StaticConstructObject_Internal)(__int64 a1,    int a2,           __int64 a3, int a4,                int a5,                                __int64 a6,        char a7,                               __int64 a8,          char a9);
 
-typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const FString *Command);
-
-// bool FConsoleManager::ProcessUserConsoleInput(const TCHAR* InInput, FOutputDevice& Ar, UWorld* InWorld)
-// __int64 __fastcall FConsoleManager::ProcessUserConsoleInput(FConsoleManager *this, const wchar_t *a2, struct FOutputDevice *a3, struct UWorld *a4)
-typedef void (__thiscall *tFConsoleManager_ProcessUserConsoleInput) (FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
-
 //typedef UObject* (__thiscall *tFSoftObjectPtr_LoadSynchronous) (FSoftObjectPtr *thisSoftObjectPtr);
 	/**
 	 * Spawn Actors with given transform and SpawnParameters
@@ -65,7 +54,9 @@ typedef void (__thiscall *tFConsoleManager_ProcessUserConsoleInput) (FConsoleMan
 	 * @return	Actor that just spawned
 	 */
     // TODO UWorld* not UObject..
+#ifdef UE_422
 typedef AActor* (__thiscall *tUWorld_SpawnActor)( UObject* thisUWorld, UClass* InClass, FVector const* Location, FRotator const* Rotation, const FActorSpawnParameters& SpawnParameters );
+#endif
 
 // UUserWidget*
 typedef UObject* (__fastcall *tUUserWidget_CreateWidget)(UObject *gameInstance, UClass* cls, FName name);
@@ -124,6 +115,7 @@ const UE4Reference RefFModuleManager_LoadModuleWithFailureReason = "FModuleManag
 const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
 const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
 const UE4Reference RefUObject_CallFunctionByNameWithArguments = "UObject::CallFunctionByNameWithArguments";
+const UE4Reference RefFObjectIterator_Ctor          = "FObjectIterator::FObjectIterator";
 
 namespace spy {
 
