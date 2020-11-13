@@ -116,6 +116,8 @@ const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
 const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
 const UE4Reference RefUObject_CallFunctionByNameWithArguments = "UObject::CallFunctionByNameWithArguments";
 const UE4Reference RefFObjectIterator_Ctor          = "FObjectIterator::FObjectIterator";
+const UE4Reference RefFName_GetEntry                = "FName::GetEntry";
+const UE4Reference RefFName_ToString                = "FName::ToString";
 
 namespace spy {
 

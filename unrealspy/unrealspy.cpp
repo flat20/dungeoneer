@@ -99,8 +99,9 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
     return nullptr;
 }
 
+
 bool spy::initVars() {
-    printf("init vars\n");
+
 //     // We can get GNames by calling FName::GetNames()
 //     //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
 #ifdef UE_422
@@ -133,23 +134,30 @@ bool spy::initVars() {
         return false;
     }
 #else
+
     if (spy::GUObjectArray == nullptr) {
         // Passing in a fake UClass to satisfy the code and make it not crash.
         char bla[256];
         auto objectIteratorCtor = (tFObjectIterator_Ctor)data.functionPtrs[RefFObjectIterator_Ctor];
         void **ref = (void**)objectIteratorCtor(&bla[0], (UClass*)&bla[0], false, EObjectFlags::RF_NoFlags, EInternalObjectFlags::None);
         spy::GUObjectArray = (FUObjectArray*)*ref;
-        hexDump(spy::GUObjectArray, 64);
-        for (spy::FRawObjectIterator It(false); It; ++It) {
+    }
 
-            UObject *obj = *It;
-            printf("First obj\n");
-            hexDump(obj, 32);
-            break;
+    // When we have objects, get uengine
+    if (spy::GEngine == nullptr && spy::GUObjectArray != nullptr) {
+
+        UObject *engine = FindObjectByName(L"Default__GameEngine", nullptr);
+        printf("engine? %llx\n", (uintptr_t)engine);
+        if (engine != nullptr) {
+            spy::GEngine = (UEngine*)engine;
         }
 
     }
 
+    // Still haven't got all variables
+    if (spy::GUObjectArray == nullptr || spy::GEngine == nullptr) {
+        return false;
+    }
 #endif
     return true;
 }
