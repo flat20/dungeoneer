@@ -146,10 +146,34 @@ bool spy::initVars() {
     // When we have objects, get uengine
     if (spy::GEngine == nullptr && spy::GUObjectArray != nullptr) {
 
-        UObject *engine = FindObjectByName(L"Default__GameEngine", nullptr);
+        //00007FF7BE524F90 - 00007FF7BA8E0000 = 3C44F90
+        // MATCH! GameEngine_2147482615
+        //        GameEngine_2147482615
+        // StaticConstructObject_Internal = 0
+
+        UEngine *actual = *(UEngine**)(data.baseAddress + (uintptr_t)0x3C44F90);
+        printf("actual? %llx\n", (uintptr_t)actual);
+        UObject *engine = FindObjectByName(nullptr, L"GameEngine", L"/Engine/Transient");
         printf("engine? %llx\n", (uintptr_t)engine);
         if (engine != nullptr) {
             spy::GEngine = (UEngine*)engine;
+
+            // for (spy::FRawObjectIterator It(false); It; ++It) {
+
+            //     UObject *obj = *It;
+            //     if (wcscmp(GetName(obj->GetClass()), L"GameEngine") == 0 && wcscmp(GetName(obj->GetOuter()), L"/Engine/Transient")) {
+            //         printf("this one?\n");
+            //         printf(" %ws\n", GetName(obj->GetClass()));
+            //         printf(" %ws\n", GetName(obj->GetOuter()));
+            //     }
+            //     if ((uintptr_t)obj == (uintptr_t)actual) {
+            //         printf("MATCH! %ws\n", GetName(obj));
+            //         printf(" %ws\n", GetName(obj->GetClass()));
+            //         printf(" %ws\n", GetName(obj->GetOuter()));
+            //         // printf(" %ws\n", GetName(obj->GetClass()->GetSuperClass()));
+            //         break;
+            //     }
+            // }
         }
 
     }

@@ -18,7 +18,7 @@ bool spy::InitConsole() {
 
     // // Have we already got a console?
     if (GameViewport->ViewportConsole != nullptr) {
-        printf("no viewportconsole\n");
+        printf("Already have ViewportConsole set\n");
         return false;
     }
 

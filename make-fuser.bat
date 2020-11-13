@@ -42,6 +42,7 @@ cl /nologo /EHsc ^
      /I "D:\UE_4.24\Engine\Intermediate\Build\Win64\UE4\Inc\Slate" ^
      /I "D:\UE_4.24\Engine\Intermediate\Build\Win64\UE4\Inc\AudioPlatformConfiguration" ^
      fuser\dll.cpp ^
+     diet-ue\4.24\impl.cpp ^
      unrealspy\*.cpp ^
      unrealspy\4.24\console.cpp ^
      unrealspy\4.24\unreal_impl.cpp ^

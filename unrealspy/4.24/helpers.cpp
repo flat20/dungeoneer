@@ -33,7 +33,7 @@ namespace spy {
         return &buf[0];
 	}
 
-	UObject *FindObjectByName(TCHAR *ObjectName, TCHAR *ClassName) {
+	UObject *FindObjectByName(TCHAR *ObjectName, TCHAR *ClassName, TCHAR *OuterName) {
 
         for (spy::FRawObjectIterator It(false); It; ++It) {
 
@@ -46,6 +46,11 @@ namespace spy {
 
             // if className is requested but doesn't match, continue
             if (ClassName != nullptr && wcscmp(GetName(obj->GetClass()), ClassName) != 0) {
+                continue;
+            }
+
+            // if OuterName is requested but doesn't match, continue
+            if (OuterName != nullptr && wcscmp(GetName(obj->GetOuter()), OuterName) != 0) {
                 continue;
             }
 
