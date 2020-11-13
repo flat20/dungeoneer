@@ -1,0 +1,112 @@
+The system is: Windows - 10.0.19041 - AMD64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: D:/Microsoft Visual Studio/VC/Tools/MSVC/14.27.29110/bin/Hostx64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.27.29111 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCCompilerId.c
+Microsoft (R) Incremental Linker Version 14.27.29111.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCCompilerId.exe 
+CMakeCCompilerId.obj 
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
+
+The C compiler identification is MSVC, found in "C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/3.17.20032601-MSVC_2/CompilerIdC/CMakeCCompilerId.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: D:/Microsoft Visual Studio/VC/Tools/MSVC/14.27.29110/bin/Hostx64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.27.29111 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCXXCompilerId.cpp
+Microsoft (R) Incremental Linker Version 14.27.29111.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCXXCompilerId.exe 
+CMakeCXXCompilerId.obj 
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+
+The CXX compiler identification is MSVC, found in "C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/3.17.20032601-MSVC_2/CompilerIdCXX/CMakeCXXCompilerId.exe"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake /nologo cmTC_74787\fast && 	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\nmake.exe" -f CMakeFiles\cmTC_74787.dir\build.make /nologo -L                  CMakeFiles\cmTC_74787.dir\build
+Building C object CMakeFiles/cmTC_74787.dir/testCCompiler.c.obj
+	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\cl.exe" @C:\Users\andreas\AppData\Local\Temp\nmCE53.tmp
+testCCompiler.c
+Linking C executable cmTC_74787.exe
+	"D:\Microsoft Visual Studio\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_74787.dir --rc=D:\winsdk\bin\10.0.18362.0\x64\rc.exe --mt=D:\winsdk\bin\10.0.18362.0\x64\mt.exe --manifests  -- "D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\link.exe" /nologo @CMakeFiles\cmTC_74787.dir\objects1.rsp @C:\Users\andreas\AppData\Local\Temp\nmCFAC.tmp
+
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake /nologo cmTC_691f9\fast && 	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\nmake.exe" -f CMakeFiles\cmTC_691f9.dir\build.make /nologo -L                  CMakeFiles\cmTC_691f9.dir\build
+Building C object CMakeFiles/cmTC_691f9.dir/CMakeCCompilerABI.c.obj
+	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\cl.exe" @C:\Users\andreas\AppData\Local\Temp\nmD151.tmp
+CMakeCCompilerABI.c
+Linking C executable cmTC_691f9.exe
+	"D:\Microsoft Visual Studio\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_691f9.dir --rc=D:\winsdk\bin\10.0.18362.0\x64\rc.exe --mt=D:\winsdk\bin\10.0.18362.0\x64\mt.exe --manifests  -- "D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\link.exe" /nologo @CMakeFiles\cmTC_691f9.dir\objects1.rsp @C:\Users\andreas\AppData\Local\Temp\nmD1A0.tmp
+
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake /nologo cmTC_91cb7\fast && 	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\nmake.exe" -f CMakeFiles\cmTC_91cb7.dir\build.make /nologo -L                  CMakeFiles\cmTC_91cb7.dir\build
+Building CXX object CMakeFiles/cmTC_91cb7.dir/testCXXCompiler.cxx.obj
+	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\cl.exe" @C:\Users\andreas\AppData\Local\Temp\nmD345.tmp
+testCXXCompiler.cxx
+Linking CXX executable cmTC_91cb7.exe
+	"D:\Microsoft Visual Studio\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_91cb7.dir --rc=D:\winsdk\bin\10.0.18362.0\x64\rc.exe --mt=D:\winsdk\bin\10.0.18362.0\x64\mt.exe --manifests  -- "D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\link.exe" /nologo @CMakeFiles\cmTC_91cb7.dir\objects1.rsp @C:\Users\andreas\AppData\Local\Temp\nmD394.tmp
+
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake /nologo cmTC_eb46b\fast && 	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\nmake.exe" -f CMakeFiles\cmTC_eb46b.dir\build.make /nologo -L                  CMakeFiles\cmTC_eb46b.dir\build
+Building CXX object CMakeFiles/cmTC_eb46b.dir/CMakeCXXCompilerABI.cpp.obj
+	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\cl.exe" @C:\Users\andreas\AppData\Local\Temp\nmD4FA.tmp
+CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTC_eb46b.exe
+	"D:\Microsoft Visual Studio\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_eb46b.dir --rc=D:\winsdk\bin\10.0.18362.0\x64\rc.exe --mt=D:\winsdk\bin\10.0.18362.0\x64\mt.exe --manifests  -- "D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\link.exe" /nologo @CMakeFiles\cmTC_eb46b.dir\objects1.rsp @C:\Users\andreas\AppData\Local\Temp\nmD53A.tmp
+
+
+
+Performing C++ SOURCE FILE Test COMPILER_HAS_DEPRECATED succeeded with the following output:
+Change Dir: C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake /nologo cmTC_d10fa\fast && 	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\nmake.exe" -f CMakeFiles\cmTC_d10fa.dir\build.make /nologo -L                  CMakeFiles\cmTC_d10fa.dir\build
+Building CXX object CMakeFiles/cmTC_d10fa.dir/src.cxx.obj
+	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\cl.exe" @C:\Users\andreas\AppData\Local\Temp\nm355D.tmp
+src.cxx
+C:\Users\andreas\code\dungeoneer\dungeoneer\build\CMakeFiles\CMakeTmp\src.cxx(2): warning C4996: 'somefunc': was declared deprecated
+Linking CXX executable cmTC_d10fa.exe
+	"D:\Microsoft Visual Studio\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_d10fa.dir --rc=D:\winsdk\bin\10.0.18362.0\x64\rc.exe --mt=D:\winsdk\bin\10.0.18362.0\x64\mt.exe --manifests  -- "D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\link.exe" /nologo @CMakeFiles\cmTC_d10fa.dir\objects1.rsp @C:\Users\andreas\AppData\Local\Temp\nm35BC.tmp
+
+
+Source file was:
+__declspec(deprecated) int somefunc() { return 0; }
+    int main() { return somefunc();}

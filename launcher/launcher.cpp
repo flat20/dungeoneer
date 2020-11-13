@@ -1,7 +1,7 @@
 #include "launcher.h"
 
 // Moved out of main so we can library-ify the launching for re-use.
-int Launch(std::string dll) {
+int Launch(std::string dll, std::vector<std::string> exeFiles) {
 
     TCHAR dir[MAX_PATH];
     char  dllPath[MAX_PATH];
@@ -14,7 +14,7 @@ int Launch(std::string dll) {
     // return 0;
 
     // Find the running .exe
-    DWORD pid = GetDungeonsProcessID();
+    DWORD pid = GetDungeonsProcessID(exeFiles);
     if (pid == 0) {
         // Attempt to launch the game.
         if (LaunchGame() == false) {
@@ -27,7 +27,7 @@ int Launch(std::string dll) {
         // Wait until we think the game has launched and is ready for us to inject the dll.
         // TODO Maybe loop and check for loaded dlls to see if we're ready? Or something similar
         Sleep(10000);
-        pid = GetDungeonsProcessID();
+        pid = GetDungeonsProcessID(exeFiles);
         if (pid == 0) {
             printf("Unable to find pid for Minecraft Dungeons\n");
             return -1;
@@ -169,9 +169,9 @@ bool LaunchWinstoreGame() {
 }
 
 // Attempt to find the running .exe PID
-DWORD GetDungeonsProcessID() {
+DWORD GetDungeonsProcessID(std::vector<std::string> exeFiles) {
     // Find them in this order. Standalone version has a Dungeons.exe running but it's the launcher exe.
-    const std::vector<std::string> exeFiles = {"Dungeons-Win64-Shipping.exe", "Dungeons.exe"};
+//    const std::vector<std::string> exeFiles = {"Dungeons-Win64-Shipping.exe", "Dungeons.exe"};
     for(const auto& exeFile: exeFiles) {
         DWORD pid = GetProcessID(exeFile.c_str());
         if (pid != 0) {

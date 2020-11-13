@@ -1,0 +1,19 @@
+Performing C++ SOURCE FILE Test COMPILER_HAS_DEPRECATED_ATTR failed with the following output:
+Change Dir: C:/Users/andreas/code/dungeoneer/dungeoneer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake /nologo cmTC_9fe8f\fast && 	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\nmake.exe" -f CMakeFiles\cmTC_9fe8f.dir\build.make /nologo -L                  CMakeFiles\cmTC_9fe8f.dir\build
+Building CXX object CMakeFiles/cmTC_9fe8f.dir/src.cxx.obj
+	"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\cl.exe" @C:\Users\andreas\AppData\Local\Temp\nm3415.tmp
+src.cxx
+C:\Users\andreas\code\dungeoneer\dungeoneer\build\CMakeFiles\CMakeTmp\src.cxx(1): error C2065: '__deprecated__': undeclared identifier
+C:\Users\andreas\code\dungeoneer\dungeoneer\build\CMakeFiles\CMakeTmp\src.cxx(1): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\andreas\code\dungeoneer\dungeoneer\build\CMakeFiles\CMakeTmp\src.cxx(1): error C2448: '__attribute__': function-style initializer appears to be a function definition
+NMAKE : fatal error U1077: '"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\Hostx64\x64\cl.exe"' : return code '0x2'
+Stop.
+NMAKE : fatal error U1077: '"D:\Microsoft Visual Studio\VC\Tools\MSVC\14.27.29110\bin\HostX64\x64\nmake.exe"' : return code '0x2'
+Stop.
+
+
+Source file was:
+__attribute__((__deprecated__)) int somefunc() { return 0; }
+    int main() { return somefunc();}

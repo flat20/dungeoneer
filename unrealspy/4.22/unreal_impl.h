@@ -3,12 +3,13 @@
 
 namespace spy {
 
+	typedef TNameEntryArray& (__stdcall *tFName_GetNames) ();
+	typedef FRawObjectIterator* (__thiscall *tFRawObjectIterator_Ctor)(void *_this, bool bOnlyGCedObjects);
+
     extern FUObjectArray *GUObjectArray;
     extern TNameEntryArray *GNames;
     extern UEngine* GEngine;
-    
-	// If we move this to spy:: where we have GUObjectArray we could make it work
-	// exactly like the original FRawObjectIterator
+
 	class FRawObjectIterator : public FUObjectArray::TIterator
 	{
 	public:
@@ -35,6 +36,5 @@ namespace spy {
 			return GetObject();
 		}
 	};
-
 
 }

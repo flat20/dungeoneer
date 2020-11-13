@@ -11,9 +11,9 @@
 #include <vector>
 #include "json.hpp"
 
-int Launch(std::string dll);
+int Launch(std::string dll, std::vector<std::string> exeFiles);
 int Error(HANDLE process, const char *fmt);
-DWORD GetDungeonsProcessID();
+DWORD GetDungeonsProcessID(std::vector<std::string> exeFiles);
 DWORD GetProcessID(const char *exeFile);
 bool LaunchGame();
 bool LaunchStandaloneGame();

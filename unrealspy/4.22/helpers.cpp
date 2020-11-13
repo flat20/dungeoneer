@@ -4,6 +4,7 @@
 
 namespace spy {
 
+#ifdef UE_422
 	bool GetName(UObject *obj, ANSICHAR (&OutName)[1024]) {
 		FName name = obj->GetFName();
 		TNameEntryArray& Names = *GNames;
@@ -67,4 +68,7 @@ namespace spy {
         }
         return nullptr;
 	}
+
+#endif
+
 }

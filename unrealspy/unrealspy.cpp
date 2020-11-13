@@ -1,15 +1,56 @@
 #include <map>
 #include <thread>
 #include "unrealspy.h"
-#include "unreal_impl.h"
-#include "helpers.h"
+#include <helpers.h>
 #include "offsets.h"
 #include "console.h"
 #include "uhook.h"
 
 #include <windows.h>
 #include <Psapi.h>
+#include <iostream>
+#include <iomanip>
 
+template <class T>
+void hexDumpValue(const unsigned char * p, unsigned int offset) {
+    const int width = sizeof(T)*2; // 16, times two for hex
+    const T * valuePtr = reinterpret_cast< const T *>( p+offset );
+    for (int i=0; i<16; i+=sizeof(T)) {
+        //std::cout << "  =" << std::setw(width) << std::setfill( ' ' ) << *valuePtr;
+        std::cout << "  =" << *valuePtr;
+        valuePtr++;
+    }
+}
+
+void hexDump16Bytes(const unsigned char * p, unsigned int offset) {
+    
+    // address and offset
+    std::cout << std::setw(12) << std::setfill( '0' ) << std::hex << (uint64_t)p+offset;
+    std::cout << "  ";
+    std::cout << std::setw(4) << offset;
+    std::cout << "  ";
+
+    unsigned int n = 16;
+    for ( unsigned int i = 0; i < n; i++ ) {
+        if (i % 8 == 0) {   // space
+            std::cout << "  ";
+        }
+        
+        std::cout << std::setw(2) << std::setfill( '0' ) << std::hex << int(p[offset+i]) << " ";
+    }
+
+    hexDumpValue<uint64_t>(p, offset);
+    //hexDumpValue<float>(p, offset);
+
+    std::cout << std::endl;
+}
+
+void hexDump(const void * mem, unsigned int n) {
+    const unsigned char * p = reinterpret_cast< const unsigned char *>( mem );
+    for ( unsigned int i = 0; i < n; i+=16 ) {
+        hexDump16Bytes(p, i);
+    }
+}
 
 namespace spy {
     Data data = {};
@@ -29,18 +70,18 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
     HANDLE process = GetCurrentProcess();
     data.functionPtrs = offsets::FindAddresses(process, functionPatterns); // offsets::defaultAddressLookups
     for(auto &it : data.functionPtrs) {
-        printf("%s = %llx\n", it.first.c_str(), it.second);
+        printf("%s = %I64x\n", it.first.c_str(), (uintptr_t)it.second);
     }
 
-    if (data.functionPtrs[RefFName_GetNames] == 0) {
-        printf("No FName::GetNames()\n");
-        return nullptr;
-    }
+    // if (data.functionPtrs[RefFName_GetNames] == 0) {
+    //     printf("No FName::GetNames()\n");
+    //     return nullptr;
+    // }
 
-    if (data.functionPtrs[RefFRawObjectIterator_Ctor] == 0) {
-        printf("No RawObjectIterator()\n");
-        return nullptr;
-    }
+    // if (data.functionPtrs[RefFRawObjectIterator_Ctor] == 0) {
+    //     printf("No RawObjectIterator()\n");
+    //     return nullptr;
+    // }
 
     // Should be optional
     InitHook();
@@ -59,9 +100,10 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
 }
 
 bool spy::initVars() {
+    printf("init vars\n");
 //     // We can get GNames by calling FName::GetNames()
 //     //FName_GetNames GetNames = (FName_GetNames)data.functionPtrs[RefFName_GetNames];
-
+#ifdef UE_422
     if (GNames == nullptr) {
         TNameEntryArray& names = GetFunction<tFName_GetNames>(RefFName_GetNames)();
         spy::GNames = &names;
@@ -90,6 +132,25 @@ bool spy::initVars() {
     if (spy::GNames == nullptr || spy::GUObjectArray == nullptr || spy::GEngine == nullptr) {
         return false;
     }
+#else
+    if (spy::GUObjectArray == nullptr) {
+        // Passing in a fake UClass to satisfy the code and make it not crash.
+        char bla[256];
+        auto objectIteratorCtor = (tFObjectIterator_Ctor)data.functionPtrs[RefFObjectIterator_Ctor];
+        void **ref = (void**)objectIteratorCtor(&bla[0], (UClass*)&bla[0], false, EObjectFlags::RF_NoFlags, EInternalObjectFlags::None);
+        spy::GUObjectArray = (FUObjectArray*)*ref;
+        hexDump(spy::GUObjectArray, 64);
+        for (spy::FRawObjectIterator It(false); It; ++It) {
+
+            UObject *obj = *It;
+            printf("First obj\n");
+            hexDump(obj, 32);
+            break;
+        }
+
+    }
+
+#endif
     return true;
 }
 
