@@ -15,6 +15,11 @@
 #include <Engine\World.h>
 #include <Engine\GameViewportClient.h>
 
+// console
+#include <Engine\LocalPlayer.h>
+#include <GameFramework/PlayerController.h>
+#include <GameFramework\PlayerInput.h>
+
 class UFont : UObject {
 
 };

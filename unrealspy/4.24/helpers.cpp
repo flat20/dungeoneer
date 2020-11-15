@@ -33,6 +33,12 @@ namespace spy {
         return &buf[0];
 	}
 
+	TCHAR *GetName(FName Name) {
+        auto ToString = GetFunction<tFName_ToString>(RefFName_ToString);
+        uint32 len = ToString(&Name,&buf[0], 100);
+        return &buf[0];
+	}
+
 	UObject *FindObjectByName(TCHAR *ObjectName, TCHAR *ClassName, TCHAR *OuterName) {
 
         for (spy::FRawObjectIterator It(false); It; ++It) {
