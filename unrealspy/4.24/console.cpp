@@ -3,6 +3,21 @@
 #include "uhook.h"
 #include <stdlib.h>
 
+#include <GameFramework/InputSettings.h>
+
+ULocalPlayer* UGameInstance::GetFirstGamePlayer() const
+{
+	return (LocalPlayers.Num() > 0) ? LocalPlayers[0] : nullptr;
+}
+
+FName FKey::GetFName() const
+{
+    return KeyName;
+}
+
+//const FKey tilde = EKeys::Tilde("Tilde");
+//static const FKey Period;
+// const FKey Period("Period");
 bool spy::InitConsole() {
 
     printf("init console\n");
@@ -34,10 +49,73 @@ bool spy::InitConsole() {
 
     GameViewport->ViewportConsole = console;
 
-    FString str((TCHAR*)L"abc");
-    console->StartTyping(str);
+    UInputSettings *InputSettings = (UInputSettings*)FindObjectByName(L"Default__InputSettings", L"InputSettings", nullptr);
+    printf("found default InputSettings %llx\n", (uintptr_t)InputSettings);
 
-    return true;
+    struct Temp {
+        uint32 Value;
+    };
+    // Needs Name_Init 
+    // name_index for period is 0x0000EE26
+    for (FKey &Key : InputSettings->ConsoleKeys) {
+        printf("console keys %ws\n", GetName(Key.GetFName()));
+        FName a = Key.GetFName();
+        Temp *b = (Temp*)&Key;
+        b->Value = 0x0000EE26; // Find this index
+        //Key = Period;
+    }
+
+    for (FKey &Key : InputSettings->ConsoleKeys) {
+        printf("console keys after %ws\n", GetName(Key.GetFName()));
+    }
+
+    // EKeys::Tilde
+    // const FKey EKeys::Tilde("Tilde")
+    // EKeys
+    // static const FKey Period;
+    // static const FKey Tilde;
+
+    // // Find console shortcut
+    // auto WorldList = GEngine->GetWorldContexts();
+    // printf("asdasd %llx\n", (uintptr_t)WorldList[0].OwningGameInstance);
+    // if (WorldList[0].OwningGameInstance == nullptr) {
+    //     // return
+    // }
+    // printf("player? %llx\n", (uintptr_t)WorldList[0].OwningGameInstance->GetFirstGamePlayer());
+
+
+
+    // ULocalPlayer *Player = WorldList[0].OwningGameInstance->GetFirstGamePlayer(); // implement
+    // printf("actionmap? %llx\n", (uintptr_t)Player->PlayerController->PlayerInput);
+
+
+    //TArray<struct FInputActionKeyMapping> ActionMappings = Player->PlayerController->PlayerInput->ActionMappings;
+    // This crashes:
+    //printf("size %d", ActionMappings.Num());
+
+    // for (FInputActionKeyMapping value : ActionMappings) {
+    //     printf("ok %ws\n", GetName(value.ActionName));
+    //     printf(" %ws\n", GetName(value.Key.GetFName()));
+    // }
+    // for (auto It = ActionMappings.CreateConstIterator(); It; ++It) {
+    //     FInputActionKeyMapping value = *It;
+    //     printf("ok %ws\n", GetName(value.ActionName));
+    //     printf(" %ws\n", GetName(value.Key.GetFName()));
+    // }
+
+
+	//TArray<struct FInputActionKeyMapping> ActionMappings;
+    // FName ActionName;
+    // FKey Key;
+
+//     const FKey EKeys::Period("Period");
+// const FKey EKeys::Slash("Slash");
+// const FKey EKeys::Tilde("Tilde");
+
+    // FString str((TCHAR*)L"abc");
+    // console->StartTyping(str);
+
+    return false;
 }
 
 
@@ -75,14 +153,13 @@ bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
 static void OnConsoleVariable(const TCHAR *Name, IConsoleObject* CVar)
 {
     //if (CVar->TestFlags(ECVF_Cheat)) {
-    printf("%ws - %ws\n", Name, CVar->GetHelp());
+    printf("%ws\n", Name);
     //}
     CVar->SetFlags(ECVF_Default);
 }
 
 void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld) {
 
-    printf("called!\n");
     // Call original
     origProcessConsoleInput(thisConsoleManager, InInput, Ar, InWorld);
 
@@ -90,7 +167,6 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
     if (wcscmp((const wchar_t*)InInput, L"flat20") != 0) { // TEXT("flat20")
         return;
     }
-
 
     bool result = spy::UnhookFunctionRef(RefFConsoleManager_ProcessUserConsoleInput);
     if (result == true) {
