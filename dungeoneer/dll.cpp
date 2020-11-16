@@ -55,23 +55,6 @@ tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
 tAHUD_PostRender origAHUD_PostRender = NULL;
 
 
-// Testing: Params passed to LoadLevel. Not completed, but has what we need for now.
-struct LoadLevelParams {
-    uint8 difficulty;
-    uint8 threatLevel;
-    TArray<TCHAR> loadType; // "lobby", "ingame"
-    uint64 something;   // 0x17, 
-    TArray<TCHAR> levelName; // "Lobby", "soggyswamp"
-    uint64 seed;    // Could be uint32 as well.
-    TArray<TArray<TCHAR>> characterUnlockKeys;
-    // Probably more stuff, but stopped looking for now.
-};
-
-// __int64 __fastcall subLevelLoad(__int64 a1, __int64 a2, char a3)
-typedef void (__fastcall *tLoadLevel)(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat);
-void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat);
-
-
 //using namespace util;
 
 
@@ -117,8 +100,6 @@ void Init() {
     spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
     spy::HookFunctionRef(RefAActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
     spy::HookFunctionRef(RefAHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
-    // Testing
-    spy::HookFunctionRef(RefLoadLevel, &LoadLevel, nullptr);
 
     dng.GUObjectArray = spy::GUObjectArray;
     dng.GNames = spy::GNames;
@@ -440,18 +421,4 @@ void __stdcall AHUD_PostRender(void* hud) {
             fnHandler(hud);
         }
     }
-}
-
-// Just for testing LoadLevel
-
-void LoadLevel(UObject* thisBpGameInstance, LoadLevelParams *params, uint8 r8b, double xmm3, DWORD64 stackFloat) {
-    // printf("level loaded? %s\n", util::getName(thisBpGameInstance));
-    printf("I have no idea if this code will work!?!? GetData() is inline so can we use it?\n");
-    printf("levelName: %ws\n", (wchar_t*)params->levelName.GetData());
-    printf("loadType: %ws\n", (wchar_t*)params->loadType.GetData());
-    printf("seed: %I64d\n", params->seed);
-//    params->seed = 91081;
-
-    ((tLoadLevel)spy::GetHook(RefLoadLevel)->original)(thisBpGameInstance, params, r8b, xmm3, stackFloat);
-    return;
 }

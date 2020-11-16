@@ -1,23 +1,16 @@
 
 # About
 
+Refactoring in progress. I wouldn't attempt building it right now until the makefile branch
+is merged in. But before that there's the 4.24 branch, which makes this work for version
+4.24 of the UE SDK. That needs to be merged in as well.
 
 # Build
 
-`make-launcher.bat`
-
-Compiles the dungeoneer.exe which injects dungeoneer.dll into Minecraft Dungeons.
-
 `make-dungeoneer.bat`
 
-Compiles the dungeoneer.dll which can load mod dll files.
+Compiles the `dungeoneer.dll` which unlocks the console and enables all the cheat commands.
 
-`make-simple.bat`
+`make-launcher.bat`
 
-Compiles simple-mod.dll, the simplests of mods. This dll can be loaded at runtime with Dungeoneer.
-
-# TODO
-
-* Mods shouldn't know about diet-ue at all, and not have to link to them.
-* Nicer/simpler getting of function pointers.
-* GetPrivateStaticClass() #defines but look up default class in gobjects.
+Compiles `dungeoneer.exe` which injects `dungeoneer.dll` into Minecraft Dungeons.

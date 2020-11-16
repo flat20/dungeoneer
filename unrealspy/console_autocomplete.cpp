@@ -5,10 +5,20 @@
 
 namespace autocomplete {
     IConsoleManager *ConsoleManager = nullptr;
-    UConsoleSettings *ConsoleSettings = nullptr;
+    //UConsoleSettings *ConsoleSettings = nullptr;
 
 }
 
+UClass *UConsoleSettings::GetPrivateStaticClass(void) {
+    static UClass* cls = (UClass*)spy::FindObjectByName("ConsoleSettings", "Class");
+    return cls;
+};
+
+
+UClass *UFunction::GetPrivateStaticClass(void) {
+    static UClass* cls = (UClass*)spy::FindObjectByName("Function", "Class");
+    return cls;
+};
 
 class FConsoleVariableAutoCompleteVisitor 
 {
@@ -28,7 +38,7 @@ public:
 		// 	return;
 		// }
 
-//		const UConsoleSettings* ConsoleSettings = GetDefault<UConsoleSettings>();
+        const UConsoleSettings* ConsoleSettings = GetDefault<UConsoleSettings>();
 
 		// can be optimized
 		int32 NewIdx = Sink.AddDefaulted();
@@ -40,33 +50,32 @@ public:
 		{
 			if (CVar->TestFlags(ECVF_ReadOnly))
 			{
-				Cmd.Color = autocomplete::ConsoleSettings->AutoCompleteFadedColor;
+				Cmd.Color = ConsoleSettings->AutoCompleteFadedColor;
 			}
 			else
 			{
-				Cmd.Color = autocomplete::ConsoleSettings->AutoCompleteCVarColor;
+				Cmd.Color = ConsoleSettings->AutoCompleteCVarColor;
 			}
 		}
 		else
 		{
-			Cmd.Color = autocomplete::ConsoleSettings->AutoCompleteCommandColor;
+			Cmd.Color = ConsoleSettings->AutoCompleteCommandColor;
 		}
 	}
 };
 
 
-class XConsole : public UConsole {
+class SpyConsole : public UConsole {
 public:
-    void BuildRuntimeAutoCompleteList2(bool bForce = false)
+
+    void SpyBuildRuntimeAutoCompleteList(bool bForce = false)
     {
-        printf("building\n");
         if (!bForce)
         {
             // unless forced delay updating until needed
             bIsRuntimeAutoCompleteUpToDate = false;
             return;
         }
-        printf("building\n");
 
         // clear the existing tree
         //@todo - probably only need to rebuild the tree + partial command list on level load
@@ -75,36 +84,35 @@ public:
             FAutoCompleteNode *Node = AutoCompleteTree.ChildNodes[Idx];
             delete Node;
         }
-        printf("building\n");
 
         AutoCompleteTree.ChildNodes.Reset();
 
+        // Private member..
+        const UConsoleSettings* ConsoleSettings = GetDefault<UConsoleSettings>();
+
         // copy the manual list first
         AutoCompleteList.Reset();
-        AutoCompleteList.AddDefaulted(autocomplete::ConsoleSettings->ManualAutoCompleteList.Num());
-        for (int32 Idx = 0; Idx < autocomplete::ConsoleSettings->ManualAutoCompleteList.Num(); Idx++)
+        AutoCompleteList.AddDefaulted(ConsoleSettings->ManualAutoCompleteList.Num());
+        for (int32 Idx = 0; Idx < ConsoleSettings->ManualAutoCompleteList.Num(); Idx++)
         {
-            AutoCompleteList[Idx] = autocomplete::ConsoleSettings->ManualAutoCompleteList[Idx];
-            AutoCompleteList[Idx].Color = autocomplete::ConsoleSettings->AutoCompleteCommandColor;
+            AutoCompleteList[Idx] = ConsoleSettings->ManualAutoCompleteList[Idx];
+            AutoCompleteList[Idx].Color = ConsoleSettings->AutoCompleteCommandColor;
         }
-        printf("building\n");
 
         // systems that have registered to want to introduce entries
         // RegisterConsoleAutoCompleteEntries.Broadcast(AutoCompleteList);
 
         // console variables
         {
-    //		IConsoleManager::Get().ForEachConsoleObjectThatStartsWith(
             autocomplete::ConsoleManager->ForEachConsoleObjectThatStartsWith(
                 FConsoleObjectVisitor::CreateStatic< TArray<struct FAutoCompleteCommand>& >(
                     &FConsoleVariableAutoCompleteVisitor::OnConsoleVariable,
                     AutoCompleteList ) );
         }
-        printf("building\n");
 
     // 	// iterate through script exec functions and append to the list
-     	// for (TObjectIterator<UFunction> It; It; ++It)
-    	// {
+    // 	for (TObjectIterator<UFunction> It; It; ++It)
+    //	{
     // 		UFunction *Func = *It;
 
     // 		// Determine whether or not this is a level script event that we can call (must be defined in the level script actor and not in parent, and has no return value)
@@ -153,7 +161,7 @@ public:
     // 			}
     // 			AutoCompleteList[NewIdx].Desc = Desc + AutoCompleteList[NewIdx].Desc;
     // 		}
-    	// }
+    //	}
 
         // // enumerate maps
         // {
@@ -243,7 +251,6 @@ public:
         // AugmentRuntimeAutoCompleteList(AutoCompleteList);
 
         AutoCompleteList.Shrink();
-        printf("almost done? %d\n", AutoCompleteList.Num());
 
         // build the magic tree!
         for (int32 ListIdx = 0; ListIdx < AutoCompleteList.Num(); ListIdx++)
@@ -276,7 +283,6 @@ public:
         }
         bIsRuntimeAutoCompleteUpToDate = true;
         //PrintNode(&AutoCompleteTree);
-        printf("building\n");
 
     }
 };
@@ -286,10 +292,8 @@ namespace autocomplete {
    
     void BuildAutocomplete(IConsoleManager *ConsoleManager, UConsole *Console) {
         autocomplete::ConsoleManager = ConsoleManager;
-        ConsoleSettings = (UConsoleSettings*)spy::FindObjectByName("Default__ConsoleSettings", nullptr);
-        printf("build?\n");
-        XConsole *con = (XConsole*)Console;
-        con->BuildRuntimeAutoCompleteList2(true);
+        SpyConsole *con = (SpyConsole*)Console;
+        con->SpyBuildRuntimeAutoCompleteList(true);
     }
 }
 
