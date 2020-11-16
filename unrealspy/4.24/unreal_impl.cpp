@@ -8,4 +8,10 @@ namespace spy {
     UEngine* GEngine = nullptr;
 }
 
+UClass* UClass::GetPrivateStaticClass() {
+    static UClass* cls = (UClass*)spy::FindObjectByName(TEXT("Class"), TEXT("Class"), nullptr);
+    printf("UClass:: %llx\n", (uintptr_t)cls);
+    return cls;
+}
+
 CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);

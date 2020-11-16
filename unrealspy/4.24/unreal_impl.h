@@ -1,5 +1,6 @@
 #pragma once
 #include <diet-ue.h>
+#include <helpers.h>
 
 namespace spy {
     //FObjectIterator *__fastcall FObjectIterator::FObjectIterator(FObjectIterator *__hidden this, struct UClass *, bool, enum EObjectFlags, enum EInternalObjectFlags)

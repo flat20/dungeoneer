@@ -99,7 +99,7 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
     return nullptr;
 }
 
-
+// TODO Move to unreal_impl.cpp
 bool spy::initVars() {
 
 //     // We can get GNames by calling FName::GetNames()
@@ -157,23 +157,6 @@ bool spy::initVars() {
         printf("engine? %llx\n", (uintptr_t)engine);
         if (engine != nullptr) {
             spy::GEngine = (UEngine*)engine;
-
-            // for (spy::FRawObjectIterator It(false); It; ++It) {
-
-            //     UObject *obj = *It;
-            //     if (wcscmp(GetName(obj->GetClass()), L"GameEngine") == 0 && wcscmp(GetName(obj->GetOuter()), L"/Engine/Transient")) {
-            //         printf("this one?\n");
-            //         printf(" %ws\n", GetName(obj->GetClass()));
-            //         printf(" %ws\n", GetName(obj->GetOuter()));
-            //     }
-            //     if ((uintptr_t)obj == (uintptr_t)actual) {
-            //         printf("MATCH! %ws\n", GetName(obj));
-            //         printf(" %ws\n", GetName(obj->GetClass()));
-            //         printf(" %ws\n", GetName(obj->GetOuter()));
-            //         // printf(" %ws\n", GetName(obj->GetClass()->GetSuperClass()));
-            //         break;
-            //     }
-            // }
         }
 
     }

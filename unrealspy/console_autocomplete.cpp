@@ -292,8 +292,15 @@ namespace autocomplete {
    
     void BuildAutocomplete(IConsoleManager *ConsoleManager, UConsole *Console) {
         autocomplete::ConsoleManager = ConsoleManager;
+<<<<<<< HEAD:unrealspy/4.22/console_autocomplete.cpp
         SpyConsole *con = (SpyConsole*)Console;
         con->SpyBuildRuntimeAutoCompleteList(true);
+=======
+        ConsoleSettings = (UConsoleSettings*)spy::FindObjectByName(TEXT("Default__ConsoleSettings"), nullptr, nullptr);
+        printf("build?\n");
+        XConsole *con = (XConsole*)Console;
+        con->BuildRuntimeAutoCompleteList2(true);
+>>>>>>> 4.24 with console autocomplete. Couldn't get CheatManager to work:unrealspy/console_autocomplete.cpp
     }
 }
 
