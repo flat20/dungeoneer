@@ -286,7 +286,7 @@ namespace autocomplete {
    
     void BuildAutocomplete(IConsoleManager *ConsoleManager, UConsole *Console) {
         autocomplete::ConsoleManager = ConsoleManager;
-        ConsoleSettings = (UConsoleSettings*)spy::FindObjectByName("Default__ConsoleSettings", nullptr);
+        ConsoleSettings = (UConsoleSettings*)spy::FindObjectByName(TEXT("Default__ConsoleSettings"), nullptr, nullptr);
         printf("build?\n");
         XConsole *con = (XConsole*)Console;
         con->BuildRuntimeAutoCompleteList2(true);

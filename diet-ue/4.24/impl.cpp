@@ -24,6 +24,23 @@ SIZE_T FMemory::QuantizeSize(SIZE_T Count, uint32 Alignment) {
 }
 
 
+FString FString::ToLower() const &
+{
+	FString New = *this;
+	New.ToLowerInline();
+	return New;
+}
+
+void FString::ToLowerInline()
+{
+	const int32 StringLength = Len();
+	TCHAR* RawData = Data.GetData();
+	for (int32 i = 0; i < StringLength; ++i)
+	{
+		RawData[i] = FChar::ToLower(RawData[i]);
+	}
+}
+
 namespace UE4Delegates_Private
 {
 	TAtomic<uint64> GNextID(1);

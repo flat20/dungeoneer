@@ -5,19 +5,6 @@
 
 namespace spy {
 
-	// bool GetName(UObject *obj, ANSICHAR (&OutName)[1024]) {
-	// 	FName name = obj->GetFName();
-	// 	TNameEntryArray& Names = *GNames;
-
-	// 	// Code from the ue source.
-	// 	const NAME_INDEX Index = name.GetDisplayIndex();
-	// 	const FNameEntry* const NameEntry = Names[Index];
-
-	// 	// GetComparisonIndex() seems to be the same thing as display index?
-
-	// 	NameEntry->GetAnsiName(OutName);
-    //     return true;
-	// }
     TCHAR buf[100];
 
     // TODO new(buf)
