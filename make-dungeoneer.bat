@@ -1,10 +1,11 @@
 
 cl /nologo /EHsc ^
-     /I minhook-master/include/ /I unrealspy/ ^
+     /DFNAME_ANSICHAR ^
+     /I minhook-master/include/ /I unrealspy/ /I unrealspy/4.22 ^
      /I imgui-1.78/  ^
      /I "%WindowsSdkDir%Include\um" /I "%WindowsSdkDir%Include\shared"  ^
-     /FI C:\Users\andreas\code\dungeoneer\diet-ue\defines.h ^
-     /I diet-ue/ ^
+     /FI C:\Users\andreas\code\dungeoneer\diet-ue\4.22\defines.h ^
+     /I diet-ue/4.22/ ^
      /I "D:\UE_4.22\Engine\Source\Runtime\Core\Public" ^
      /I "D:\UE_4.22\Engine\Source\Runtime\Core\Private" ^
      /I "D:\UE_4.22\Engine\Source\Runtime\CoreUObject\Public" ^
@@ -34,9 +35,13 @@ cl /nologo /EHsc ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\AssetRegistry" ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\Slate" ^
      /I "D:\UE_4.22\Engine\Intermediate\Build\Win64\UE4\Inc\AudioPlatformConfiguration" ^
+     /I "D:\UE_4.22\Engine\Source\Runtime\Launch\Resources" ^
      dungeoneer\*.cpp ^
      unrealspy\*.cpp ^
-     diet-ue\*.cpp ^
+     unrealspy\4.22\console.cpp ^
+     unrealspy\4.22\unreal_impl.cpp ^
+     unrealspy\4.22\helpers.cpp ^
+     diet-ue\4.22\impl.cpp ^
      minhook-master\src\hook.c^
      minhook-master\src\buffer.c^
      minhook-master\src\trampoline.c^

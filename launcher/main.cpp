@@ -8,5 +8,6 @@ int main(int argc, char *argv[]) {
         dll = argv[1];
     }
 
-    return Launch(dll);
+    const std::vector<std::string> exeFiles = {"Dungeons-Win64-Shipping.exe", "Dungeons.exe"};
+    return Launch(dll, exeFiles);
 }

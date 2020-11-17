@@ -5,7 +5,6 @@
 #include <diet-ue.h>
 #include <unreal_impl.h>
 
-
 #ifdef SPYAPI_IMPORT
 //    #define SPYAPI __declspec(dllimport)
 #else

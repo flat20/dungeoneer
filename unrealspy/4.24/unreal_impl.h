@@ -15,6 +15,7 @@ namespace spy {
     extern FUObjectArray *GUObjectArray;
     // extern TNameEntryArray *GNames;
     extern UEngine* GEngine;
+	bool initVars();
 
     // Slightly changed from 4.22 although maybe 4.22 could use this too?
 	class FRawObjectIterator : public FUObjectArray::TIterator

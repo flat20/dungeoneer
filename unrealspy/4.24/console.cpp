@@ -1,7 +1,8 @@
 #include "console.h"
 #include "helpers.h"
 #include "uhook.h"
-#include "console_autocomplete.h"
+#include "../console_autocomplete.h"
+#include "../defines.h"
 #include <stdlib.h>
 #include <wchar.h>
 
@@ -45,7 +46,7 @@ bool spy::InitConsole() {
 
     SetConsoleKey();
 
-    EnableCheatManager();
+    //EnableCheatManager();
 
     // FString str((TCHAR*)L"abc");
     // console->StartTyping(str);
@@ -104,8 +105,6 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
     if (result == true) {
         origProcessConsoleInput = nullptr;
     }
-
-    printf("console manager? %llx\n", (uintptr_t)thisConsoleManager);
 
     // Visit each console var to enable them.
     thisConsoleManager->ForEachConsoleObjectThatStartsWith(
@@ -166,6 +165,7 @@ ULocalPlayer* UGameInstance::GetFirstGamePlayer() const
 
 // TODO Not sure if this will ever work. Just testing for Fuser.
 void EnableCheatManager() {
+
     TIndirectArray<FWorldContext> WorldList = spy::GEngine->GetWorldContexts();
 
     // PlayerController should be HypePlayercontroller something?

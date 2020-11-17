@@ -6,6 +6,7 @@ cl /nologo /EHsc ^
       /subsystem:console -OUT:fuser.exe
 
 cl /nologo /EHsc ^
+     /DFNAME_WIDECHAR ^
      /I minhook-master/include/ /I unrealspy/ /I unrealspy/4.24 ^
      /I "%WindowsSdkDir%Include\um" /I "%WindowsSdkDir%Include\shared"  ^
      /FI C:\Users\andreas\code\dungeoneer\diet-ue\4.24\defines.h ^
