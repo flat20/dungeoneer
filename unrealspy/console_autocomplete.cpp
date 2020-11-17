@@ -1,5 +1,4 @@
 #include <diet-ue.h>
-#include <defines.h>
 #include <helpers.h>
 #include <Misc/DefaultValueHelper.h>
 
@@ -11,13 +10,13 @@ namespace autocomplete {
 }
 
 UClass *UConsoleSettings::GetPrivateStaticClass(void) {
-    static UClass* cls = (UClass*)spy::FindObjectByName(UTEXT("ConsoleSettings"), UTEXT("Class"), nullptr);
+    static UClass* cls = (UClass*)spy::FindObjectByName("ConsoleSettings", "Class", nullptr);
     return cls;
 };
 
 
 UClass *UFunction::GetPrivateStaticClass(void) {
-    static UClass* cls = (UClass*)spy::FindObjectByName(UTEXT("Function"), UTEXT("Class"), nullptr);
+    static UClass* cls = (UClass*)spy::FindObjectByName("Function", "Class", nullptr);
     return cls;
 };
 

@@ -2,7 +2,6 @@
 #include "helpers.h"
 #include "uhook.h"
 #include "../console_autocomplete.h"
-#include "../defines.h"
 #include <stdlib.h>
 #include <wchar.h>
 
@@ -32,7 +31,7 @@ bool spy::InitConsole() {
     // Hack to avoid triggering ::StaticClass() inside TSubclassOf.
     // TSubclassOf happens to have only one member, which is a pointer to the UClass.
     UClass *ConsoleClass = *(UClass**)&GEngine->ConsoleClass;
-    printf("console class: %ws\n", GetName(ConsoleClass));
+    printf("console class: %s\n", GetName(ConsoleClass));
 
     FName NameNone;
     auto ConstructObject = GetFunction<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
@@ -129,7 +128,7 @@ FName FKey::GetFName() const
 // Needs FName finder.
 void SetConsoleKey() {
     
-    UInputSettings *InputSettings = (UInputSettings*)spy::FindObjectByName(TEXT("Default__InputSettings"), TEXT("InputSettings"), nullptr);
+    UInputSettings *InputSettings = (UInputSettings*)spy::FindObjectByName("Default__InputSettings", "InputSettings", nullptr);
     printf("found default InputSettings %llx\n", (uintptr_t)InputSettings);
 
     // Hack until we can get the FName from the global list.
@@ -139,7 +138,7 @@ void SetConsoleKey() {
     // Needs Name_Init 
     // name_index for period is 0x0000EE26
     for (FKey &Key : InputSettings->ConsoleKeys) {
-        printf("console keys %ws\n", spy::GetName(Key.GetFName()));
+        printf("console keys %s\n", spy::GetName(Key.GetFName()));
         FName a = Key.GetFName();
         Temp *b = (Temp*)&Key;
         b->Value = 0x0000EE26;
@@ -147,7 +146,7 @@ void SetConsoleKey() {
     }
 
     for (FKey &Key : InputSettings->ConsoleKeys) {
-        printf("console keys after %ws\n", spy::GetName(Key.GetFName()));
+        printf("console keys after %s\n", spy::GetName(Key.GetFName()));
     }
 
     // EKeys::Tilde
@@ -171,24 +170,24 @@ void EnableCheatManager() {
     // PlayerController should be HypePlayercontroller something?
 
     ULocalPlayer *Player = WorldList[0].OwningGameInstance->GetFirstGamePlayer(); // implement
-    printf("player ctrler name: %ws\n", spy::GetName(Player->PlayerController));
+    printf("player ctrler name: %s\n", spy::GetName(Player->PlayerController));
     printf("cheatmgr? %llx\n", (uintptr_t)Player->PlayerController->CheatManager);
 
     // TSubClassof has one entry, pointer to the class itself.
     UClass *CheatClass = *(UClass**)&Player->PlayerController->CheatClass;
     printf("cheat cls ? %llx\n", (uintptr_t)CheatClass);
-    printf(" name: %ws\n", spy::GetName(CheatClass));
+    printf(" name: %s\n", spy::GetName(CheatClass));
 
     UObject *cheatManager;
-    cheatManager = spy::FindObjectByName(nullptr, TEXT("HypeCheatMgr"), nullptr);
+    cheatManager = spy::FindObjectByName(nullptr, "HypeCheatMgr", nullptr);
     printf("cm cls ? %llx\n", (uintptr_t)cheatManager);
-    printf(" name: %ws\n", spy::GetName(cheatManager));
+    printf(" name: %s\n", spy::GetName(cheatManager));
     
     Player->PlayerController->CheatManager = (UCheatManager*)cheatManager;
 
     for (TFieldIterator<UFunction> it(cheatManager->GetClass(), EFieldIteratorFlags::ExcludeSuper); it; ++it) {
         UFunction *p = *it;
-        printf("  UFunction: %ws flags: %x\n", spy::GetName(p), p->FunctionFlags);
+        printf("  UFunction: %s flags: %x\n", spy::GetName(p), p->FunctionFlags);
         p->FunctionFlags |= EFunctionFlags::FUNC_Exec;
     }
 

@@ -31,7 +31,11 @@ bool spy::initVars() {
 
         UEngine *actual = *(UEngine**)(data.baseAddress + (uintptr_t)0x3C44F90);
         printf("actual? %llx\n", (uintptr_t)actual);
-        UObject *engine = FindObjectByName(nullptr, L"GameEngine", L"/Engine/Transient");
+
+        UObject *engine = FindObjectByName("GameEngine", "GameEngine", nullptr); // "/Engine/Transient"
+        printf("%s\n", GetName(engine));
+        printf("%s\n", GetName(engine->GetClass()));
+        printf("%s\n", GetName(engine->GetOuter()));
         printf("engine? %llx\n", (uintptr_t)engine);
         if (engine != nullptr) {
             spy::GEngine = (UEngine*)engine;
@@ -48,9 +52,24 @@ bool spy::initVars() {
 }
 
 UClass* UClass::GetPrivateStaticClass() {
-    static UClass* cls = (UClass*)spy::FindObjectByName(TEXT("Class"), TEXT("Class"), nullptr);
+    static UClass* cls = (UClass*)spy::FindObjectByName("Class", "Class", nullptr);
     printf("UClass:: %llx\n", (uintptr_t)cls);
     return cls;
+}
+
+// For FName matching
+void FNameEntry::GetAnsiName(ANSICHAR(&Out)[NAME_SIZE]) const
+{
+	//check(!IsWide());
+	CopyUnterminatedName(Out);
+	Out[Header.Len] = '\0';
+}
+
+void FNameEntry::CopyUnterminatedName(ANSICHAR* Out) const
+{
+	FPlatformMemory::Memcpy(Out, AnsiName, sizeof(ANSICHAR) * Header.Len);
+    // Does nothing normally.
+//	Decode(Out, Header.Len);
 }
 
 CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);

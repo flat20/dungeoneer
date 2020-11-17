@@ -18,61 +18,81 @@ namespace spy {
     //     return true;
 	// }
 
-    // ANSICHAR, WIDECHAR, TCHAR?
-    template<typename T>
-	T *GetName(UObject *obj) {
-        if (obj == nullptr) {
+//     // ANSICHAR, WIDECHAR, TCHAR?
+//     template<typename T>
+// 	T *GetName(UObject *obj) {
+//         if (obj == nullptr) {
+//             return nullptr;
+//         }
+
+//         // Give us direct access to the name char*
+//         class QuickName : public ::FNameEntry {
+//         public:
+//             FORCEINLINE T *GetPtr()
+//             {
+//                 // Both point to the same address anyway
+// //                if (IsWide()) {
+// //                	return (TCHAR*)&WideName[0];
+// //                } else {
+//                     return (T*)&AnsiName[0];
+//  //               } 
+//             }
+//         };
+
+// 		FName name = obj->GetFName();
+// 	}
+
+    ANSICHAR *GetName(UObject *Object) {
+        if (Object == nullptr) {
             return nullptr;
         }
+        return GetName(Object->GetFName());
+    }
 
-        // Give us direct access to the name char*
+    ANSICHAR *GetName(FName Name) {
+
         class QuickName : public ::FNameEntry {
         public:
-            FORCEINLINE T *GetPtr()
+            FORCEINLINE ANSICHAR *GetPtr()
             {
                 // Both point to the same address anyway
 //                if (IsWide()) {
 //                	return (TCHAR*)&WideName[0];
 //                } else {
-                    return (T*)&AnsiName[0];
+                    return (ANSICHAR*)&AnsiName[0];
  //               } 
             }
         };
 
-		FName name = obj->GetFName();
-		TNameEntryArray& Names = *GNames;
+        TNameEntryArray& Names = *GNames;
 
 		// Code from the ue source.
-		const NAME_INDEX Index = name.GetDisplayIndex();
+		const NAME_INDEX Index = Name.GetDisplayIndex();
 
         auto NameEntry = (QuickName*)Names[Index];
         return NameEntry->GetPtr();
-	}
-
-    FNAME_TYPE *GetName(UObject *Object) {
-        return GetName<FNAME_TYPE>(Object);
     }
 
     // Match Object name with the supplied names.
-    template<typename T>
-    UObject* FindObjectByName(T *ObjectName, T *ClassName, T *OuterName) {
+    // template<typename T>
+    UObject* FindObjectByName(ANSICHAR *ObjectName, ANSICHAR *ClassName, ANSICHAR *OuterName) {
 
         for (spy::FRawObjectIterator It(false); It; ++It) {
 
             UObject *Object = *It;
 
             // if objectName is requested but doesn't match, continue
-            if (ObjectName != nullptr && FPlatformString::Strcmp(GetName<T>(Object), ObjectName) != 0) {
+            if (ObjectName != nullptr && FPlatformString::Strcmp(GetName(Object), ObjectName) != 0) {
                 continue;
             }
 
             // if className is requested but doesn't match, continue
-            if (ClassName != nullptr && FPlatformString::Strcmp(GetName<T>(Object->GetClass()), ClassName) != 0) {
+            if (ClassName != nullptr && FPlatformString::Strcmp(GetName(Object->GetClass()), ClassName) != 0) {
                 continue;
             }
 
             // if OuterName is requested but doesn't match, continue
-            if (OuterName != nullptr && FPlatformString::Strcmp(GetName<T>(Object->GetOuter()), OuterName) != 0) {
+            if (OuterName != nullptr && FPlatformString::Strcmp(GetName(Object->GetOuter()), OuterName) != 0) {
                 continue;
             }
 
@@ -83,11 +103,11 @@ namespace spy {
         return nullptr;
     }
 
-	UObject *FindObjectByName(ANSICHAR *ObjectName, ANSICHAR *ClassName, ANSICHAR *OuterName) {
-        return FindObjectByName<ANSICHAR>(ObjectName, ClassName, OuterName);
-	}
+	// UObject *FindObjectByName(ANSICHAR *ObjectName, ANSICHAR *ClassName, ANSICHAR *OuterName) {
+    //     return FindObjectByName<ANSICHAR>(ObjectName, ClassName, OuterName);
+	// }
 
-	UObject *FindObjectByName(WIDECHAR *ObjectName, WIDECHAR *ClassName, WIDECHAR *OuterName) {
-        return FindObjectByName<WIDECHAR>(ObjectName, ClassName, OuterName);
-	}
+	// UObject *FindObjectByName(WIDECHAR *ObjectName, WIDECHAR *ClassName, WIDECHAR *OuterName) {
+    //     return FindObjectByName<WIDECHAR>(ObjectName, ClassName, OuterName);
+	// }
 }
