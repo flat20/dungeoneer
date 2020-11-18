@@ -3,6 +3,7 @@
 #include "unrealspy.h"
 #include <helpers.h>
 #include "offsets.h"
+#include "functions.h"
 #include "console.h"
 #include "uhook.h"
 
@@ -11,12 +12,13 @@
 #include <iostream>
 #include <iomanip>
 
+// Can this go inside functions.h as well?
 namespace spy {
     std::vector<offsets::OpcodeAddress*> defaultFunctionLookups = {
-        &offsets::functions::FName_GetNames,
-        &offsets::functions::FRawObjectIterator,
-        &offsets::functions::StaticConstructObject_Internal,
-        &offsets::functions::UConsole_ConsoleCommand,
+        &functions::FName_GetNames,
+        &functions::FRawObjectIterator,
+        &functions::StaticConstructObject_Internal,
+        &functions::UConsole_ConsoleCommand,
     };
 }
 
@@ -75,18 +77,21 @@ spy::Data *spy::Init(std::vector<offsets::OpcodeAddress*> functionLookups) {
     HMODULE dll = GetModuleHandle(NULL);
     uintptr_t baseAddress = (uintptr_t)dll;
     data.baseAddress = baseAddress;
-
     HANDLE process = GetCurrentProcess();
+
     offsets::FindAddresses(process, functionLookups); // offsets::defaultAddressLookups
+    bool lookupSuccess = true;
     for (auto opcode : functionLookups) {
         printf("opcode lookup %llx = %s\n", opcode->GetAddress(), opcode->GetOpcodes());
+        if (opcode->GetAddress() == 0) {
+            lookupSuccess = false;
+        }
     }
-    printf("address for getnames: %llx\n", ::offsets::functions::FName_GetNames.GetAddress());
+    printf("address for getnames: %llx\n", functions::FName_GetNames.GetAddress());
 
-    // data.functionPtrs = offsets::FindAddresses(process, functionPatterns); // offsets::defaultAddressLookups
-    // for(auto &it : data.functionPtrs) {
-    //     printf("%s = %I64x\n", it.first.c_str(), (uintptr_t)it.second);
-    // }
+    if (lookupSuccess == false) {
+        return nullptr;
+    }
 
     // Should be optional
     InitHook();

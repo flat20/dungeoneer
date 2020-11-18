@@ -11,7 +11,7 @@
 #include "dungeoneer.h"
 #include "ui.h"
 
-#include <offsets.h>
+#include <functions.h>
 
 
 signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void* params);
@@ -95,9 +95,9 @@ void Init() {
         return;
     }
 
-    spy::HookFunctionRef(offsets::functions::UObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
-    spy::HookFunctionRef(offsets::functions::AActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
-    spy::HookFunctionRef(offsets::functions::AHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
+    spy::HookFunctionRef(spy::functions::UObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
+    spy::HookFunctionRef(spy::functions::AActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
+    spy::HookFunctionRef(spy::functions::AHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
 
     dng.GUObjectArray = spy::GUObjectArray;
     dng.GNames = spy::GNames;
@@ -357,7 +357,7 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
     {
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
 
-        auto it = functionHandlers.find(&offsets::functions::UObject_ProcessEvent);
+        auto it = functionHandlers.find(&spy::functions::UObject_ProcessEvent);
         if (it == functionHandlers.end()) {
             return result;
         }
@@ -384,7 +384,7 @@ signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, voi
     {
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
 
-        auto it = functionHandlers.find(&offsets::functions::AActor_ProcessEvent);
+        auto it = functionHandlers.find(&spy::functions::AActor_ProcessEvent);
         if (it == functionHandlers.end()) {
             return result;
         }
@@ -408,7 +408,7 @@ void __stdcall AHUD_PostRender(void* hud) {
     {
 
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
-        auto it = functionHandlers.find(&offsets::functions::AHUD_PostRender);
+        auto it = functionHandlers.find(&spy::functions::AHUD_PostRender);
         if (it == functionHandlers.end()) {
             return;
         }

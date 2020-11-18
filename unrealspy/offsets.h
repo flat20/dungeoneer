@@ -38,22 +38,9 @@ namespace offsets {
 
     };
 
-
     void FindAddresses(HANDLE process, std::vector<OpcodeAddress*>& lookups);
-
-    // ["name"] = opcodes string
-//    extern std::map<::UE4Reference,std::string> defaultAddressLookups;
-
-
-    // std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> lookups);
-    // std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, MODULEENTRY32 modEntry, std::map<UE4Reference, std::string> opcodes);
-
-    //uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, std::string opcodes);
     MODULEENTRY32 GetModule(const DWORD &pid);
     size_t parseHex(std::string hex, BYTE *bytes, char *mask);
-
-
-    // Actual pattern scanning:
     uintptr_t PatternScan(char* bytes, size_t size, const BYTE* pattern, const char* mask, size_t patternLen);
     
     // TODO This MemoryIterator is very specific to our pattern matching.

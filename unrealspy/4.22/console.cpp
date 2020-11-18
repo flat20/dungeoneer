@@ -27,7 +27,7 @@ bool spy::InitConsole() {
     UClass *ConsoleClass = *(UClass**)&GEngine->ConsoleClass;
     
     FName NameNone;
-    auto ConstructObject = ::offsets::functions::StaticConstructObject_Internal.Call;//<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
+    auto ConstructObject = functions::StaticConstructObject_Internal.Call;//<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
     UConsole *console = (UConsole*)ConstructObject(ConsoleClass, GameViewport, NameNone, RF_NoFlags, EInternalObjectFlags::None, nullptr, false, nullptr, false);
     if (console == nullptr) {
         printf("Unable to instantiate console class?\n");
@@ -49,7 +49,7 @@ bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
         return false;
     }
 
-    bool result = spy::HookFunctionRef(::offsets::functions::FConsoleManager_ProcessUserConsoleInput, &FConsoleManager_ProcessUserConsoleInput, (void**)&origProcessConsoleInput);
+    bool result = spy::HookFunctionRef(functions::FConsoleManager_ProcessUserConsoleInput, &FConsoleManager_ProcessUserConsoleInput, (void**)&origProcessConsoleInput);
     if (result == false) {
         printf("no console hook\n");
         return false;
@@ -62,7 +62,7 @@ bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
     // auto consoleCommand = ::offsets::functions::UConsole_ConsoleCommand.Call;//<tUConsole_ConsoleCommand>(RefUConsole_ConsoleCommand);
     FString str((TCHAR*)L"flat20");
 
-    ::offsets::functions::UConsole_ConsoleCommand.Call(console, &str);
+    functions::UConsole_ConsoleCommand.Call(console, &str);
 
     return true;
 }
@@ -84,8 +84,7 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
         return;
     }
 
-
-    bool result = spy::UnhookFunctionRef(::offsets::functions::FConsoleManager_ProcessUserConsoleInput);
+    bool result = spy::UnhookFunctionRef(spy::functions::FConsoleManager_ProcessUserConsoleInput);
     if (result == true) {
         origProcessConsoleInput = nullptr;
     }
