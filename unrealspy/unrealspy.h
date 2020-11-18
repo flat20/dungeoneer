@@ -1,9 +1,12 @@
 #pragma once
 #include <map>
+#include <vector>
 #include <string>
 #include <functional>
 #include <diet-ue.h>
 #include <unreal_impl.h>
+
+#include "offsets.h"
 
 #ifdef SPYAPI_IMPORT
 //    #define SPYAPI __declspec(dllimport)
@@ -13,6 +16,88 @@
 
 // Would be nice if all hook stuff was declared here.
 // TODO JUst move hooks array?
+
+// namespace spy {
+
+
+
+// typedef std::string UE4Reference;
+// const UE4Reference RefFName_GetNames                = "FName_GetNames";
+// const UE4Reference RefFName_Init                    = "FName::Init";
+// const UE4Reference RefFRawObjectIterator_Ctor       = "FRawObjectIterator_Ctor";
+// const UE4Reference RefUObject_ProcessEvent          = "UObject::ProcessEvent";
+// const UE4Reference RefAActor_ProcessEvent           = "AActor::ProcessEvent";
+// const UE4Reference RefAHUD_PostRender               = "AHUD::PostRender";
+// const UE4Reference RefStaticLoadObject              = "StaticLoadObject";
+// const UE4Reference RefStaticLoadClass               = "StaticLoadClass";
+// const UE4Reference RefLoadPackage                   = "LoadPackage";
+// const UE4Reference RefStaticConstructObject_Internal= "StaticConstructObject_Internal";
+// const UE4Reference RefUConsole_ConsoleCommand       = "UConsole_ConsoleCommand";    // Run console command
+// const UE4Reference RefFConsoleManager_ProcessUserConsoleInput = "FConsoleManager::ProcessUserConsoleInput";
+// const UE4Reference RefAddEmeralds                   = "AddEmeralds";
+// const UE4Reference RefLoadLevel                     = "LoadLevel";
+// //const UE4Reference RefFSoftObjectPtr_LoadSynchronous= "RefFSoftObjectPtr::LoadSynchronous";
+// const UE4Reference RefUWorld_SpawnActor             = "UWorld_SpawnActor";
+// const UE4Reference RefUUserWidget_CreateWidget      = "UUserWidget::CreateWidget";
+// const UE4Reference RefUUserWidget_AddToViewport     = "UUserWidget::AddToViewport";
+// const UE4Reference RefFModuleManager_LoadModule     = "FModuleManager::LoadModule";
+// const UE4Reference RefFModuleManager_LoadModuleWithFailureReason = "FModuleManager::LoadModuleWithFailureReason";
+// const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
+// const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
+// const UE4Reference RefUObject_CallFunctionByNameWithArguments = "UObject::CallFunctionByNameWithArguments";
+// const UE4Reference RefFObjectIterator_Ctor          = "FObjectIterator::FObjectIterator";
+// const UE4Reference RefFName_GetEntry                = "FName::GetEntry";
+// const UE4Reference RefFName_ToString                = "FName::ToString";
+
+// }
+namespace spy {
+
+    extern std::vector<offsets::OpcodeAddress*> defaultFunctionLookups;
+//     // Some defaults for us.
+//     std::map<UE4Reference, std::string> defaultAddressLookups = {
+//         {RefFName_GetNames,                 "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? B9 08 08 00 00 48 89 5C 24 20"},
+//         // Sort of Ctor for FNames. Does the main work
+//         {RefFName_Init,                     "48 89 5C 24 18 55 56 57 48 81 EC 60 08 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 84 24 50 08 00 00 0F B7 02"},
+//         {RefFRawObjectIterator_Ctor,        "84 D2 48 C7 41 10 00 00 00 00 B8 FF FF FF FF ?? ?? ?? ?? ?? ?? ?? 89 41 08 4C 8B D1 4C 89 01"},
+
+//         // TODO These are UFunctions so we can just get them at runtime.
+//         {"AHUD_DrawRect",                   "48 8B C4 48 89 58 08 57 48 81 EC E0 00 00 00 0F 29 70 E8 48 8B FA 0F 29 78 D8 0F 28 F3 0F 28 FA 48 8B D9"},
+//         {"AHUD_DrawText",                   "40 55 56 57 48 81 EC 30 02 00 00 44 0F 29 84 24 00 02 00 00"},
+//         {"AHUD_GetTextSize",                "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 40 49 8B F9 49 8B F0 48 8B EA 48 8B D9 ?? ?? ?? ?? ?? 84 C0"},
+
+//         {RefStaticLoadObject,               "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 18 FE FF FF 48 81 EC E8 02 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 D0 01 00 00 48 8B 85 68 02 00 00"},
+//         {RefStaticLoadClass,                "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 08 FF FF FF 48 81 EC F8 01 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 E0 00 00 00 8B BD 60 01 00 00"},
+//         {RefLoadPackage,                    "48 8B C4 53 56 48 83 EC 68 48 89 68 08 48 8B EA 4C 89 60 18 33 D2 4C 89 68 E8 4C 8B E1 4C 89 70 E0 48 8D 48 C8 4C 89 78 D8 45 33 ED"},
+//         {RefUObject_ProcessEvent,           "40 55 56 57 41 54 41 55 41 56 41 57 48 81 EC F0 00 00 00 48 8D 6C 24 30 48 89 9D 18 01 00 00"},
+//         {RefAActor_ProcessEvent,            "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B 01 49 8B F0 ?? ?? ?? ?? ?? ?? ?? 48 8B EA 48 8B D9"},
+//         {RefAHUD_PostRender,                "40 55 56 48 8D 6C 24 B1 48 81 EC C8 00 00 00 48 8B 01 48 8B F1"},
+// // TODO separate default offsets
+// #if ENGINE_MINOR_VERSION == 22
+//         {RefStaticConstructObject_Internal, "40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 50 FF FF FF 48 81 EC B0 01 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 A8 00 00 00"},
+//         {RefUConsole_ConsoleCommand,        "48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57 48 83 EC 30 48 8B F2 48 89 54 24 40 48 8B D9 48 8D 54 24 40 48 83 C1 68"},
+// #else
+//         {RefStaticConstructObject_Internal, "4C 89 44 24 18 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 48 FF FF FF 48 81 EC B8 01 00 00"},
+//         {RefUConsole_ConsoleCommand,        "48 89 5C 24 10 48 89 6C 24 18 56 57 41 56 48 83 EC 30 83 7A 08 00 48 8D"},
+// #endif
+//         {RefFConsoleManager_ProcessUserConsoleInput, "48 8B C4 4C 89 48 20 4C 89 40 18 48 89 48 08 55 56 48 8D 68 A1 48 81 EC B8 00 00 00 33 F6"},
+//         //{RefAddEmeralds,                    "40 55 56 57 48 81 EC 80 00 00 00 48 C7 44 24 30 FE FF FF FF 48 89 9C 24 B0 00 00 00 0F 29 74 24 70"},
+//         {RefLoadLevel,                      "40 55 53 56 57 41 56 48 8D AC 24 70 FF FF FF 48 81 EC 90 01 00 00 48 C7 44 24 70 FE FF FF FF 0F 29 B4 24 80 01 00 00"},
+// //        {RefFSoftObjectPtr_LoadSynchronous, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B F9 ?? ?? ?? ?? ?? 33 ED 48 8B F0 48 85 C0"},
+//         //{RefStaticLoadObject,               "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 18 FE FF FF 48 81 EC E8 02 00 00 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 85 D0 01 00 00"},
+//         {RefUWorld_SpawnActor,              "40 53 56 57 48 83 EC 70 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 44 24 60 ?? ?? ?? ?? ?? ?? ?? 0F 57 D2 48 8B B4 24 B0 00 00 00 0F 28 CB"},
+//         {RefUUserWidget_CreateWidget,       "48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 30 49 8B D8 48 8B FA 48 8B F1 48 85 C9 ?? ?? ?? ?? ?? ?? 48 89 6C 24 40 48 8B A9 60 01 00 00 48 85 ED"},
+//         {RefUUserWidget_AddToViewport,      "48 8B 01 44 8B C2 33 D2 48 FF A0 C8 02 00 00"},
+//         {RefFModuleManager_LoadModule,      "48 89 5C 24 08 57 48 83 EC 20 ?? ?? ?? ?? ?? ?? ?? 48 8B DA 48 8B F9 ?? ?? ?? ?? ?? ?? ?? ?? 4C 8D 44 24 40 48 8B D3 48 8B CF"},
+//         {RefFModuleManager_LoadModuleWithFailureReason,   "48 89 54 24 10 55 53 56 57 41 54 41 55 41 56 48 8D 6C 24 D9 48 81 EC B0 00 00 00"},
+//         {RefFModuleManager_Get,             "48 83 EC 28 ?? ?? ?? ?? ?? ?? ?? 48 85 C0 ?? ?? ?? ?? ?? ?? 65 48 8B 04 25 58 00 00 00 8B 0D ?? ?? ?? ?? 41 B8 ?? ?? ?? ?? 48 8B 14 C8 41 8B 04 10 39 05 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 8D"},
+//         {RefFWindowsPlatformProcess_GetDllHandle, "40 55 53 56 48 8B EC 48 83 EC 40 33 F6 48 89 7C 24 68 4C 89 7C 24 78 4C 8B F9 48 8D 4D F0"},
+//         {RefUObject_CallFunctionByNameWithArguments, "40 55 53 56 57 41 54 41 55 41 56 41 57 48 81 EC F8 02 00 00 48 8D 6C 24 30"},
+
+//         {RefFObjectIterator_Ctor,           "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 44 8B 54 24 50"},
+//         {RefFName_GetEntry,                 "40 53 48 83 EC 20 8B D9 0F B7 C1 C1 EB 10 ?? ?? ?? ?? ?? ?? ?? 89 5C 24 38 89 44 24 3C"},
+//         {RefFName_ToString,                 "48 89 5C 24 18 48 89 74 24 20 57 48 83 EC 50 ?? ?? ?? ?? ?? ?? ?? 48 33 C4 48 89 44 24 48 8B 01 48 8B F2"},
+//     };
+}
 
 typedef signed int (__thiscall *tUObject_ProcessEvent) (UObject* thisObject, UFunction* func, void *params);
 typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
@@ -90,39 +175,13 @@ typedef void* (__fastcall *tFWindowsPlatformProcess_GetDllHandle)(const TCHAR *F
 typedef bool (__fastcall *tUobject_CallFunctionByNameWithArguments)(UObject *thisUObject, const TCHAR* Str, FOutputDevice& Ar, UObject* Executor, bool bForceCallWithNonExec);
 // We need global access to some predefined functions and names.
 // Can't use string enums so maybe this?
-typedef std::string UE4Reference;
-const UE4Reference RefFName_GetNames                = "FName_GetNames";
-const UE4Reference RefFName_Init                    = "FName::Init";
-const UE4Reference RefFRawObjectIterator_Ctor       = "FRawObjectIterator_Ctor";
-const UE4Reference RefUObject_ProcessEvent          = "UObject::ProcessEvent";
-const UE4Reference RefAActor_ProcessEvent           = "AActor::ProcessEvent";
-const UE4Reference RefAHUD_PostRender               = "AHUD::PostRender";
-const UE4Reference RefStaticLoadObject              = "StaticLoadObject";
-const UE4Reference RefStaticLoadClass               = "StaticLoadClass";
-const UE4Reference RefLoadPackage                   = "LoadPackage";
-const UE4Reference RefStaticConstructObject_Internal= "StaticConstructObject_Internal";
-const UE4Reference RefUConsole_ConsoleCommand       = "UConsole_ConsoleCommand";    // Run console command
-const UE4Reference RefFConsoleManager_ProcessUserConsoleInput = "FConsoleManager::ProcessUserConsoleInput";
-const UE4Reference RefAddEmeralds                   = "AddEmeralds";
-const UE4Reference RefLoadLevel                     = "LoadLevel";
-//const UE4Reference RefFSoftObjectPtr_LoadSynchronous= "RefFSoftObjectPtr::LoadSynchronous";
-const UE4Reference RefUWorld_SpawnActor             = "UWorld_SpawnActor";
-const UE4Reference RefUUserWidget_CreateWidget      = "UUserWidget::CreateWidget";
-const UE4Reference RefUUserWidget_AddToViewport     = "UUserWidget::AddToViewport";
-const UE4Reference RefFModuleManager_LoadModule     = "FModuleManager::LoadModule";
-const UE4Reference RefFModuleManager_LoadModuleWithFailureReason = "FModuleManager::LoadModuleWithFailureReason";
-const UE4Reference RefFModuleManager_Get            = "FModuleManager::Get";
-const UE4Reference RefFWindowsPlatformProcess_GetDllHandle = "FWindowsPlatformProcess::GetDllHandle";
-const UE4Reference RefUObject_CallFunctionByNameWithArguments = "UObject::CallFunctionByNameWithArguments";
-const UE4Reference RefFObjectIterator_Ctor          = "FObjectIterator::FObjectIterator";
-const UE4Reference RefFName_GetEntry                = "FName::GetEntry";
-const UE4Reference RefFName_ToString                = "FName::ToString";
+
+
 
 namespace spy {
-
     struct Data {
         uintptr_t baseAddress;                          // Base address of process, never used but let's leave for now.
-        std::map<UE4Reference, uintptr_t> functionPtrs;  // Looked up addresses
+        //std::map<UE4Reference, uintptr_t> functionPtrs;  // Looked up addresses
     };
 
     // For internal use, but I guess I'll work that out later..
@@ -130,13 +189,13 @@ namespace spy {
     extern Data data;
     //}
 
-    Data *Init(std::map<UE4Reference, std::string> functionPatterns);
+    Data *Init(std::vector<offsets::OpcodeAddress*> functionLookups);
     bool initVars();
-    uintptr_t AddFunctionRef(UE4Reference refName, std::string pattern);
-    uintptr_t GetFunctionRef(const UE4Reference refName);
-    template<typename T>
-    T GetFunction(const UE4Reference refName) {
-        return (T)data.functionPtrs[refName];
-    }
+    // uintptr_t AddFunctionRef(UE4Reference refName, std::string pattern);
+    // uintptr_t GetFunctionRef(const UE4Reference refName);
+    // template<typename T>
+    // T GetFunction(const UE4Reference refName) {
+    //     return (T)data.functionPtrs[refName];
+    // }
 
 }

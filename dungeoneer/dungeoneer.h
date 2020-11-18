@@ -22,7 +22,7 @@ struct Module {
     std::string filename;
     ModuleInfo *info;
     
-    std::map<UE4Reference,void *> functionHandlers;
+    std::map<offsets::OpcodeAddress*,void *> functionHandlers;
 };
 
 // Init struct for mods.
@@ -33,7 +33,7 @@ struct Dungeoneer {
     UEngine* GEngine;
 
     spy::Data *spyData;
-    void (__stdcall *AddFunctionHandler)(Module *mod, UE4Reference funcName, void *fnHandler);
+    void (__stdcall *AddFunctionHandler)(Module *mod, offsets::OpcodeAddress* func, void *fnHandler);
 };
 
 

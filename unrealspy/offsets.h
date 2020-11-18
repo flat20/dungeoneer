@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <unrealspy.h>
+//#include <unrealspy.h>
 #include <Windows/AllowWindowsPlatformTypes.h>
 	#include <windows.h>
     #include <TlHelp32.h>
@@ -11,18 +11,47 @@
 
 namespace offsets {
 
-    // ["name"] = opcodes string
-    extern std::map<UE4Reference,std::string> defaultAddressLookups;
+    // Base class used by offset pattern finding code.
+    // And then inherited by spy::functions::FunctionAddress
+    class OpcodeAddress {
+    public:
+        OpcodeAddress(const char *InOpcodes) : Opcodes(InOpcodes)
+        {
+        }
 
-    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> lookups);
-    std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, MODULEENTRY32 modEntry, std::map<UE4Reference, std::string> opcodes);
+    private:
+        // "48 23 ?? 42 41"
+        const char *Opcodes;
+        uintptr_t Address;
+
+    public:
+        const char *GetOpcodes() {
+            return Opcodes;
+        }
+
+        virtual void SetAddress(uintptr_t InAddress) {
+            Address = InAddress;
+        }
+        virtual uintptr_t GetAddress() {
+            return Address;
+        }
+
+    };
+
+
+    void FindAddresses(HANDLE process, std::vector<OpcodeAddress*>& lookups);
+
+    // ["name"] = opcodes string
+//    extern std::map<::UE4Reference,std::string> defaultAddressLookups;
+
+
+    // std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, std::map<UE4Reference,std::string> lookups);
+    // std::map<UE4Reference,uintptr_t> FindAddresses(HANDLE process, MODULEENTRY32 modEntry, std::map<UE4Reference, std::string> opcodes);
 
     //uintptr_t FindOffset(HANDLE process, MODULEENTRY32 modEntry, std::string opcodes);
     MODULEENTRY32 GetModule(const DWORD &pid);
     size_t parseHex(std::string hex, BYTE *bytes, char *mask);
 
-
-    // Taken from https://github.com/0xZ0F/CPPMemory/blob/master/x64/Scanning.cpp
 
     // Actual pattern scanning:
     uintptr_t PatternScan(char* bytes, size_t size, const BYTE* pattern, const char* mask, size_t patternLen);
@@ -32,8 +61,8 @@ namespace offsets {
     class MemoryIterator {
 
     private:
-        // 128 bytes so we can match across CHUNKS
-        static const int PATTERN_MAX_SIZE = 128; // 128 crashes! But didn't use to. Maybe just double buffer size
+        // 128 bytes extra so we can match across CHUNKS
+        static const int PATTERN_MAX_SIZE = 128;
 
         static const int CHUNK_SIZE = 4096;
         HANDLE hProc;
@@ -91,7 +120,8 @@ namespace offsets {
                 return;
             }
 
-            // Copy last iteration's last 128 bytes to start of buffer to find patterns crossing 4096 border
+            // Copy last iteration's last 128 bytes to the start of the buffer
+            // so we can find patterns crossing CHUNK_SIZE border
             memcpy(&buffer[0], &buffer[CHUNK_SIZE], PATTERN_MAX_SIZE);
 
             DWORD oldProtect;

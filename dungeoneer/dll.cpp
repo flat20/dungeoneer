@@ -26,15 +26,15 @@ std::string getDllDirectory();
 std::string dllDirectory;
 
 // Global function handlers for all mods.
-std::map<UE4Reference,std::list<void *>> functionHandlers;
+std::map<offsets::OpcodeAddress*,std::list<void *>> functionHandlers;
 std::mutex functionHandlersMutex;
 
 // Lookup for loaded modules.
 std::map<std::string,Module*> loadedModules;
 
 void Init();
-void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler);
-void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler);
+void __stdcall AddFunctionHandler(Module *mod, offsets::OpcodeAddress* func, void *fnHandler);
+void RemoveFunctionHandler(Module *mod, offsets::OpcodeAddress* func, void *fnHandler);
 void ClearFunctionHandlers(Module *mod);
 
 void onLoadPressed(const char *);
@@ -89,17 +89,15 @@ void Init() {
 
     // Can block for up to 60s until it finds all vars.
     // We run in a thread for that reason
-    spyData = spy::Init(offsets::defaultAddressLookups);
+    spyData = spy::Init(spy::defaultFunctionLookups);
     if (spyData == nullptr) {
         printf("Failed to initialize unrealspy\n");
         return;
     }
 
-    // https://docs.unrealengine.com/en-US/Programming/BuildTools/UnrealBuildTool/ThirdPartyLibraries/index.html
-
-    spy::HookFunctionRef(RefUObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
-    spy::HookFunctionRef(RefAActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
-    spy::HookFunctionRef(RefAHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
+    spy::HookFunctionRef(offsets::functions::UObject_ProcessEvent, &UObject_ProcessEvent, (void**)&origUObject_ProcessEvent);
+    spy::HookFunctionRef(offsets::functions::AActor_ProcessEvent, &AActor_ProcessEvent, (void**)&origAActor_ProcessEvent);
+    spy::HookFunctionRef(offsets::functions::AHUD_PostRender, &AHUD_PostRender, (void**)&origAHUD_PostRender);
 
     dng.GUObjectArray = spy::GUObjectArray;
     dng.GNames = spy::GNames;
@@ -126,32 +124,34 @@ void Init() {
     printf("Dungeoneer ready\n");
 }
 
-void __stdcall AddFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
+// TODO Just use uintptr_t instead. Maybe a typedef FunctionAddress
+// OpcodeAddresses might not be resolved.
+void __stdcall AddFunctionHandler(Module *mod, offsets::OpcodeAddress* func, void *fnHandler) {
     std::lock_guard<std::mutex> guard(functionHandlersMutex);
 
-    mod->functionHandlers[funcName] = fnHandler;
+    mod->functionHandlers[func] = fnHandler;
 
-    functionHandlers[funcName].push_back(fnHandler);
+    functionHandlers[func].push_back(fnHandler);
 
 }
 
-void RemoveFunctionHandler(Module *mod, UE4Reference funcName, void *fnHandler) {
+void RemoveFunctionHandler(Module *mod, offsets::OpcodeAddress* func, void *fnHandler) {
     std::lock_guard<std::mutex> guard(functionHandlersMutex);
 
-    mod->functionHandlers.erase(funcName);
+    mod->functionHandlers.erase(func);
     
-    functionHandlers[funcName].remove(fnHandler);
+    functionHandlers[func].remove(fnHandler);
 }
 
 void ClearFunctionHandlers(Module *mod) {
     std::lock_guard<std::mutex> guard(functionHandlersMutex);
 
     for (auto it = mod->functionHandlers.begin(); it !=  mod->functionHandlers.end(); it++) {
-        UE4Reference funcName = it->first;
+        offsets::OpcodeAddress* func = it->first;
         void *fnHandler = it->second;
-        functionHandlers[funcName].remove(fnHandler);
-        if (functionHandlers[funcName].size() == 0) {
-            functionHandlers.erase(funcName);
+        functionHandlers[func].remove(fnHandler);
+        if (functionHandlers[func].size() == 0) {
+            functionHandlers.erase(func);
         }
     }
 
@@ -357,7 +357,7 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
     {
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
 
-        auto it = functionHandlers.find(RefUObject_ProcessEvent);
+        auto it = functionHandlers.find(&offsets::functions::UObject_ProcessEvent);
         if (it == functionHandlers.end()) {
             return result;
         }
@@ -384,7 +384,7 @@ signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, voi
     {
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
 
-        auto it = functionHandlers.find(RefAActor_ProcessEvent);
+        auto it = functionHandlers.find(&offsets::functions::AActor_ProcessEvent);
         if (it == functionHandlers.end()) {
             return result;
         }
@@ -408,7 +408,7 @@ void __stdcall AHUD_PostRender(void* hud) {
     {
 
         std::unique_lock<std::mutex> guard(functionHandlersMutex);
-        auto it = functionHandlers.find(RefAHUD_PostRender);
+        auto it = functionHandlers.find(&offsets::functions::AHUD_PostRender);
         if (it == functionHandlers.end()) {
             return;
         }

@@ -11,6 +11,15 @@
 #include <iostream>
 #include <iomanip>
 
+namespace spy {
+    std::vector<offsets::OpcodeAddress*> defaultFunctionLookups = {
+        &offsets::functions::FName_GetNames,
+        &offsets::functions::FRawObjectIterator,
+        &offsets::functions::StaticConstructObject_Internal,
+        &offsets::functions::UConsole_ConsoleCommand,
+    };
+}
+
 template <class T>
 void hexDumpValue(const unsigned char * p, unsigned int offset) {
     const int width = sizeof(T)*2; // 16, times two for hex
@@ -60,7 +69,7 @@ namespace spy {
 
 // Can block for up to 60 seconds while getting the needed variables.
 // Run in a separate thread if that's a problem.
-spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
+spy::Data *spy::Init(std::vector<offsets::OpcodeAddress*> functionLookups) {
 
     // Get our DLL's base address
     HMODULE dll = GetModuleHandle(NULL);
@@ -68,19 +77,15 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
     data.baseAddress = baseAddress;
 
     HANDLE process = GetCurrentProcess();
-    data.functionPtrs = offsets::FindAddresses(process, functionPatterns); // offsets::defaultAddressLookups
-    for(auto &it : data.functionPtrs) {
-        printf("%s = %I64x\n", it.first.c_str(), (uintptr_t)it.second);
+    offsets::FindAddresses(process, functionLookups); // offsets::defaultAddressLookups
+    for (auto opcode : functionLookups) {
+        printf("opcode lookup %llx = %s\n", opcode->GetAddress(), opcode->GetOpcodes());
     }
+    printf("address for getnames: %llx\n", ::offsets::functions::FName_GetNames.GetAddress());
 
-    // if (data.functionPtrs[RefFName_GetNames] == 0) {
-    //     printf("No FName::GetNames()\n");
-    //     return nullptr;
-    // }
-
-    // if (data.functionPtrs[RefFRawObjectIterator_Ctor] == 0) {
-    //     printf("No RawObjectIterator()\n");
-    //     return nullptr;
+    // data.functionPtrs = offsets::FindAddresses(process, functionPatterns); // offsets::defaultAddressLookups
+    // for(auto &it : data.functionPtrs) {
+    //     printf("%s = %I64x\n", it.first.c_str(), (uintptr_t)it.second);
     // }
 
     // Should be optional
@@ -99,27 +104,27 @@ spy::Data *spy::Init(std::map<UE4Reference, std::string> functionPatterns) {
     return nullptr;
 }
 
-uintptr_t spy::AddFunctionRef(UE4Reference refName, std::string pattern) {
+// uintptr_t spy::AddFunctionRef(UE4Reference refName, std::string pattern) {
 
-    // Already have it
-    if (data.functionPtrs.count(refName) > 0) {
-        return data.functionPtrs[refName];
-    }
+//     // Already have it
+//     if (data.functionPtrs.count(refName) > 0) {
+//         return data.functionPtrs[refName];
+//     }
 
-    // TODO Refactor offset namespace
-    std::map<UE4Reference,std::string> functionPatterns = {{refName, pattern}};
+//     // TODO Refactor offset namespace
+//     std::map<UE4Reference,std::string> functionPatterns = {{refName, pattern}};
 
-    HANDLE process = GetCurrentProcess();
-    std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, functionPatterns);
+//     HANDLE process = GetCurrentProcess();
+//     std::map<UE4Reference,uintptr_t> addresses = offsets::FindAddresses(process, functionPatterns);
 
-    data.functionPtrs[refName] = addresses[refName];
+//     data.functionPtrs[refName] = addresses[refName];
 
-    return addresses[refName];
-}
+//     return addresses[refName];
+// }
 
-uintptr_t spy::GetFunctionRef(UE4Reference refName) {
-    return data.functionPtrs[refName];
-}
+// uintptr_t spy::GetFunctionRef(UE4Reference refName) {
+//     return data.functionPtrs[refName];
+// }
 
 
 // bool DeInitSpy(SpyData *data) {

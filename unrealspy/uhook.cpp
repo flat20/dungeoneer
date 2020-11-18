@@ -8,18 +8,23 @@
 #include <stdio.h>
 
 // Enabled hooks
-std::map<UE4Reference, spy::Hook*> hooks;
+std::map<uintptr_t, spy::Hook*> hooks;
 
 // We need the original set immediately or our detour
 // could get called without having an original function to call
-bool spy::HookFunctionRef(UE4Reference refName, const void *detour, void **original) {
+bool spy::HookFunctionRef(::offsets::OpcodeAddress& func, const void *detour, void **original) {
     
-    // Already have it
-    if (hooks.count(refName) > 0) {
+    uintptr_t address = func.GetAddress();
+    if (address == 0) {
         return false;
     }
 
-    Hook *hook = new Hook{GetFunctionRef(refName), detour};
+    // Already have it
+    if (hooks.count(address) > 0) {
+        return false;
+    }
+
+    Hook *hook = new Hook{address, detour};
     bool result = SetHook(hook);
     if (result == false) {
         return false;
@@ -37,24 +42,29 @@ bool spy::HookFunctionRef(UE4Reference refName, const void *detour, void **origi
         return false;
     }
 
-    hooks[refName] = hook;
+    hooks[address] = hook;
 
     return true;
 }
 
-bool spy::UnhookFunctionRef(UE4Reference refName) {
+bool spy::UnhookFunctionRef(::offsets::OpcodeAddress& func) {
     
+    uintptr_t address = func.GetAddress();
+    if (address == 0) {
+        return false;
+    } 
+
     // Don't have it
-    if (hooks.count(refName) == 0) {
+    if (hooks.count(address) == 0) {
         return false;
     }
 
-    Hook *hook = hooks[refName];
+    Hook *hook = hooks[address];
     bool result = RemoveHook(hook);
 
     // Delete regardless of removal result. Maybe?
     delete hook;
-    hooks.erase(refName);
+    hooks.erase(address);
 
     return result;
 }
@@ -92,8 +102,8 @@ bool spy::SetHook(spy::Hook *hook) {
     return SetHook(target, hook->detour, &hook->original);
 }
 
-spy::Hook* spy::GetHook(UE4Reference refName) {
-    return hooks[refName];
+spy::Hook* spy::GetHook(::offsets::OpcodeAddress& func) {
+    return hooks[func.GetAddress()];
 }
 
 bool spy::RemoveHook(spy::Hook *hook) {

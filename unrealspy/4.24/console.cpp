@@ -14,8 +14,6 @@ void SetConsoleKey();
 
 bool spy::InitConsole() {
 
-    printf("init console\n");
-
     UGameViewportClient *GameViewport = GEngine->GameViewport;
     if (GameViewport == nullptr) {
         printf("no GameViewport\n");
