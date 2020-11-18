@@ -30,17 +30,22 @@ namespace offsets {
 
 		};
 
-		// Specific for 4.22
-		extern FunctionAddr<TNameEntryArray& (__stdcall *)()> FName_GetNames;
-		extern FunctionAddr<::FRawObjectIterator* (__thiscall *)(void *_this, bool bOnlyGCedObjects)> FRawObjectIterator;
+		// Specific for 4.22 - Move later.
+		typedef TNameEntryArray& (__stdcall *tFName_GetNames)();
+		extern FunctionAddr<tFName_GetNames> FName_GetNames;
+		typedef ::FRawObjectIterator* (__thiscall *tFRawObjectIterator)(void *_this, bool bOnlyGCedObjects);
+		extern FunctionAddr<tFRawObjectIterator> FRawObjectIterator;
 
-		extern FunctionAddr<UObject* (__fastcall *)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype)> StaticConstructObject_Internal;
-		extern FunctionAddr<void (__thiscall *)(UConsole *thisUConsole, const FString *Command)> UConsole_ConsoleCommand;
-		extern FunctionAddr<signed int (__thiscall *)(UObject* thisObject, UFunction* func, void *params)> UObject_ProcessEvent;
-		extern FunctionAddr<signed int (__thiscall *) (AActor* thisActor, UFunction* func, void *params)> AActor_ProcessEvent;
+		typedef UObject* (__fastcall *tStaticConstructObject_Internal)(UClass* Class, UObject* InOuter, FName Name, EObjectFlags SetFlags, EInternalObjectFlags InternalSetFlags, UObject* Template, bool bCopyTransientsFromClassDefaults, void* InstanceGraph, bool bAssumeTemplateIsArchetype);
+		extern FunctionAddr<tStaticConstructObject_Internal> StaticConstructObject_Internal;
+		typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const FString *Command);
+		extern FunctionAddr<tUConsole_ConsoleCommand> UConsole_ConsoleCommand;
+		typedef signed int (__thiscall *tUObject_ProcessEvent)(UObject* thisObject, UFunction* func, void *params);
+		extern FunctionAddr<tUObject_ProcessEvent> UObject_ProcessEvent;
+		typedef signed int (__thiscall *tAActor_ProcessEvent) (AActor* thisActor, UFunction* func, void *params);
+		extern FunctionAddr<tAActor_ProcessEvent> AActor_ProcessEvent;
 		typedef void (__thiscall *tAHUD_PostRender) (void *hud);
 		extern FunctionAddr<tAHUD_PostRender> AHUD_PostRender;
-
 
 	}
 }
