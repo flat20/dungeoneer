@@ -12,16 +12,6 @@
 #include <iostream>
 #include <iomanip>
 
-// Can this go inside functions.h as well?
-namespace spy {
-    std::vector<offsets::OpcodeAddress*> defaultFunctionLookups = {
-        &functions::FName_GetNames,
-        &functions::FRawObjectIterator,
-        &functions::StaticConstructObject_Internal,
-        &functions::UConsole_ConsoleCommand,
-    };
-}
-
 template <class T>
 void hexDumpValue(const unsigned char * p, unsigned int offset) {
     const int width = sizeof(T)*2; // 16, times two for hex
@@ -71,7 +61,7 @@ namespace spy {
 
 // Can block for up to 60 seconds while getting the needed variables.
 // Run in a separate thread if that's a problem.
-spy::Data *spy::Init(std::vector<offsets::OpcodeAddress*> functionLookups) {
+spy::Data *spy::Init() {
 
     // Get our DLL's base address
     HMODULE dll = GetModuleHandle(NULL);
@@ -79,19 +69,21 @@ spy::Data *spy::Init(std::vector<offsets::OpcodeAddress*> functionLookups) {
     data.baseAddress = baseAddress;
     HANDLE process = GetCurrentProcess();
 
-    offsets::FindAddresses(process, functionLookups); // offsets::defaultAddressLookups
-    bool lookupSuccess = true;
-    for (auto opcode : functionLookups) {
-        printf("opcode lookup %llx = %s\n", opcode->GetAddress(), opcode->GetOpcodes());
-        if (opcode->GetAddress() == 0) {
-            lookupSuccess = false;
-        }
-    }
-    printf("address for getnames: %llx\n", functions::FName_GetNames.GetAddress());
+    offsets::AddressFinder::Get().LookupAll();
+    printf("lookup called\n");
 
-    if (lookupSuccess == false) {
-        return nullptr;
-    }
+    // offsets::FindAddresses(process, functionLookups); // offsets::defaultAddressLookups
+    // bool lookupSuccess = true;
+    // for (auto opcode : functionLookups) {
+    //     printf("opcode lookup %llx = %s\n", opcode->GetAddress(), opcode->GetOpcodes());
+    //     if (opcode->GetAddress() == 0) {
+    //         lookupSuccess = false;
+    //     }
+    // }
+
+    // if (lookupSuccess == false) {
+    //     return nullptr;
+    // }
 
     // Should be optional
     InitHook();

@@ -4,6 +4,13 @@
 typedef void (__thiscall *tUConsole_ConsoleCommand)(UConsole *thisUConsole, const FString *Command);
 typedef void (__thiscall *tFConsoleManager_ProcessUserConsoleInput) (FConsoleManager* thisConsoleManager, const TCHAR* InInput, void *Ar, void *InWorld);
 
+// Does this actually have to be extern?
+namespace spy {
+    namespace functions {
+        extern FunctionAddr<tFConsoleManager_ProcessUserConsoleInput> FConsoleManager_ProcessUserConsoleInput;
+    }
+}
+
 namespace spy {
     bool InitConsole();
     bool InitCheatCommands(std::function<void (bool result)> fnResult);

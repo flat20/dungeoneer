@@ -6,7 +6,7 @@ typedef void (__thiscall *tFConsoleManager_ProcessUserConsoleInput) (FConsoleMan
 
 namespace spy {
     namespace functions {
-        static FunctionAddr<tFConsoleManager_ProcessUserConsoleInput> FConsoleManager_ProcessUserConsoleInput("48 8B C4 4C 89 48 20 4C 89 40 18 48 89 48 08 55 56 48 8D 68 A1 48 81 EC B8 00 00 00 33 F6");
+        extern FunctionAddr<tFConsoleManager_ProcessUserConsoleInput> FConsoleManager_ProcessUserConsoleInput;
     }
 }
 

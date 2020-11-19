@@ -19,20 +19,13 @@ namespace spy {
         return GetName(Name);
     }
 
-    // FNAME_TYPE *GetName(UObject *Object) {
-    //     return GetName<FNAME_TYPE>(Object);
-    // }
-
-
 	ANSICHAR *GetName(FName Name) {
         static ANSICHAR buffer[NAME_SIZE];
-        static auto GetEntry = GetFunction<tFName_GetEntry>(RefFName_GetEntry);
 
-        FNameEntry *Entry = GetEntry(Name.GetDisplayIndex());
+        FNameEntry *Entry = functions::FName_GetEntry.Call(Name.GetDisplayIndex());
         Entry->GetAnsiName(buffer);
         return &buffer[0];
 	}
-
 
     // Match Object name with the supplied names.
     UObject* FindObjectByName(ANSICHAR *ObjectName, ANSICHAR *ClassName, ANSICHAR *OuterName) {

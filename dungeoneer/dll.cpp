@@ -50,9 +50,9 @@ spy::Data *spyData;
 UIData uiData;
 
 // TODO just make a std::map or similar
-tUObject_ProcessEvent origUObject_ProcessEvent = NULL;
-tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
-tAHUD_PostRender origAHUD_PostRender = NULL;
+spy::functions::tUObject_ProcessEvent origUObject_ProcessEvent = NULL;
+spy::functions::tAActor_ProcessEvent origAActor_ProcessEvent = NULL;
+spy::functions::tAHUD_PostRender origAHUD_PostRender = NULL;
 
 
 //using namespace util;
@@ -89,7 +89,7 @@ void Init() {
 
     // Can block for up to 60s until it finds all vars.
     // We run in a thread for that reason
-    spyData = spy::Init(spy::defaultFunctionLookups);
+    spyData = spy::Init();
     if (spyData == nullptr) {
         printf("Failed to initialize unrealspy\n");
         return;
@@ -367,7 +367,7 @@ signed int __stdcall UObject_ProcessEvent(UObject* object, UFunction* func, void
         guard.unlock();
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
-            tUObject_ProcessEvent fnHandler = (tUObject_ProcessEvent)*it;
+            auto fnHandler = (spy::functions::tUObject_ProcessEvent)*it;
             fnHandler(object, func, params);
         }
     }
@@ -393,7 +393,7 @@ signed int __stdcall AActor_ProcessEvent(AActor* thisActor, UFunction* func, voi
         guard.unlock();
 
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
-            auto fnHandler = (tAActor_ProcessEvent)*it;
+            auto fnHandler = (spy::functions::tAActor_ProcessEvent)*it;
             fnHandler(thisActor, func, params);
         }
     }
@@ -417,7 +417,7 @@ void __stdcall AHUD_PostRender(void* hud) {
         guard.unlock();
     
         for (auto it = handlers.begin(); it != handlers.end(); it++) {
-            auto fnHandler = (tAHUD_PostRender)*it;
+            auto fnHandler = (spy::functions::tAHUD_PostRender)*it;
             fnHandler(hud);
         }
     }

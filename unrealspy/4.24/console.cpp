@@ -7,7 +7,11 @@
 
 #include <GameFramework/InputSettings.h>
 
-// Most of this code can be used in 4.22. Just needs testing.
+namespace spy {
+    namespace functions {
+        FunctionAddr<tFConsoleManager_ProcessUserConsoleInput> FConsoleManager_ProcessUserConsoleInput("48 8B C4 4C 89 48 20 4C 89 40 18 48 89 48 08 55 56 48 8D 68 A1 48 81 EC B8 00 00 00 33 F6");
+    }
+}
 
 void EnableCheatManager();
 void SetConsoleKey();
@@ -32,7 +36,7 @@ bool spy::InitConsole() {
     printf("console class: %s\n", GetName(ConsoleClass));
 
     FName NameNone;
-    auto ConstructObject = GetFunction<tStaticConstructObject_Internal>(RefStaticConstructObject_Internal);
+    auto ConstructObject = functions::StaticConstructObject_Internal.Call;
     UConsole *console = (UConsole*)ConstructObject(ConsoleClass, GameViewport, NameNone, RF_NoFlags, EInternalObjectFlags::None, nullptr, false, nullptr, false);
     if (console == nullptr) {
         printf("Unable to instantiate console class?\n");
@@ -61,7 +65,7 @@ bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
         return false;
     }
 
-    bool result = spy::HookFunctionRef(RefFConsoleManager_ProcessUserConsoleInput, &FConsoleManager_ProcessUserConsoleInput, (void**)&origProcessConsoleInput);
+    bool result = spy::HookFunctionRef(functions::FConsoleManager_ProcessUserConsoleInput, &FConsoleManager_ProcessUserConsoleInput, (void**)&origProcessConsoleInput);
     if (result == false) {
         printf("no console hook\n");
         return false;
@@ -70,12 +74,10 @@ bool spy::InitCheatCommands(std::function<void (bool result)> fnResult) {
     fnEnableConsoleResult = fnResult;
 
     // Send random console command so we can get access to FConsoleManager.
-    auto consoleCommand = GetFunction<tUConsole_ConsoleCommand>(RefUConsole_ConsoleCommand);
-
     UConsole *console = GEngine->GameViewport->ViewportConsole;
     FString str(TEXT("flat20"));
 
-    consoleCommand(console, &str);
+    functions::UConsole_ConsoleCommand.Call(console, &str);
 
     return true;
 
@@ -98,7 +100,7 @@ void __stdcall FConsoleManager_ProcessUserConsoleInput(FConsoleManager* thisCons
         return;
     }
 
-    bool result = spy::UnhookFunctionRef(RefFConsoleManager_ProcessUserConsoleInput);
+    bool result = spy::UnhookFunctionRef(spy::functions::FConsoleManager_ProcessUserConsoleInput);
     if (result == true) {
         origProcessConsoleInput = nullptr;
     }

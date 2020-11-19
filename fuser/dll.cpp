@@ -69,7 +69,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 // Initializing in a separate thread
 void Init() {
 
-    spyData = spy::Init(offsets::defaultAddressLookups);
+    spyData = spy::Init();
     if (spyData == nullptr) {
         printf("Unable to init Unreal Spy\n");
         return;

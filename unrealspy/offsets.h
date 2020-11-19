@@ -9,15 +9,19 @@
     #include <TlHelp32.h>
 #include <Windows/HideWindowsPlatformTypes.h>
 
+
+// TODO Rename to addresses.h
 namespace offsets {
 
     // Base class used by offset pattern finding code.
     // And then inherited by spy::functions::FunctionAddress
+    // TODO Make constructor register itself with a singleton
+    // AddressLookupInitializer? OpcodeAddressLookup.Register()?
+    // AddressLookup.Register? AddressFinder.Register(this)
+    // TODO base class Address and an OffsetAddress class?
     class OpcodeAddress {
     public:
-        OpcodeAddress(const char *InOpcodes) : Opcodes(InOpcodes)
-        {
-        }
+        OpcodeAddress(const char *InOpcodes);
 
     private:
         // "48 23 ?? 42 41"
@@ -122,5 +126,45 @@ namespace offsets {
             }
         }
     };
+
+
+    // Looks up any registered OpcodeAddresses
+    class AddressFinder {
+    public:
+        void Register(OpcodeAddress* Address) {
+            Lookups.push_back(Address);
+        }
+
+        // Called once at startup.
+        // TODO Maybe we need to add ones later?
+        bool LookupAll() {
+            HANDLE process = GetCurrentProcess();
+            FindAddresses(process, Lookups);
+            bool lookupSuccess = true;
+            for (auto opcode : Lookups) {
+                printf("opcode lookup %llx = %s\n", opcode->GetAddress(), opcode->GetOpcodes());
+                if (opcode->GetAddress() == 0) {
+                    lookupSuccess = false;
+                }
+            }
+            return lookupSuccess;
+        }
+
+        FORCEINLINE static AddressFinder& Get()
+        {
+            if (!Singleton)
+            {
+                SetupSingleton();
+            }
+            return *Singleton;
+        }
+    private:
+    
+        std::vector<offsets::OpcodeAddress*> Lookups;
+
+        static AddressFinder* Singleton;
+        static void SetupSingleton();
+    };
+
 
 }

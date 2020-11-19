@@ -208,4 +208,14 @@ namespace offsets {
         }
         return modEntry;
     }
+
+    AddressFinder* AddressFinder::Singleton;
+    void AddressFinder::SetupSingleton() {
+        Singleton = new AddressFinder;
+    }
+
+    OpcodeAddress::OpcodeAddress(const char *InOpcodes) : Opcodes(InOpcodes)
+    {
+        AddressFinder::Get().Register(this);
+    }
 }
