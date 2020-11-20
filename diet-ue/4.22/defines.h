@@ -74,7 +74,7 @@
 #define WITH_VS_PERF_PROFILER 0
 #define WITH_DIRECTXMATH 0
 #define WITH_MALLOC_STOMP 0
-#define CORE_API 
+#define CORE_API //__declspec(dllexport)
 #define COREUOBJECT_API 
 #define APPLICATIONCORE_API 
 #define RHI_API 
@@ -112,3 +112,11 @@
 #define ANIMATIONCORE_API 
 
 #define _TCHAR_DEFINED
+
+//#define SPYAPI __declspec(dllimport)
+// #ifndef SPYAPI
+//     #define SPYAPI __declspec(dllexport)
+// // #else
+// //     #define SPYAPI __declspec(dllimport)
+// #endif
+

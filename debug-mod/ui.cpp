@@ -6,7 +6,6 @@
 #include <utility>
 #include "debug.h"
 #include "ui.h"
-#include <util.h>
 
 std::queue<std::pair<UObject*,std::vector<UObjectData>>> incomingNodes;
 std::mutex treeMtx;
@@ -18,9 +17,9 @@ bool itemsGetter(void* data, int index, const char** name) {
     auto objects = *(std::vector<UObject*>*)data;
     UObject *obj = objects[index];
     std::stringstream ss;
-    ss << util::getName(obj);
+    ss << spy::GetName(obj);
     if (obj != nullptr) {
-        ss << " (" << util::getName(obj->ClassPrivate) << ")";
+        ss << " (" << spy::GetName(obj->GetClass()) << ")";
     }
     ss << " 0x" << std::hex << (uintptr_t)obj;
 
@@ -51,12 +50,12 @@ void loadProperties(TreeNode *node) {
 
 
 
-    printf("clicked %llx %llx %s\n", uintptr_t(object), (uintptr_t)node, util::getName(object));
+    printf("clicked %llx %llx %s\n", uintptr_t(object), (uintptr_t)node, spy::GetName(object));
     // TODO Move to its own function for clarity?
     debug::AddExecutor([object, node](bool result) {
 
         auto fieldsData = debug::ListProperties(object);
-        printf("found  %llx %llx %s\n", uintptr_t(object), (uintptr_t)node, util::getName(object));
+        printf("found  %llx %llx %s\n", uintptr_t(object), (uintptr_t)node, spy::GetName(object));
 
         std::unique_lock<std::mutex> guard(treeMtx);
 
@@ -123,7 +122,7 @@ void Draw(void *ctx) {
                 root.children.clear();
                 for (auto &it : foundObjects) {
                     UObject *obj = it;
-                    root.children[obj] = TreeNode{UObjectData{obj,nullptr,util::getName(obj),util::getName(obj->ClassPrivate)}};
+                    root.children[obj] = TreeNode{UObjectData{obj,nullptr,spy::GetName(obj),spy::GetName(obj->GetClass())}};
                 }
 
             });

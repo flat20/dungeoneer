@@ -27,9 +27,9 @@ namespace spy {
 
 
 
-    extern FUObjectArray *GUObjectArray;
-    extern TNameEntryArray *GNames;
-    extern UEngine* GEngine;
+    SPYAPI extern FUObjectArray *GUObjectArray;
+    SPYAPI extern TNameEntryArray *GNames;
+    SPYAPI extern UEngine* GEngine;
 	bool initVars();
 
 

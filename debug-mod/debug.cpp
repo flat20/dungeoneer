@@ -14,11 +14,11 @@ ModuleInfo modInfo = {
     &Draw,
 };
 
-void UObject_ProcessEvent(UObject* object, UFunction* func, void *params);
+//void UObject_ProcessEvent(UObject* object, UFunction* func, void *params);
 
 //UIData uiData;
 
-tUObject_ProcessEvent origUObject_ProcessEvent;
+//tUObject_ProcessEvent origUObject_ProcessEvent;
 std::queue<debug::CommandExecutor> commandQueue;
 std::mutex commandQueueMtx;
 typedef IModuleInterface* ( *FInitializeModuleFunctionPtr )( void );
@@ -28,26 +28,26 @@ void ModMain(Dungeoneer *dng, Module *mod) {
     // origUObject_ProcessEvent = (tUObject_ProcessEvent)dng->spyData->functionPtrs[RefUObject_ProcessEvent];
     // dng->AddFunctionHandler(mod, RefUObject_ProcessEvent, &UObject_ProcessEvent);
 
-    printf("trying to load\n");
+    printf("debug does nothing right now\n");
 
-    auto GetDllHandle = (tFWindowsPlatformProcess_GetDllHandle)dng->spyData->functionPtrs[RefFWindowsPlatformProcess_GetDllHandle];
-    void* handle = GetDllHandle((TCHAR*)L"UE4Editor-MyMod.dll");
-    printf("tried loading %llx\n", (uintptr_t)handle);
-    if (handle == nullptr) {
-        return;
-    }
+    // auto GetDllHandle = (tFWindowsPlatformProcess_GetDllHandle)dng->spyData->functionPtrs[RefFWindowsPlatformProcess_GetDllHandle];
+    // void* handle = GetDllHandle((TCHAR*)L"UE4Editor-MyMod.dll");
+    // printf("tried loading %llx\n", (uintptr_t)handle);
+    // if (handle == nullptr) {
+    //     return;
+    // }
 
-    FInitializeModuleFunctionPtr initFuncPtr = (FInitializeModuleFunctionPtr)GetProcAddress((HMODULE)handle, "InitializeModule");
-    printf("func ptr %llx\n", (uintptr_t)initFuncPtr);
-    if (initFuncPtr == nullptr) {
-        return;
-    }
+    // FInitializeModuleFunctionPtr initFuncPtr = (FInitializeModuleFunctionPtr)GetProcAddress((HMODULE)handle, "InitializeModule");
+    // printf("func ptr %llx\n", (uintptr_t)initFuncPtr);
+    // if (initFuncPtr == nullptr) {
+    //     return;
+    // }
 
-    IModuleInterface *module = initFuncPtr();
-    printf("init module %llx\n", (uintptr_t)module);
-    module->StartupModule();
-    printf("startup called\n");
-    printf("isgameModule %s\n", module->IsGameModule() ? "true" : "false");
+    // IModuleInterface *module = initFuncPtr();
+    // printf("init module %llx\n", (uintptr_t)module);
+    // module->StartupModule();
+    // printf("startup called\n");
+    // printf("isgameModule %s\n", module->IsGameModule() ? "true" : "false");
     
 
     // FInitializeModuleFunctionPtr InitializeModuleFunctionPtr =
@@ -83,34 +83,34 @@ std::vector<UObject*> debug::Search(const char *obj, const char *cls) {
         cls = nullptr;
     }
     std::vector<UObject *> found;
-    util::IterateObjectArray([&](UObject *object) {
+    for (spy::FRawObjectIterator It(false); It; ++It) {
+        UObject *Object = *It;
         // if objectName is requested but doesn't match, continue
-        if (obj != nullptr && strstr(util::getName(object), obj) == nullptr) {
-            return false;
+        if (obj != nullptr && strstr(spy::GetName(Object), obj) == nullptr) {
+            continue;
         }
 
         // if className is requested but doesn't match, continue
-        if (cls != nullptr && strstr(util::getName(object->ClassPrivate), cls) == nullptr) {
-            return false;
+        if (cls != nullptr && strstr(spy::GetName(Object->GetClass()), cls) == nullptr) {
+            continue;
         }
 
-        printf("  %s (%s) %llx\n", util::getName(object), util::getName(object->ClassPrivate), (uintptr_t)object);
-        found.push_back(object);
+        printf("  %s (%s) %llx\n", spy::GetName(Object), spy::GetName(Object->GetClass()), (uintptr_t)Object);
+        found.push_back(Object);
 
-        return false; // continue anyway
-    });
+    }
     printf("done\n");
     return found;
 
 }
 
-std::vector<UObjectData> debug::ListProperties(UObject *object) {
+std::vector<UObjectData> debug::ListProperties(UObject *Object) {
 
     std::vector<UObjectData> found;
-    for (TFieldIterator<UObject> it(object->ClassPrivate); it; ++it) {
+    for (TFieldIterator<UObject> it(Object->GetClass()); it; ++it) {
         UObject *f = *it;
-        std::string clsName = (f != nullptr) ? util::getName(f->ClassPrivate) : nullptr;
-        found.push_back(UObjectData{f, nullptr, util::getName(f), clsName});
+        std::string clsName = (f != nullptr) ? spy::GetName(f->GetClass()) : nullptr;
+        found.push_back(UObjectData{f, nullptr, spy::GetName(f), clsName});
     }
     return found;
 

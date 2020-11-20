@@ -1,4 +1,9 @@
 #pragma once
+
+// Done in make.bat now.
+//#pragma comment(lib, "dungeoneer.lib")
+//#define SPYAPI __declspec(dllimport)
+
 #include <dungeoneer.h>
 
 // All this just for HMODULE

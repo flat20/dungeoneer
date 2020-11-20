@@ -4,9 +4,9 @@
 #include "helpers.h"
 
 namespace spy {
-    FUObjectArray *GUObjectArray = nullptr;
-    TNameEntryArray *GNames = nullptr;
-    UEngine* GEngine = nullptr;
+    SPYAPI FUObjectArray *GUObjectArray = nullptr;
+    SPYAPI TNameEntryArray *GNames = nullptr;
+    SPYAPI UEngine* GEngine = nullptr;
 }
 
 namespace spy {
@@ -55,11 +55,11 @@ bool spy::initVars() {
     return true;
 }
 
-
+#pragma comment(linker, "/export:?GetPrivateStaticClass@UClass@@CAPEAV1@XZ")
 UClass* UClass::GetPrivateStaticClass() {
     static UClass* cls = (UClass*)spy::FindObjectByName("Class", "Class", nullptr);
     return cls;
 }
 
-//#pragma comment(linker, "/export:?ZeroVector@FVector@@2U1@B")
+#pragma comment(linker, "/export:?ZeroVector@FVector@@2U1@B")
 CORE_API const FVector FVector::ZeroVector(0.0f, 0.0f, 0.0f);

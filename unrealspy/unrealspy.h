@@ -8,12 +8,6 @@
 
 #include "offsets.h"
 
-#ifdef SPYAPI_IMPORT
-//    #define SPYAPI __declspec(dllimport)
-#else
-    #define SPYAPI __declspec(dllexport)
-#endif
-
 namespace spy {
 
 //     // Some defaults for us.

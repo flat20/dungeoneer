@@ -142,7 +142,7 @@ namespace offsets {
             FindAddresses(process, Lookups);
             bool lookupSuccess = true;
             for (auto opcode : Lookups) {
-                printf("opcode lookup %llx = %s\n", opcode->GetAddress(), opcode->GetOpcodes());
+                printf("AddressFinder::Lookup %llx = %s\n", opcode->GetAddress(), opcode->GetOpcodes());
                 if (opcode->GetAddress() == 0) {
                     lookupSuccess = false;
                 }

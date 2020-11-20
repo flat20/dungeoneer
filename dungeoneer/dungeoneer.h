@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unrealspy.h>
+#include <helpers.h>
 #include <uhook.h>
 #include <list>
 #include <map>
